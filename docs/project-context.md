@@ -43,9 +43,9 @@ The planned backlog contains 57 issues across six milestones. Work proceeds one 
 ## Current handoff
 
 - **Completed:** F001, Define WordGame 2.0 architecture, merged through PR #60. Local Git history confirms merge commit `f633f77`; the documentation is in `docs/architecture.md`.
-- **Next:** F002, Set up clean frontend project structure. Its intended scope is React + TypeScript + Vite initialization, project structure, routing, linting, strict TypeScript, demo removal, and a simple placeholder homepage. Implementation must wait for the user's instruction to continue.
+- **Active:** [F002, Set up clean frontend project structure (#4)](https://github.com/joelsjovall/WordGame2.0/issues/4). The complete issue was retrieved from GitHub and implementation authorized. The local frontend now includes React + TypeScript + Vite, routing, ESLint, formatting, strict typing, API URL configuration, and a placeholder homepage. See `frontend/README.md` for setup and structure. Completion remains subject to final review and the GitHub workflow.
 - **Local state at inspection (2026-11-17):** Branch `feature/F002-frontend-setup`. An existing uncommitted change reduces `README.md` from the architecture text to `# WordGame 2.0`. Preserve this change; it predates this handoff. The tracked working files inspected were `README.md` and `docs/architecture.md`; no frontend or backend implementation was present.
-- **This task:** Add `AGENTS.md` and this context document only. Do not implement F002, change branches, commit, or push. Future branch changes, commits, and pushes require asking the user first, as recorded in `AGENTS.md`.
+- **Current authorization:** The user authorized F002 implementation and preparing its branch from updated `main`. Fetch confirmed `main` was current; `feature/F002-frontend-setup` retains the committed context files. Commits, pushes, and merging still require user authorization.
 - **Outstanding security follow-up:** A database credential was previously exposed in the public V1 repository. Never reuse or reproduce it. Rotation must be verified; this handoff provides no evidence that rotation has occurred.
 
 Update this section as issues are completed or the handoff state changes.
