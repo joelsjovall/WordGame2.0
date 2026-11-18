@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using WordGame.Api.Authentication;
 using WordGame.Api.Endpoints;
 using WordGame.Api.Errors;
 using WordGame.Api.OpenApi;
@@ -8,6 +9,7 @@ using WordGame.Application.Categories;
 using WordGame.Application.Challenges;
 using WordGame.Application.Games;
 using WordGame.Application.Sessions;
+using WordGame.Application.Synchronization;
 using WordGame.Application.Words;
 using WordGame.Domain;
 using WordGame.Infrastructure.Categories;
@@ -31,6 +33,8 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 builder.Services.AddOpenApi("v1", options => options.AddDocumentTransformer<ContractDocumentTransformer>());
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddHealthChecks();
+builder.AddPlayerAuthentication();
+builder.Services.AddSingleton<GameEventService>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton(_ => new SessionRetention(
     builder.Configuration.GetValue("Sessions:DisconnectedGrace", TimeSpan.FromMinutes(2)),
@@ -61,7 +65,7 @@ if (builder.Environment.IsDevelopment())
     var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
     builder.Services.AddCors(options =>
         options.AddDefaultPolicy(policy =>
-            policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod()));
+            policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
 }
 
 var app = builder.Build();
@@ -86,11 +90,14 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 app.MapCategoryEndpoints();
+app.MapGameSynchronizationEndpoints();
 
 if (app.Environment.IsDevelopment())
 {
     app.UseCors();
 }
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapHealthChecks("/health");
 

@@ -2,6 +2,24 @@ import assert from 'node:assert/strict'
 import { test } from 'vitest'
 import { ApiError, createApiClient } from '../src/services/api/client.ts'
 import { createCategoriesApi } from '../src/services/api/categories.ts'
+import { createGamesApi } from '../src/services/api/games.ts'
+
+test('game state fallback includes credentials, disables caching, and preserves cancellation', async () => {
+  const controller = new AbortController()
+  const games = createGamesApi(
+    createApiClient('', async (input, options) => {
+      assert.equal(String(input), '/api/v1/games/game%2Fid/state')
+      assert.equal(options?.credentials, 'include')
+      assert.equal(options?.cache, 'no-store')
+      assert.equal(options?.signal, controller.signal)
+      return Response.json({ version: '8' })
+    }),
+  )
+  assert.equal(
+    (await games.getState('game/id', controller.signal)).version,
+    '8',
+  )
+})
 
 test('JSON requests join the configured base, preserve headers and serialize only provided bodies', async () => {
   let url: string | undefined

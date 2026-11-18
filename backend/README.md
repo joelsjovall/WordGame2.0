@@ -14,7 +14,7 @@ The HTTP profile serves `http://localhost:5000`. `GET /health` returns HTTP 200 
 
 Set the frontend's `VITE_API_BASE_URL=http://localhost:5000` in `frontend/.env.local` for local HTTP development.
 
-F009 adds public metadata-only `/api/v1/categories` reads and a Development-only OpenAPI document at `/openapi/v1.json`. See [API contracts](../docs/api-contracts.md) for transport DTOs, Problem Details, TypeScript generation, and specified future game/lobby/matchmaking operations. Game state/action routes remain unavailable until their authenticated workflows exist.
+F009 adds public metadata-only `/api/v1/categories` reads and a Development-only OpenAPI document at `/openapi/v1.json`. See [API contracts](../docs/api-contracts.md) for transport DTOs, Problem Details, TypeScript generation, and specified future game/lobby/matchmaking operations. F021 adds protected [game state/SSE synchronization](../docs/game-synchronization.md); guest credential issuance and gameplay action routes remain later work.
 
 ## Project boundaries
 
@@ -33,7 +33,7 @@ The Domain remains independent of ASP.NET Core and infrastructure; see [domain m
 
 The API also registers the shared in-memory session store and automatic cleanup worker. See [session management](../docs/session-management.md) for isolation, lifecycle, reconnection, change notifications, and `Sessions` retention settings. Active sessions are lost on restart; this store supports one backend instance.
 
-The shared Application [GameEngine](../docs/game-engine.md) orchestrates creation, initialization, round phases, resolution, completion, and cancellation through that store. It returns structured internal results without exposing new HTTP routes. [Turn management](../docs/turn-management.md) adds rotating starters, versioned player actions, replay guards, and disconnect/leave handling. [Category selection](../docs/category-selection.md) adds provider-backed availability, retained answer snapshots, configurable difficulty modifiers, and a timeout worker. [Timed word challenges](../docs/word-challenges.md) add bidder-only submissions, duplicate tracking, automatic success/expiry, and structured results. Scoring and win-condition policies remain later work.
+The shared Application [GameEngine](../docs/game-engine.md) orchestrates creation, initialization, round phases, resolution, completion, and cancellation through that store. It returns structured internal results without exposing new HTTP routes. [Turn management](../docs/turn-management.md) adds rotating starters, versioned player actions, replay guards, and disconnect/leave handling. [Category selection](../docs/category-selection.md) adds provider-backed availability, retained answer snapshots, configurable difficulty modifiers, and a timeout worker. [Timed word challenges](../docs/word-challenges.md) add bidder-only submissions, duplicate tracking, automatic success/expiry, and structured results. F018–F020 add [scoring](../docs/scoring.md), retained round results, and automatic match completion. F021 exposes authorized state/SSE reads over the same store.
 
 See [bidding and bluff calls](../docs/bidding.md) for opening/raising bids, caller permissions, phase locking, and atomic request-race behavior shared by both modes.
 
@@ -44,7 +44,7 @@ See [bidding and bluff calls](../docs/bidding.md) for opening/raising bids, call
 - Unexpected request exceptions return HTTP 500 Problem Details with a generic title and trace ID; exception messages and stack traces stay out of responses, including in Development. Domain-specific error mapping is future gameplay work.
 - CORS is enabled only in Development, for the exact origins `http://localhost:5173` and `http://127.0.0.1:5173`. These are configured under `Cors:AllowedOrigins` in `appsettings.Development.json`; change the list if the Vite port changes. Credentials are not enabled. CORS does not authenticate players. Production cross-origin policy must be explicitly designed when deploying.
 - Configuration uses ASP.NET Core defaults (JSON, environment variables, command-line arguments). For example, `Cors__AllowedOrigins__0` overrides the first development origin. Keep secrets out of tracked files; future sensitive values belong in environment variables or user secrets.
-- Identity, SSE endpoints, complete game orchestration, persistent storage, and production deployment remain planned. Category providers and in-memory storage are implemented as described above.
+- Guest credential issuance, gameplay action endpoints, lobby/matchmaking integration, persistent storage, and production deployment remain planned. Category providers and in-memory storage are implemented as described above.
 
 Tests cover database-free startup, health responses, allowed development preflights, rejected origins, production CORS behavior, safe unexpected-error responses, and absence of demo endpoints.
 

@@ -32,7 +32,7 @@ Vitest runs API client and React component tests with `npm test`. Playwright run
 
 See [API contracts](../docs/api-contracts.md) for implemented endpoints, future specifications, versioning, and errors. All JSON requests go through `src/services/api/client.ts`; typed category operations are in `categories.ts`. Import shared generated types from `generated.ts` instead of declaring response interfaces in components.
 
-With the Development backend running on port 5000, run `npm run api:generate` to refresh types and `npm run api:check` to detect drift. A trailing OpenAPI document URL overrides the default. Commit generated changes with backend DTO changes. No game/matchmaking client wrappers are added until their routes exist.
+With the Development backend running on port 5000, run `npm run api:generate` to refresh types and `npm run api:check` to detect drift. A trailing OpenAPI document URL overrides the default. Commit generated changes with backend DTO changes. F021 adds gamesApi state retrieval and a shared SSE synchronization service with useGameState; see [synchronization](../docs/game-synchronization.md). Gameplay screens and matchmaking remain later work.
 
 ## Structure and boundaries
 

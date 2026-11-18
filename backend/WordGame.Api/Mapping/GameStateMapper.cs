@@ -13,7 +13,7 @@ public static class GameStateMapper
         return new GameStateResponse(snapshot.Id, MapStatus(snapshot.Status), snapshot.Version.ToString(CultureInfo.InvariantCulture), serverTime,
             snapshot.Game.Players.Select(player => new GamePlayerResponse(
                 player.Id, player.DisplayName, snapshot.Game.Scores[player.Id].Points, connected[player.Id])).ToArray(),
-            snapshot.Game.CurrentRound is { } round ? MapRound(round, snapshot.Game.RoundResults.GetValueOrDefault(round.Id)) : null,
+            snapshot.Game.CurrentRound is { } round ? MapRound(round, snapshot.Game.RoundResults.GetValueOrDefault(round.Id), snapshot.CategorySelectionDeadline) : null,
             new MatchSettingsResponse(MapFormat(snapshot.Game.Settings.Format), snapshot.Game.Settings.RoundCount),
             snapshot.Game.Result is { } result ? MapMatchResult(result) : null);
     }
@@ -29,7 +29,7 @@ public static class GameStateMapper
         result.GameId, MapFormat(result.Format), result.CompletedRoundCount, result.IsTie, result.WinnerIds,
         result.Standings.Select(standing => new MatchStandingResponse(standing.PlayerId, standing.DisplayName, standing.Score, standing.Rank)).ToArray());
 
-    private static ApiSessionStatus MapStatus(SessionStatus status) => status switch
+    internal static ApiSessionStatus MapStatus(SessionStatus status) => status switch
     {
         SessionStatus.Waiting => ApiSessionStatus.Waiting,
         SessionStatus.Starting => ApiSessionStatus.Starting,
@@ -46,7 +46,7 @@ public static class GameStateMapper
         result.Submissions.Select(MapSubmission).ToArray(),
         result.Scores.Select(score => new RoundPlayerScoreResponse(score.PlayerId, score.PointsAwarded, score.TotalPoints)).ToArray());
 
-    private static GameRoundResponse MapRound(Domain.GameRound round, Domain.RoundResult? result) => new(
+    private static GameRoundResponse MapRound(Domain.GameRound round, Domain.RoundResult? result, DateTimeOffset? selectionDeadline) => new(
         round.Id, round.Number, round.Status switch
         {
             Domain.RoundStatus.CategorySelection => ApiRoundStatus.CategorySelection,
@@ -57,7 +57,7 @@ public static class GameStateMapper
             _ => throw new InvalidOperationException("Unsupported round status.")
         }, round.Turn.PlayerId, round.Category is { } category ? CategoryMapper.Map(category) : null,
         round.HighestBid is { } bid ? new BidResponse(bid.PlayerId, bid.WordCount) : null,
-        round.Challenge is { } challenge ? MapChallenge(challenge) : null, result is null ? null : MapResult(result));
+        round.Challenge is { } challenge ? MapChallenge(challenge) : null, result is null ? null : MapResult(result), selectionDeadline);
 
     private static ChallengeResponse MapChallenge(Domain.Challenge challenge) => new(
         challenge.Id, challenge.Bid.PlayerId, challenge.ChallengerId, challenge.Bid.WordCount,
