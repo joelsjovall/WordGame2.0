@@ -15,7 +15,7 @@ The engine derives phases from existing session/game/round states rather than ma
 | Bluff challenge             | Active / InProgress / Challenge                          | `CallBluffAsync` challenges the current highest bid and makes its bidder the active player.               |
 | Round results               | Active / InProgress / Completed round                    | `ResolveChallengeAsync` derives the outcome from accepted submissions and completes the round atomically. |
 | Next round                  | Active / InProgress / CategorySelection                  | `NextRoundAsync` requires scored results and creates the next numbered round.                             |
-| Game over                   | Session Completed, Game Completed                        | `CompleteAsync` ends an active match with a completed final round.                                        |
+| Game over                   | Session Completed, Game Completed                        | F020 automatically ends the match when its configured final round is scored.                              |
 | Cancelled                   | Session Abandoned, Game Cancelled                        | `CancelAsync` cancels a nonterminal session and its unfinished round/challenge.                           |
 
 Completed and abandoned sessions cannot restart; rematches create new sessions. Completed rounds retain their last turn as history. `InitializeAsync` is not a per-player readiness system: lobbies and matchmaking must gather/validate their participants before creating the fixed-roster game.
@@ -32,7 +32,7 @@ F015's [selection service](category-selection.md) resolves player-selected IDs t
 
 `SubmitWordAsync` validates against retained answers and records attempts atomically. Reaching the required count completes the round immediately; the gameplay timeout worker resolves expired challenges. `ResolveChallengeAsync` remains a trusted backend operation, never accepts a client-selected outcome, and rejects early/repeated resolution. See [word challenges](word-challenges.md) for timestamp semantics and structured results.
 
-The backend workflow explicitly chooses `NextRoundAsync` or `CompleteAsync` after results; there is no between-round ready-up requirement. F018 supplies [scoring](scoring.md); F019 supplies immutable [round results and guarded progression](round-results.md), including a round-ID/revision overload for delayed workflows. Match limits, match winners, and forfeits remain later work.
+The backend workflow explicitly chooses `NextRoundAsync` after intermediate results; F020 completes the match automatically after its final round; there is no between-round ready-up requirement. F018 supplies [scoring](scoring.md); F019 supplies immutable [round results and guarded progression](round-results.md), including a round-ID/revision overload for delayed workflows. F020 supplies [match limits, final standings, and shared wins for ties](match-completion.md); forfeits remain later work.
 
 ## Transactions and results
 

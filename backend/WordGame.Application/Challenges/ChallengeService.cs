@@ -77,5 +77,10 @@ public sealed class ChallengeService(IGameSessionStore sessions, SessionRetentio
         challenge.Resolve(challenge.AcceptedWordCount >= challenge.Bid.WordCount ? ChallengeOutcome.Succeeded : ChallengeOutcome.Failed);
         round.Complete();
         session.Game.RecordRoundScores(round.Id, scoringRules.Calculate(round, session.SelectedCategory!.ScoreMultiplier));
+        if (session.Game.Rounds.Count == session.Game.Settings.RoundCount)
+        {
+            session.Game.Complete();
+            session.Complete();
+        }
     }
 }

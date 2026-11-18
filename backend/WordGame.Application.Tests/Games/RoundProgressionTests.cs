@@ -13,7 +13,8 @@ public sealed class RoundProgressionTests
     public async Task MultipleRoundsRetainResultsAndMatchStateWhileResettingRoundData(int players)
     {
         var timeout = TimeSpan.FromSeconds(45);
-        var game = await TurnTestGame.Create(players, new TestCategoryProvider(ChallengeTestGame.Capitals()), new CategorySelectionRules(timeout));
+        var game = await TurnTestGame.Create(players, new TestCategoryProvider(ChallengeTestGame.Capitals()), new CategorySelectionRules(timeout),
+            settings: MatchSettings.Party(players * 2 + 1));
         var results = new List<RoundResult>();
         var expectedTotals = game.Players.ToDictionary(player => player.Id, _ => 0);
         for (var index = 0; index < players * 2; index++)
@@ -145,10 +146,10 @@ public sealed class RoundProgressionTests
     [Fact]
     public async Task ResultsRemainReadableAfterMatchCompletionButCancelledRoundsHaveNoResult()
     {
-        var game = await ChallengeTestGame.Create(required: 1);
+        var game = await ChallengeTestGame.Create(required: 1, settings: MatchSettings.Party(1));
         var completion = await game.Submit(0, "Paris");
         var result = completion.RoundResult!;
-        TurnTestGame.Accepted(await game.Engine.CompleteAsync(game.Id));
+        Assert.Equal(WordGame.Application.Sessions.SessionStatus.Completed, completion.State!.Status);
         Assert.Same(result, (await game.Engine.GetRoundResultAsync(game.Id, result.RoundId)).RoundResult);
         Assert.False((await game.Engine.NextRoundAsync(game.Id)).Succeeded);
         Assert.Equal(GameEngineErrorCode.NotFound, (await game.Engine.GetRoundResultAsync(Guid.NewGuid(), result.RoundId)).Error!.Code);

@@ -8,7 +8,7 @@ public sealed class Game
     private readonly Dictionary<Guid, PlayerScore> scores;
     private readonly Dictionary<Guid, RoundResult> roundResults = [];
 
-    public Game(Guid id, IEnumerable<Player> players)
+    public Game(Guid id, IEnumerable<Player> players, MatchSettings? settings = null)
     {
         Id = DomainGuard.Id(id, nameof(id));
         ArgumentNullException.ThrowIfNull(players);
@@ -24,6 +24,11 @@ public sealed class Game
         }
 
         Players = Array.AsReadOnly(roster);
+        Settings = settings ?? MatchSettings.Party(roster.Length * 2);
+        if (Settings.Format == MatchFormat.Online && roster.Length != 2)
+        {
+            throw new ArgumentException("Online matches require exactly two players.", nameof(players));
+        }
         Rounds = rounds.AsReadOnly();
         scores = roster.ToDictionary(player => player.Id, player => new PlayerScore(player.Id, 0));
         Scores = new ReadOnlyDictionary<Guid, PlayerScore>(scores);
@@ -31,6 +36,8 @@ public sealed class Game
     }
 
     public Guid Id { get; }
+    public MatchSettings Settings { get; }
+    public MatchResult? Result { get; private set; }
     // Roster order is the stable turn-order basis shared by both modes.
     public IReadOnlyList<Player> Players { get; }
     public IReadOnlyList<GameRound> Rounds { get; }
@@ -42,7 +49,7 @@ public sealed class Game
     // Copies mutable aggregates for isolated session transactions and detached reads.
     public Game Copy()
     {
-        var copy = new Game(Id, Players) { Status = Status };
+        var copy = new Game(Id, Players, Settings) { Status = Status, Result = Result };
         copy.rounds.AddRange(rounds.Select(round => round.Copy()));
         foreach (var score in scores)
         {
@@ -76,6 +83,7 @@ public sealed class Game
             "The game has already ended.");
         DomainGuard.State(CurrentRound is null || CurrentRound.Status == RoundStatus.Completed,
             "The previous round must be completed.");
+        DomainGuard.State(rounds.Count < Settings.RoundCount, "The configured round limit has been reached.");
         DomainGuard.State(!rounds.Any(round => round.Id == roundId), "Round IDs must be unique within a game.");
 
         var round = new GameRound(roundId, checked(rounds.Count + 1), Players.Select(player => player.Id), startingPlayerId);
@@ -116,8 +124,10 @@ public sealed class Game
 
     public void Complete()
     {
-        DomainGuard.State(Status == GameStatus.InProgress && CurrentRound?.Status == RoundStatus.Completed,
-            "An active game needs a completed final round.");
+        DomainGuard.State(Status == GameStatus.InProgress && CurrentRound?.Status == RoundStatus.Completed &&
+            rounds.Count == Settings.RoundCount && roundResults.Count == Settings.RoundCount,
+            "Match completion requires every configured round to be completed and scored.");
+        Result = new MatchResult(this);
         Status = GameStatus.Completed;
     }
 

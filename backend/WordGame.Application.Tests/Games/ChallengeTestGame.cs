@@ -11,10 +11,10 @@ internal static class ChallengeTestGame
         new AcceptedAnswer("Madrid"), new AcceptedAnswer("Rome"), new AcceptedAnswer("Copenhagen", ["Köpenhamn"])
     ]);
 
-    internal static async Task<TurnTestGame> Create(int players = 2, int required = 5, TimeSpan? duration = null, TestCategoryProvider? provider = null)
+    internal static async Task<TurnTestGame> Create(int players = 2, int required = 5, TimeSpan? duration = null, TestCategoryProvider? provider = null, MatchSettings? settings = null)
     {
         var game = await TurnTestGame.Create(players, provider ?? new TestCategoryProvider(Capitals()),
-            challengeRules: new ChallengeRules(duration ?? TurnTestGame.Duration));
+            challengeRules: new ChallengeRules(duration ?? TurnTestGame.Duration), settings: settings);
         TurnTestGame.Accepted(await game.Engine.SelectCategoryAsync(game.Id, game.Players[0].Id, "capitals", await game.Context()));
         await game.Bid(0, required);
         await game.Bluff(1);

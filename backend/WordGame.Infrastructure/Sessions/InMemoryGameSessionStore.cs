@@ -10,10 +10,10 @@ public sealed class InMemoryGameSessionStore(TimeProvider clock, SessionRetentio
 {
     private readonly ConcurrentDictionary<Guid, SessionEntry> sessions = new();
 
-    public Task<SessionSnapshot> CreateAsync(IEnumerable<Player> players, CancellationToken cancellationToken = default)
+    public Task<SessionSnapshot> CreateAsync(IEnumerable<Player> players, CancellationToken cancellationToken = default, MatchSettings? settings = null)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var session = new GameSession(Guid.NewGuid(), players, clock.GetUtcNow());
+        var session = new GameSession(Guid.NewGuid(), players, clock.GetUtcNow(), settings);
         if (!sessions.TryAdd(session.Id, new SessionEntry(session)))
         {
             throw new InvalidOperationException("A generated session ID collided with an existing session.");

@@ -25,7 +25,7 @@ public sealed class GameEngineTests
     public async Task BothModesUseTheFullLifecycleWithSequentialRoundsAndTrackedPlayers(int count)
     {
         var players = Players(count);
-        var created = State(await engine.CreateAsync(players));
+        var created = State(await engine.CreateAsync(players, MatchSettings.Party(2)));
         Assert.Equal(SessionStatus.Waiting, created.Status);
         Assert.Equal(GameStatus.WaitingToStart, created.Game.Status);
         Assert.Null(created.Game.CurrentRound);
@@ -45,7 +45,8 @@ public sealed class GameEngineTests
         Assert.NotEqual(first.Game.CurrentRound!.Id, next.Game.CurrentRound.Id);
         Assert.Equal(players[1].Id, next.Game.CurrentRound.Turn.PlayerId);
         await FinishRound(created.Id, players[1].Id, players[(2 % count)].Id);
-        var completed = State(await engine.CompleteAsync(created.Id));
+        var completed = State(await engine.GetStateAsync(created.Id));
+        await Reject(created.Id, () => engine.CompleteAsync(created.Id), GameEngineErrorCode.InvalidState);
         Assert.Equal(SessionStatus.Completed, completed.Status);
         Assert.Equal(GameStatus.Completed, completed.Game.Status);
         Assert.Equal(clock.GetUtcNow(), completed.EndedAt);

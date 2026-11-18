@@ -1,4 +1,5 @@
 using WordGame.Application.Sessions;
+using WordGame.Domain;
 
 namespace WordGame.Infrastructure.Tests;
 
@@ -127,8 +128,10 @@ public sealed class SessionCleanupAndNotificationTests
         var created = await store.CreateAsync(SessionTestData.Players());
         var completed = await store.UpdateAsync(created.Id, SessionTestData.Complete);
         Assert.Equal(SessionStatus.Completed, completed.Status);
+        var result = Assert.IsType<MatchResult>(completed.Game.Result);
         clock.Advance(TimeSpan.FromMinutes(9));
         await store.UpdateAsync(created.Id, session => session.Connect(created.Game.Players[0].Id, Guid.NewGuid()));
+        Assert.Same(result, (await store.GetAsync(created.Id))!.Game.Result);
         Assert.Equal(0, await store.CleanupAsync());
         clock.Advance(TimeSpan.FromMinutes(1));
         Assert.Equal(1, await store.CleanupAsync());

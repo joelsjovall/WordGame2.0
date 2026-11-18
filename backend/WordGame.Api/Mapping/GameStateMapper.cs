@@ -13,8 +13,21 @@ public static class GameStateMapper
         return new GameStateResponse(snapshot.Id, MapStatus(snapshot.Status), snapshot.Version.ToString(CultureInfo.InvariantCulture), serverTime,
             snapshot.Game.Players.Select(player => new GamePlayerResponse(
                 player.Id, player.DisplayName, snapshot.Game.Scores[player.Id].Points, connected[player.Id])).ToArray(),
-            snapshot.Game.CurrentRound is { } round ? MapRound(round, snapshot.Game.RoundResults.GetValueOrDefault(round.Id)) : null);
+            snapshot.Game.CurrentRound is { } round ? MapRound(round, snapshot.Game.RoundResults.GetValueOrDefault(round.Id)) : null,
+            new MatchSettingsResponse(MapFormat(snapshot.Game.Settings.Format), snapshot.Game.Settings.RoundCount),
+            snapshot.Game.Result is { } result ? MapMatchResult(result) : null);
     }
+
+    private static ApiMatchFormat MapFormat(Domain.MatchFormat format) => format switch
+    {
+        Domain.MatchFormat.Party => ApiMatchFormat.Party,
+        Domain.MatchFormat.Online => ApiMatchFormat.Online,
+        _ => throw new InvalidOperationException("Unsupported match format.")
+    };
+
+    private static MatchResultResponse MapMatchResult(Domain.MatchResult result) => new(
+        result.GameId, MapFormat(result.Format), result.CompletedRoundCount, result.IsTie, result.WinnerIds,
+        result.Standings.Select(standing => new MatchStandingResponse(standing.PlayerId, standing.DisplayName, standing.Score, standing.Rank)).ToArray());
 
     private static ApiSessionStatus MapStatus(SessionStatus status) => status switch
     {

@@ -99,6 +99,10 @@ public sealed class ApiContractTests
         Assert.Contains(resultSchema.GetProperty("type").EnumerateArray(), item => item.GetString() == "null");
         Assert.True(resultSchema.GetProperty("properties").TryGetProperty("winnerId", out _));
         Assert.True(resultSchema.GetProperty("properties").TryGetProperty("scores", out _));
+        var matchResultSchema = schemas.GetProperty("GameStateResponse").GetProperty("properties").GetProperty("result");
+        Assert.Contains(matchResultSchema.GetProperty("type").EnumerateArray(), item => item.GetString() == "null");
+        Assert.True(matchResultSchema.GetProperty("properties").TryGetProperty("winnerIds", out _));
+        Assert.True(matchResultSchema.GetProperty("properties").TryGetProperty("standings", out _));
         Assert.Equal("string", schemas.GetProperty("GameStateResponse").GetProperty("properties")
             .GetProperty("version").GetProperty("type").GetString());
         AssertLocalReferencesResolve(document.RootElement, schemas);

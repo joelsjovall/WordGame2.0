@@ -47,17 +47,21 @@ internal static class SessionTestData
     internal static void Complete(GameSession session)
     {
         Activate(session);
-        var round = session.Game.CurrentRound!;
         var bidder = session.Game.Players[0].Id;
         var caller = session.Game.Players[1].Id;
-        round.SelectCategory(bidder, new Category("cars", "Cars", CategoryDifficulty.Easy));
-        round.RecordBid(new Bid(bidder, 1));
-        round.AssignTurn(caller);
-        var challenge = new Challenge(Guid.NewGuid(), round.HighestBid!, caller,
-            session.UpdatedAt, session.UpdatedAt.AddSeconds(30));
-        round.BeginChallenge(challenge);
-        challenge.Resolve(ChallengeOutcome.Failed);
-        round.Complete();
+        for (var number = 0; number < session.Game.Settings.RoundCount; number++)
+        {
+            var round = number == 0 ? session.Game.CurrentRound! : session.Game.StartRound(Guid.NewGuid(), bidder);
+            round.SelectCategory(bidder, new Category("cars", "Cars", CategoryDifficulty.Easy));
+            round.RecordBid(new Bid(bidder, 1));
+            round.AssignTurn(caller);
+            var challenge = new Challenge(Guid.NewGuid(), round.HighestBid!, caller,
+                session.UpdatedAt, session.UpdatedAt.AddSeconds(30));
+            round.BeginChallenge(challenge);
+            challenge.Resolve(ChallengeOutcome.Failed);
+            round.Complete();
+            session.Game.RecordRoundScores(round.Id, new ScoringRules().Calculate(round, 1));
+        }
         session.Game.Complete();
         session.Complete();
     }
