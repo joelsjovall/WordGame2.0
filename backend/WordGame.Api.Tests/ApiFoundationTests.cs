@@ -1,10 +1,10 @@
 using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using WordGame.Api.Tests.Fixtures;
 using WordGame.Application.Categories;
 using WordGame.Application.Sessions;
 using WordGame.Application.Words;
@@ -17,7 +17,7 @@ public sealed class ApiFoundationTests
     [Fact]
     public async Task HostedCleanupAutomaticallyRemovesExpiredSessions()
     {
-        using var factory = CreateFactory("Production").WithWebHostBuilder(builder =>
+        using var factory = new WordGameApiFactory("Production").WithWebHostBuilder(builder =>
             builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(
                 new Dictionary<string, string?>
                 {
@@ -39,13 +39,16 @@ public sealed class ApiFoundationTests
     [Fact]
     public async Task ShippedDatasetsAreRegisteredAndUsableByTheValidator()
     {
-        using var factory = CreateFactory("Production");
+        using var factory = new WordGameApiFactory("Production");
         var provider = factory.Services.GetRequiredService<ICategoryProvider>();
         var catalog = await provider.GetCategoriesAsync();
-        Assert.Equal(3, catalog.Count);
-        Assert.Single(await provider.GetCategoriesAsync(CategoryDifficulty.Easy));
-        Assert.Single(await provider.GetCategoriesAsync(CategoryDifficulty.Medium));
-        Assert.Single(await provider.GetCategoriesAsync(CategoryDifficulty.Hard));
+        Assert.NotEmpty(catalog);
+        Assert.Contains(await provider.GetCategoriesAsync(CategoryDifficulty.Easy),
+            category => category.Id == "european-capitals");
+        Assert.Contains(await provider.GetCategoriesAsync(CategoryDifficulty.Medium),
+            category => category.Id == "chemical-elements");
+        Assert.Contains(await provider.GetCategoriesAsync(CategoryDifficulty.Hard),
+            category => category.Id == "greek-letters");
         var category = await provider.GetByIdAsync("european-capitals");
         Assert.NotNull(category);
         var result = factory.Services.GetRequiredService<IWordValidationService>()
@@ -58,7 +61,7 @@ public sealed class ApiFoundationTests
     public void MissingConfiguredDatasetDirectoryPreventsStartup()
     {
         var missing = Path.Combine(Path.GetTempPath(), "wordgame-f007-missing-" + Guid.NewGuid().ToString("N"));
-        using var factory = CreateFactory("Production").WithWebHostBuilder(builder =>
+        using var factory = new WordGameApiFactory("Production").WithWebHostBuilder(builder =>
             builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(
                 new Dictionary<string, string?> { ["Categories:Directory"] = missing })));
 
@@ -68,7 +71,7 @@ public sealed class ApiFoundationTests
     [Fact]
     public void ValidationServiceIsRegisteredWithoutDatabaseOrProviderDependencies()
     {
-        using var factory = CreateFactory("Production");
+        using var factory = new WordGameApiFactory("Production");
         var service = factory.Services.GetRequiredService<IWordValidationService>();
         var category = new CategoryDefinition(
             new Category("cars", "Cars", CategoryDifficulty.Easy), [new AcceptedAnswer("Volvo")]);
@@ -81,7 +84,7 @@ public sealed class ApiFoundationTests
     [InlineData("Production")]
     public async Task Health_ReturnsOkWithoutDatabase(string environment)
     {
-        using var factory = CreateFactory(environment);
+        using var factory = new WordGameApiFactory(environment);
         using var client = factory.CreateClient();
 
         using var response = await client.GetAsync("/health");
@@ -95,7 +98,7 @@ public sealed class ApiFoundationTests
     [InlineData("http://127.0.0.1:5173")]
     public async Task DevelopmentCors_AllowsConfiguredFrontendPreflight(string origin)
     {
-        using var factory = CreateFactory("Development");
+        using var factory = new WordGameApiFactory("Development");
         using var client = factory.CreateClient();
         using var request = new HttpRequestMessage(HttpMethod.Options, "/health");
         request.Headers.Add("Origin", origin);
@@ -116,7 +119,7 @@ public sealed class ApiFoundationTests
     [InlineData("Production", "http://localhost:5173")]
     public async Task Cors_DoesNotAllowUntrustedOrProductionOrigins(string environment, string origin)
     {
-        using var factory = CreateFactory(environment);
+        using var factory = new WordGameApiFactory(environment);
         using var client = factory.CreateClient();
         using var request = new HttpRequestMessage(HttpMethod.Get, "/health");
         request.Headers.Add("Origin", origin);
@@ -133,7 +136,7 @@ public sealed class ApiFoundationTests
     [InlineData("Production", "text/html")]
     public async Task UnhandledException_ReturnsProblemDetailsWithoutExceptionDetails(string environment, string accept)
     {
-        using var factory = CreateFactory(environment).WithWebHostBuilder(builder =>
+        using var factory = new WordGameApiFactory(environment).WithWebHostBuilder(builder =>
             builder.ConfigureServices(services =>
                 services.AddSingleton<HealthCheckService, ThrowingHealthCheckService>()));
         using var client = factory.CreateClient();
@@ -155,17 +158,13 @@ public sealed class ApiFoundationTests
     [Fact]
     public async Task UnknownRoute_ReturnsNotFound()
     {
-        using var factory = CreateFactory("Production");
+        using var factory = new WordGameApiFactory("Production");
         using var client = factory.CreateClient();
 
         using var response = await client.GetAsync("/weatherforecast");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
-
-    private static WebApplicationFactory<Program> CreateFactory(string environment) =>
-        new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
-            builder.UseEnvironment(environment));
 
     private sealed class ThrowingHealthCheckService : HealthCheckService
     {

@@ -24,7 +24,9 @@ npm run build
 npm run preview
 ```
 
-`build` includes TypeScript checks. `format` applies Prettier; ESLint handles code quality with React Hooks and Fast Refresh rules. Both application and Vite configuration use explicit strict TypeScript settings. TypeScript 5.9 satisfies both typescript-eslint and openapi-typescript peer ranges. `package-lock.json` pins dependency resolutions for `npm ci`. API client tests use Node's built-in test runner and TypeScript stripping, without adding a test framework.
+`build` includes TypeScript checks. `format` applies Prettier; ESLint handles code quality with React Hooks and Fast Refresh rules. Both application and Vite configuration use explicit strict TypeScript settings. TypeScript 5.9 satisfies both typescript-eslint and openapi-typescript peer ranges. `package-lock.json` pins dependency resolutions for `npm ci`.
+
+Vitest runs API client and React component tests with `npm test`. Playwright runs desktop and mobile browser checks with `npm run test:e2e`, starting its own local frontend and API. See [automated testing](../docs/testing.md) for browser installation, suite commands, organization, and isolation.
 
 ## Shared API contracts
 
@@ -57,6 +59,6 @@ The homepage is intentionally a placeholder. Party lobbies, matchmaking, gamepla
 
 ## Initial verification
 
-F002 was checked using Node 25.2.1 and npm 11.13.0. ESLint, strict TypeScript, formatting, and production build checks passed. A temporary Playwright smoke check in headless Edge verified homepage rendering, unknown-route handling, return navigation, browser history, mobile overflow, the default API URL, and absence of runtime errors. Browser test tooling was installed outside the repository; a permanent frontend test suite is not introduced by this setup.
+F002 was checked using Node 25.2.1 and npm 11.13.0. ESLint, strict TypeScript, formatting, and production build checks passed. Its temporary browser checks are now supplemented by the permanent F010 component and Playwright suites described in [automated testing](../docs/testing.md).
 
 Known dependency limitation: the initial npm audit reports 11 high-severity development-tool findings traced to the transitive `picomatch` dependency (GHSA-fc5q-39xc-vjpf). The latest registry version available during setup, 4.0.7, is affected. Recheck when a patched release is available; avoid forced toolchain downgrades. This is separate from the outstanding V1 credential rotation follow-up.

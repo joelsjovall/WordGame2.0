@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { test } from 'node:test'
+import { test } from 'vitest'
 import { ApiError, createApiClient } from '../src/services/api/client.ts'
 import { createCategoriesApi } from '../src/services/api/categories.ts'
 
