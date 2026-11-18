@@ -37,6 +37,20 @@ public sealed class Game
     public GameStatus Status { get; private set; } = GameStatus.WaitingToStart;
     public GameRound? CurrentRound => rounds.LastOrDefault();
 
+    // Pure roster lookup; the engine decides when to advance a turn or start a round.
+    public Guid GetNextPlayerId(Guid currentPlayerId)
+    {
+        for (var index = 0; index < Players.Count; index++)
+        {
+            if (Players[index].Id == currentPlayerId)
+            {
+                return Players[(index + 1) % Players.Count].Id;
+            }
+        }
+
+        throw new ArgumentException("The current player must belong to this game.", nameof(currentPlayerId));
+    }
+
     public GameRound StartRound(Guid roundId, Guid startingPlayerId)
     {
         DomainGuard.State(Status is GameStatus.WaitingToStart or GameStatus.InProgress,
