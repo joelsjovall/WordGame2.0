@@ -43,3 +43,5 @@ The API also registers the shared in-memory session store and automatic cleanup 
 - HTTPS termination, identity, SSE, gameplay, category providers, storage, and production deployment are outside F003.
 
 Tests cover database-free startup, health responses, allowed development preflights, rejected origins, production CORS behavior, safe unexpected-error responses, and absence of demo endpoints.
+
+See [automated testing](../docs/testing.md) for the shared API factory, unit/integration responsibilities, and `scripts/test-backend.ps1` suite runner.

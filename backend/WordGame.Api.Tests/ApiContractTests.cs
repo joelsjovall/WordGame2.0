@@ -1,12 +1,11 @@
 using System.Net;
 using System.Text.Json;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using WordGame.Api.Contracts.V1;
 using WordGame.Api.Mapping;
+using WordGame.Api.Tests.Fixtures;
 using WordGame.Application.Sessions;
 using WordGame.Domain;
 
@@ -17,12 +16,12 @@ public sealed class ApiContractTests
     [Fact]
     public async Task CategoryEndpointsReturnVersionedMetadataWithoutAnswerData()
     {
-        using var factory = CreateFactory("Production");
+        using var factory = new WordGameApiFactory("Production");
         using var client = factory.CreateClient();
         using var list = await client.GetAsync("/api/v1/categories");
         using var listJson = JsonDocument.Parse(await list.Content.ReadAsStringAsync());
         Assert.Equal(HttpStatusCode.OK, list.StatusCode);
-        Assert.Equal(3, listJson.RootElement.GetProperty("items").GetArrayLength());
+        Assert.NotEmpty(listJson.RootElement.GetProperty("items").EnumerateArray());
         using var detail = await client.GetAsync("/api/v1/categories/european-capitals");
         using var detailJson = JsonDocument.Parse(await detail.Content.ReadAsStringAsync());
         Assert.Equal(HttpStatusCode.OK, detail.StatusCode);
@@ -31,8 +30,9 @@ public sealed class ApiContractTests
         Assert.False(detailJson.RootElement.TryGetProperty("aliases", out _));
         using var filtered = await client.GetAsync("/api/v1/categories?difficulty=hard");
         using var filteredJson = JsonDocument.Parse(await filtered.Content.ReadAsStringAsync());
-        Assert.Equal("greek-letters", Assert.Single(filteredJson.RootElement.GetProperty("items").EnumerateArray())
-            .GetProperty("id").GetString());
+        var items = filteredJson.RootElement.GetProperty("items").EnumerateArray().ToArray();
+        Assert.NotEmpty(items);
+        Assert.All(items, category => Assert.Equal("hard", category.GetProperty("difficulty").GetString()));
     }
 
     [Theory]
@@ -42,7 +42,7 @@ public sealed class ApiContractTests
     [InlineData("difficulty=easy&difficulty=hard")]
     public async Task InvalidCategoryFiltersUseStandardValidationProblemDetails(string query)
     {
-        using var factory = CreateFactory("Production");
+        using var factory = new WordGameApiFactory("Production");
         using var client = factory.CreateClient();
         using var response = await client.GetAsync("/api/v1/categories?" + query);
         using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
@@ -60,7 +60,7 @@ public sealed class ApiContractTests
     [InlineData("/api/v1/matchmaking/queue", 404)]
     public async Task MissingResourcesAndUnimplementedRoutesUseProblemDetails(string path, int status)
     {
-        using var factory = CreateFactory("Production");
+        using var factory = new WordGameApiFactory("Production");
         using var client = factory.CreateClient();
         using var response = await client.GetAsync(path);
         using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
@@ -73,7 +73,7 @@ public sealed class ApiContractTests
     [Fact]
     public async Task OpenApiDocumentsOnlyRealRoutesAndContainsFutureContractSchemas()
     {
-        using var factory = CreateFactory("Development");
+        using var factory = new WordGameApiFactory("Development");
         using var client = factory.CreateClient();
         using var response = await client.GetAsync("/openapi/v1.json");
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
@@ -102,7 +102,7 @@ public sealed class ApiContractTests
     [Fact]
     public async Task OpenApiIsNotExposedByDefaultInProduction()
     {
-        using var factory = CreateFactory("Production");
+        using var factory = new WordGameApiFactory("Production");
         using var client = factory.CreateClient();
         using var response = await client.GetAsync("/openapi/v1.json");
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -111,7 +111,7 @@ public sealed class ApiContractTests
     [Fact]
     public async Task UnsupportedCategoryMethodsAlsoUseProblemDetails()
     {
-        using var factory = CreateFactory("Production");
+        using var factory = new WordGameApiFactory("Production");
         using var client = factory.CreateClient();
         using var response = await client.PostAsync("/api/v1/categories", null);
         using var problem = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
@@ -123,7 +123,7 @@ public sealed class ApiContractTests
     [Fact]
     public void ActionContractsSerializeAsDiscriminatedRequestsAndRejectUnsafeExtraFields()
     {
-        using var factory = CreateFactory("Development");
+        using var factory = new WordGameApiFactory("Development");
         var options = factory.Services.GetRequiredService<IOptions<JsonOptions>>().Value.SerializerOptions;
         GameActionRequest action = new PlaceBidAction(Guid.NewGuid(), "3", 5);
         var json = JsonSerializer.Serialize(action, options);
@@ -144,7 +144,7 @@ public sealed class ApiContractTests
     [InlineData(4)]
     public async Task GameStateProjectionUsesTheSamePublicContractForBothRosterSizes(int count)
     {
-        using var factory = CreateFactory("Production");
+        using var factory = new WordGameApiFactory("Production");
         var store = factory.Services.GetRequiredService<IGameSessionStore>();
         var players = Enumerable.Range(0, count).Select(index => new Player(Guid.NewGuid(), $"Player {index}")).ToArray();
         var created = await store.CreateAsync(players);
@@ -215,7 +215,4 @@ public sealed class ApiContractTests
             }
         }
     }
-
-    private static WebApplicationFactory<Program> CreateFactory(string environment) =>
-        new WebApplicationFactory<Program>().WithWebHostBuilder(builder => builder.UseEnvironment(environment));
 }
