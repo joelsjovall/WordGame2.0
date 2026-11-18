@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WordGame category",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "difficulty", "answers"],
+  "properties": {
+    "id": { "$ref": "#/$defs/text" },
+    "name": { "$ref": "#/$defs/text" },
+    "difficulty": { "enum": ["easy", "medium", "hard"] },
+    "answers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["value", "aliases"],
+        "properties": {
+          "id": { "$ref": "#/$defs/text" },
+          "value": { "$ref": "#/$defs/text" },
+          "aliases": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/text" }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "text": { "type": "string", "minLength": 1, "pattern": "\\S" }
+  }
+}

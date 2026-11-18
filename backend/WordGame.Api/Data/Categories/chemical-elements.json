@@ -1,0 +1,11 @@
+{
+  "id": "chemical-elements",
+  "name": "Chemical Elements",
+  "difficulty": "medium",
+  "answers": [
+    { "id": "hydrogen", "value": "Hydrogen", "aliases": ["H"] },
+    { "id": "oxygen", "value": "Oxygen", "aliases": ["O"] },
+    { "id": "carbon", "value": "Carbon", "aliases": ["C"] },
+    { "id": "iron", "value": "Iron", "aliases": ["Fe"] }
+  ]
+}
