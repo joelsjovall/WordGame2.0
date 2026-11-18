@@ -48,7 +48,7 @@ public sealed class GameEngine(IGameSessionStore sessions, TimeProvider clock, S
         Guid gameId, Guid playerId, int wordCount, PlayerActionContext context, CancellationToken cancellationToken = default) =>
         commands.PlayerUpdateAsync(gameId, playerId, context, session =>
         {
-            var round = PlayerRound(session, playerId);
+            var round = BiddingRound(session, playerId);
             round.RecordBid(new Bid(playerId, wordCount));
             round.AssignTurn(TurnPolicy.NextPlayer(session, playerId, retention.DisconnectedGrace));
         }, cancellationToken);
@@ -58,8 +58,8 @@ public sealed class GameEngine(IGameSessionStore sessions, TimeProvider clock, S
         Guid gameId, Guid playerId, TimeSpan duration, PlayerActionContext context, CancellationToken cancellationToken = default) =>
         commands.PlayerUpdateAsync(gameId, playerId, context, session =>
         {
-            var round = PlayerRound(session, playerId);
-            Require(round.Status == RoundStatus.Bidding && round.HighestBid is not null, "A bluff call requires an existing bid.");
+            var round = BiddingRound(session, playerId);
+            Require(round.HighestBid is not null, "A bluff call requires an existing bid.");
             Require(session.CanTakeTurn(round.HighestBid!.PlayerId, retention.DisconnectedGrace), "The bidder is unavailable.");
             var now = clock.GetUtcNow();
             round.BeginChallenge(new Challenge(Guid.NewGuid(), round.HighestBid!, playerId, now, now.Add(duration)));
@@ -120,9 +120,11 @@ public sealed class GameEngine(IGameSessionStore sessions, TimeProvider clock, S
             session.ReconcileTurns(retention.DisconnectedGrace);
         }, cancellationToken);
 
-    private static GameRound PlayerRound(GameSession session, Guid playerId)
+    private static GameRound BiddingRound(GameSession session, Guid playerId)
     {
         var round = ActiveRound(session);
+        Require(round.Status == RoundStatus.Bidding && session.SelectedCategory?.RoundId == round.Id,
+            "Bidding requires a provider-validated category selected for this round.");
         if (round.Turn.PlayerId != playerId)
         {
             throw new GameActionRejectedException(GameEngineErrorCode.NotYourTurn, "The player does not hold the current turn.");
