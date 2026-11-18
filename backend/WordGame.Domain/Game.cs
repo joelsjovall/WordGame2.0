@@ -1,0 +1,97 @@
+using System.Collections.ObjectModel;
+
+namespace WordGame.Domain;
+
+public sealed class Game
+{
+    private readonly List<GameRound> rounds = [];
+    private readonly Dictionary<Guid, PlayerScore> scores;
+    private readonly HashSet<Guid> scoredRounds = [];
+
+    public Game(Guid id, IEnumerable<Player> players)
+    {
+        Id = DomainGuard.Id(id, nameof(id));
+        ArgumentNullException.ThrowIfNull(players);
+        var roster = players.ToArray();
+        if (roster.Length is < 2 or > 4 || roster.Any(player => player is null))
+        {
+            throw new ArgumentException("A game needs two to four non-null players.", nameof(players));
+        }
+
+        if (roster.Select(player => player.Id).Distinct().Count() != roster.Length)
+        {
+            throw new ArgumentException("Player IDs must be unique within the game.", nameof(players));
+        }
+
+        Players = Array.AsReadOnly(roster);
+        Rounds = rounds.AsReadOnly();
+        scores = roster.ToDictionary(player => player.Id, player => new PlayerScore(player.Id, 0));
+        Scores = new ReadOnlyDictionary<Guid, PlayerScore>(scores);
+    }
+
+    public Guid Id { get; }
+    // Roster order is the stable turn-order basis shared by both modes.
+    public IReadOnlyList<Player> Players { get; }
+    public IReadOnlyList<GameRound> Rounds { get; }
+    public IReadOnlyDictionary<Guid, PlayerScore> Scores { get; }
+    public GameStatus Status { get; private set; } = GameStatus.WaitingToStart;
+    public GameRound? CurrentRound => rounds.LastOrDefault();
+
+    public GameRound StartRound(Guid roundId, Guid startingPlayerId)
+    {
+        DomainGuard.State(Status is GameStatus.WaitingToStart or GameStatus.InProgress,
+            "The game has already ended.");
+        DomainGuard.State(CurrentRound is null || CurrentRound.Status == RoundStatus.Completed,
+            "The previous round must be completed.");
+        DomainGuard.State(!rounds.Any(round => round.Id == roundId), "Round IDs must be unique within a game.");
+
+        var round = new GameRound(roundId, checked(rounds.Count + 1), Players.Select(player => player.Id), startingPlayerId);
+        rounds.Add(round);
+        Status = GameStatus.InProgress;
+        return round;
+    }
+
+    // Award calculation and win conditions belong to later scoring/engine work.
+    public void RecordRoundScores(Guid roundId, IEnumerable<PlayerScore> awards)
+    {
+        ArgumentNullException.ThrowIfNull(awards);
+        DomainGuard.State(Status == GameStatus.InProgress, "Scoring requires an active game.");
+        DomainGuard.State(rounds.Any(round => round.Id == roundId && round.Status == RoundStatus.Completed),
+            "Only completed rounds can award points.");
+        DomainGuard.State(!scoredRounds.Contains(roundId), "This round has already awarded points.");
+        var changes = awards.ToArray();
+        DomainGuard.State(changes.All(award => award is not null && scores.ContainsKey(award.PlayerId)),
+            "All awards must refer to players in this game.");
+        DomainGuard.State(changes.Select(award => award.PlayerId).Distinct().Count() == changes.Length,
+            "A player can receive only one award entry per round.");
+
+        // Compute everything first so an invalid award or overflow cannot partially update scores.
+        var updated = changes.Select(award =>
+            new PlayerScore(award.PlayerId, checked(scores[award.PlayerId].Points + award.Points))).ToArray();
+        foreach (var score in updated)
+        {
+            scores[score.PlayerId] = score;
+        }
+
+        scoredRounds.Add(roundId);
+    }
+
+    public void Complete()
+    {
+        DomainGuard.State(Status == GameStatus.InProgress && CurrentRound?.Status == RoundStatus.Completed,
+            "An active game needs a completed final round.");
+        Status = GameStatus.Completed;
+    }
+
+    public void Cancel()
+    {
+        DomainGuard.State(Status is GameStatus.WaitingToStart or GameStatus.InProgress,
+            "The game has already ended.");
+        if (CurrentRound is { Status: not (RoundStatus.Completed or RoundStatus.Cancelled) } round)
+        {
+            round.Cancel();
+        }
+
+        Status = GameStatus.Cancelled;
+    }
+}

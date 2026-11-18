@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WordGame.Infrastructure", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WordGame.Api.Tests", "WordGame.Api.Tests\WordGame.Api.Tests.csproj", "{CE024594-4AB4-407D-B735-A2E6AFEF643C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WordGame.Domain.Tests", "WordGame.Domain.Tests\WordGame.Domain.Tests.csproj", "{D3471B2C-683A-401D-BF3C-C1D88DE5AEDE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +85,18 @@ Global
 		{CE024594-4AB4-407D-B735-A2E6AFEF643C}.Release|x64.Build.0 = Release|Any CPU
 		{CE024594-4AB4-407D-B735-A2E6AFEF643C}.Release|x86.ActiveCfg = Release|Any CPU
 		{CE024594-4AB4-407D-B735-A2E6AFEF643C}.Release|x86.Build.0 = Release|Any CPU
+		{D3471B2C-683A-401D-BF3C-C1D88DE5AEDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3471B2C-683A-401D-BF3C-C1D88DE5AEDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3471B2C-683A-401D-BF3C-C1D88DE5AEDE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D3471B2C-683A-401D-BF3C-C1D88DE5AEDE}.Debug|x64.Build.0 = Debug|Any CPU
+		{D3471B2C-683A-401D-BF3C-C1D88DE5AEDE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D3471B2C-683A-401D-BF3C-C1D88DE5AEDE}.Debug|x86.Build.0 = Debug|Any CPU
+		{D3471B2C-683A-401D-BF3C-C1D88DE5AEDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3471B2C-683A-401D-BF3C-C1D88DE5AEDE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3471B2C-683A-401D-BF3C-C1D88DE5AEDE}.Release|x64.ActiveCfg = Release|Any CPU
+		{D3471B2C-683A-401D-BF3C-C1D88DE5AEDE}.Release|x64.Build.0 = Release|Any CPU
+		{D3471B2C-683A-401D-BF3C-C1D88DE5AEDE}.Release|x86.ActiveCfg = Release|Any CPU
+		{D3471B2C-683A-401D-BF3C-C1D88DE5AEDE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
