@@ -34,12 +34,50 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/games/{gameId}/state': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['GetGameState']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/games/{gameId}/events': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['WatchGameEvents']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
 }
 export type webhooks = Record<string, never>
 export interface components {
   schemas: {
     /** @enum {unknown} */
     ApiCategoryDifficulty: 'easy' | 'medium' | 'hard'
+    /** @enum {unknown} */
+    ApiChallengeOutcome: 'pending' | 'succeeded' | 'failed' | 'cancelled'
+    /** @enum {unknown} */
+    ApiEventKind: 'updated' | 'removed'
+    /** @enum {unknown} */
+    ApiMatchFormat: 'party' | 'online'
     ApiProblemDetails: {
       type?: null | string
       title?: null | string
@@ -52,6 +90,20 @@ export interface components {
         [key: string]: string[]
       }
     }
+    /** @enum {unknown} */
+    ApiRoundStatus:
+      'categorySelection' | 'bidding' | 'challenge' | 'completed' | 'cancelled'
+    /** @enum {unknown} */
+    ApiSessionStatus:
+      'waiting' | 'starting' | 'active' | 'completed' | 'abandoned'
+    /** @enum {unknown} */
+    ApiSubmissionStatus: 'accepted' | 'rejected' | 'duplicate'
+    BidResponse: {
+      /** Format: uuid */
+      playerId: string
+      /** Format: int32 */
+      wordCount: number
+    }
     CategoryListResponse: {
       items: components['schemas']['CategoryResponse'][]
     }
@@ -59,6 +111,24 @@ export interface components {
       id: string
       name: string
       difficulty: components['schemas']['ApiCategoryDifficulty']
+    }
+    ChallengeResponse: {
+      /** Format: uuid */
+      id: string
+      /** Format: uuid */
+      playerId: string
+      /** Format: uuid */
+      callerId: string
+      /** Format: int32 */
+      requiredWordCount: number
+      /** Format: date-time */
+      startedAt: string
+      /** Format: date-time */
+      deadline: string
+      outcome: components['schemas']['ApiChallengeOutcome']
+      /** Format: int32 */
+      acceptedWordCount: number
+      submissions: components['schemas']['SubmittedWordResponse'][]
     }
     CreateGameRequest: {
       /** Format: uuid */
@@ -110,141 +180,43 @@ export interface components {
       /** Format: uuid */
       gameId: string
       version: string
-      /** @enum {unknown} */
-      status: 'waiting' | 'starting' | 'active' | 'completed' | 'abandoned'
-      /** @enum {unknown} */
-      kind: 'updated' | 'removed'
+      status: components['schemas']['ApiSessionStatus']
+      kind: components['schemas']['ApiEventKind']
+    }
+    GamePlayerResponse: {
+      /** Format: uuid */
+      id: string
+      displayName: string
+      /** Format: int32 */
+      score: number
+      isConnected: boolean
+    }
+    GameRoundResponse: {
+      /** Format: uuid */
+      id: string
+      /** Format: int32 */
+      number: number
+      status: components['schemas']['ApiRoundStatus']
+      /** Format: uuid */
+      activePlayerId: string
+      category: null | components['schemas']['CategoryResponse']
+      highestBid: null | components['schemas']['BidResponse']
+      challenge: null | components['schemas']['ChallengeResponse']
+      result?: null | components['schemas']['RoundResultResponse']
+      /** Format: date-time */
+      categorySelectionDeadline?: null | string
     }
     GameStateResponse: {
       /** Format: uuid */
       id: string
-      /** @enum {unknown} */
-      status: 'waiting' | 'starting' | 'active' | 'completed' | 'abandoned'
+      status: components['schemas']['ApiSessionStatus']
       version: string
       /** Format: date-time */
       serverTime: string
-      players: {
-        /** Format: uuid */
-        id: string
-        displayName: string
-        /** Format: int32 */
-        score: number
-        isConnected: boolean
-      }[]
-      round: null | {
-        /** Format: uuid */
-        id: string
-        /** Format: int32 */
-        number: number
-        /** @enum {unknown} */
-        status:
-          | 'categorySelection'
-          | 'bidding'
-          | 'challenge'
-          | 'completed'
-          | 'cancelled'
-        /** Format: uuid */
-        activePlayerId: string
-        category: null | {
-          id: string
-          name: string
-          /** @enum {unknown} */
-          difficulty: 'easy' | 'medium' | 'hard'
-        }
-        highestBid: null | {
-          /** Format: uuid */
-          playerId: string
-          /** Format: int32 */
-          wordCount: number
-        }
-        challenge: null | {
-          /** Format: uuid */
-          id: string
-          /** Format: uuid */
-          playerId: string
-          /** Format: uuid */
-          callerId: string
-          /** Format: int32 */
-          requiredWordCount: number
-          /** Format: date-time */
-          startedAt: string
-          /** Format: date-time */
-          deadline: string
-          /** @enum {unknown} */
-          outcome: 'pending' | 'succeeded' | 'failed' | 'cancelled'
-          /** Format: int32 */
-          acceptedWordCount: number
-          submissions: {
-            text: string
-            /** @enum {unknown} */
-            status: 'accepted' | 'rejected' | 'duplicate'
-          }[]
-        }
-        result?: null | {
-          /** Format: uuid */
-          roundId: string
-          /** Format: int32 */
-          roundNumber: number
-          category: {
-            id: string
-            name: string
-            /** @enum {unknown} */
-            difficulty: 'easy' | 'medium' | 'hard'
-          }
-          /** Format: uuid */
-          challengeId: string
-          /** Format: uuid */
-          bidderId: string
-          /** Format: uuid */
-          callerId: string
-          /** Format: uuid */
-          winnerId: string
-          /** Format: int32 */
-          requiredWordCount: number
-          /** Format: int32 */
-          acceptedWordCount: number
-          /** @enum {unknown} */
-          outcome: 'pending' | 'succeeded' | 'failed' | 'cancelled'
-          submissions: {
-            text: string
-            /** @enum {unknown} */
-            status: 'accepted' | 'rejected' | 'duplicate'
-          }[]
-          scores: {
-            /** Format: uuid */
-            playerId: string
-            /** Format: int32 */
-            pointsAwarded: number
-            /** Format: int32 */
-            totalPoints: number
-          }[]
-        }
-      }
-      match: {
-        /** @enum {unknown} */
-        format: 'party' | 'online'
-        /** Format: int32 */
-        roundCount: number
-      }
-      result: null | {
-        /** Format: uuid */
-        gameId: string
-        /** @enum {unknown} */
-        format: 'party' | 'online'
-        /** Format: int32 */
-        completedRoundCount: number
-        isTie: boolean
-        winnerIds: string[]
-        standings: {
-          /** Format: uuid */
-          playerId: string
-          displayName: string
-          /** Format: int32 */
-          score: number
-          /** Format: int32 */
-          rank: number
-        }[]
-      }
+      players: components['schemas']['GamePlayerResponse'][]
+      round: null | components['schemas']['GameRoundResponse']
+      match: components['schemas']['MatchSettingsResponse']
+      result: null | components['schemas']['MatchResultResponse']
     }
     JoinGameRequest: {
       lobbyCode: string
@@ -255,6 +227,64 @@ export interface components {
       lobbyCode: string
       /** Format: uuid */
       gameId: null | string
+    }
+    MatchResultResponse: {
+      /** Format: uuid */
+      gameId: string
+      format: components['schemas']['ApiMatchFormat']
+      /** Format: int32 */
+      completedRoundCount: number
+      isTie: boolean
+      winnerIds: string[]
+      standings: components['schemas']['MatchStandingResponse'][]
+    }
+    MatchSettingsResponse: {
+      format: components['schemas']['ApiMatchFormat']
+      /** Format: int32 */
+      roundCount: number
+    }
+    MatchStandingResponse: {
+      /** Format: uuid */
+      playerId: string
+      displayName: string
+      /** Format: int32 */
+      score: number
+      /** Format: int32 */
+      rank: number
+    }
+    RoundPlayerScoreResponse: {
+      /** Format: uuid */
+      playerId: string
+      /** Format: int32 */
+      pointsAwarded: number
+      /** Format: int32 */
+      totalPoints: number
+    }
+    RoundResultResponse: {
+      /** Format: uuid */
+      roundId: string
+      /** Format: int32 */
+      roundNumber: number
+      category: components['schemas']['CategoryResponse']
+      /** Format: uuid */
+      challengeId: string
+      /** Format: uuid */
+      bidderId: string
+      /** Format: uuid */
+      callerId: string
+      /** Format: uuid */
+      winnerId: string
+      /** Format: int32 */
+      requiredWordCount: number
+      /** Format: int32 */
+      acceptedWordCount: number
+      outcome: components['schemas']['ApiChallengeOutcome']
+      submissions: components['schemas']['SubmittedWordResponse'][]
+      scores: components['schemas']['RoundPlayerScoreResponse'][]
+    }
+    SubmittedWordResponse: {
+      text: string
+      status: components['schemas']['ApiSubmissionStatus']
     }
   }
   responses: never
@@ -342,6 +372,78 @@ export interface operations {
         content: {
           'application/problem+json': components['schemas']['ApiProblemDetails']
         }
+      }
+    }
+  }
+  GetGameState: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        gameId: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['GameStateResponse']
+        }
+      }
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  WatchGameEvents: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        gameId: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'text/event-stream': components['schemas']['GameEventResponse']
+        }
+      }
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
       }
     }
   }

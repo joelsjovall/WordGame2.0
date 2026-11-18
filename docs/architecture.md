@@ -11,7 +11,7 @@ The application supports two game modes:
 
 Both modes share the same server-authoritative gameplay engine.
 
-This is the intended product architecture. The current implementation includes domain models/invariants, word validation and [timed challenge submissions](word-challenges.md), local JSON category storage, an in-memory session store, the shared Application [GameEngine lifecycle](game-engine.md), public category metadata endpoints, API contracts, a placeholder React frontend, tests, and CI. Complete gameplay policies, guest authentication, lobbies, matchmaking, and SSE endpoints remain planned. See [project context](project-context.md) for changing progress.
+This is the intended product architecture. The current implementation includes domain models/invariants, word validation and [timed challenge submissions](word-challenges.md), local JSON category storage, an in-memory session store, the shared Application [GameEngine lifecycle](game-engine.md), public category metadata endpoints, authenticated [state/SSE synchronization](game-synchronization.md), API contracts, a placeholder React frontend, tests, and CI. Guest credential issuance, gameplay action endpoints/UI, lobbies, and matchmaking remain planned. See [project context](project-context.md) for changing progress.
 
 ## Architecture
 
@@ -83,7 +83,7 @@ The application follows a mobile-first approach and should remain suitable for f
 | Separate Domain, Application, Infrastructure, and API          | Keeps gameplay testable without HTTP or storage. Provider/store interfaces let implementations change without moving business rules into adapters. See [backend boundaries](../backend/README.md#project-boundaries). |
 | Local JSON categories behind a provider contract               | Supports validation without database setup or network calls. Datasets are validated and cached at startup; external providers can implement the same boundary later. See [category datasets](category-datasets.md).   |
 | In-memory sessions on one backend instance                     | Avoids persistence/distributed coordination before it is needed. Restarts lose matches, and horizontal scaling requires a new storage/coordination design. See [session management](session-management.md).           |
-| REST actions/state plus SSE notifications (planned)            | Server-to-client notifications fit the chosen transport while commands remain HTTP operations. Reconnection retrieves authoritative state; bidirectional WebSockets are not introduced without a new requirement.     |
+| REST state plus SSE notifications; actions planned             | Server-to-client notifications fit the chosen transport while commands remain HTTP operations. Reconnection retrieves authoritative state; bidirectional WebSockets are not introduced without a new requirement.     |
 | Separate versioned transport DTOs and generated frontend types | Avoids exposing mutable domain state or category answers and reduces contract drift. See [API contracts](api-contracts.md) for implemented endpoints and future specifications.                                       |
 
 Record significant changes with their context, rationale, tradeoffs, and consequences as described in [CONTRIBUTING](../CONTRIBUTING.md#configuration-security-and-decisions). Keep this overview and focused documents consistent with implementation.

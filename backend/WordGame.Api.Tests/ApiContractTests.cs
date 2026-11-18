@@ -79,7 +79,9 @@ public sealed class ApiContractTests
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var paths = document.RootElement.GetProperty("paths");
-        Assert.Equal(2, paths.EnumerateObject().Count());
+        Assert.Equal(4, paths.EnumerateObject().Count());
+        Assert.True(paths.TryGetProperty("/api/v1/games/{gameId}/state", out _));
+        Assert.True(paths.TryGetProperty("/api/v1/games/{gameId}/events", out _));
         Assert.True(paths.TryGetProperty("/api/v1/categories", out _));
         Assert.False(paths.TryGetProperty("/api/v1/games", out _));
         var schemas = document.RootElement.GetProperty("components").GetProperty("schemas");
@@ -93,14 +95,17 @@ public sealed class ApiContractTests
         Assert.All(action.GetProperty("anyOf").EnumerateArray(),
             variant => Assert.Contains(variant.GetProperty("required").EnumerateArray(), item => item.GetString() == "type"));
         Assert.Contains(schemas.GetProperty("GameStateResponse").GetProperty("properties")
-            .GetProperty("round").GetProperty("type").EnumerateArray(), item => item.GetString() == "null");
-        var resultSchema = schemas.GetProperty("GameStateResponse").GetProperty("properties")
-            .GetProperty("round").GetProperty("properties").GetProperty("result");
-        Assert.Contains(resultSchema.GetProperty("type").EnumerateArray(), item => item.GetString() == "null");
+            .GetProperty("round").GetProperty("oneOf").EnumerateArray(), item => item.TryGetProperty("type", out var type) && type.GetString() == "null");
+        var roundProperties = schemas.GetProperty("GameRoundResponse").GetProperty("properties");
+        Assert.Contains(roundProperties.GetProperty("result").GetProperty("oneOf").EnumerateArray(),
+            item => item.TryGetProperty("type", out var type) && type.GetString() == "null");
+        Assert.Contains(roundProperties.GetProperty("categorySelectionDeadline").GetProperty("type").EnumerateArray(), item => item.GetString() == "null");
+        var resultSchema = schemas.GetProperty("RoundResultResponse");
         Assert.True(resultSchema.GetProperty("properties").TryGetProperty("winnerId", out _));
         Assert.True(resultSchema.GetProperty("properties").TryGetProperty("scores", out _));
-        var matchResultSchema = schemas.GetProperty("GameStateResponse").GetProperty("properties").GetProperty("result");
-        Assert.Contains(matchResultSchema.GetProperty("type").EnumerateArray(), item => item.GetString() == "null");
+        var matchResultSchema = schemas.GetProperty("MatchResultResponse");
+        Assert.Contains(schemas.GetProperty("GameStateResponse").GetProperty("properties").GetProperty("result").GetProperty("oneOf").EnumerateArray(),
+            item => item.TryGetProperty("type", out var type) && type.GetString() == "null");
         Assert.True(matchResultSchema.GetProperty("properties").TryGetProperty("winnerIds", out _));
         Assert.True(matchResultSchema.GetProperty("properties").TryGetProperty("standings", out _));
         Assert.Equal("string", schemas.GetProperty("GameStateResponse").GetProperty("properties")

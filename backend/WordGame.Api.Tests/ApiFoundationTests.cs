@@ -124,7 +124,7 @@ public sealed class ApiFoundationTests
         Assert.Equal(origin, Assert.Single(response.Headers.GetValues("Access-Control-Allow-Origin")));
         Assert.Contains("POST", response.Headers.GetValues("Access-Control-Allow-Methods"));
         Assert.Contains("content-type", response.Headers.GetValues("Access-Control-Allow-Headers"));
-        Assert.False(response.Headers.Contains("Access-Control-Allow-Credentials"));
+        Assert.Equal("true", Assert.Single(response.Headers.GetValues("Access-Control-Allow-Credentials")));
     }
 
     [Theory]
