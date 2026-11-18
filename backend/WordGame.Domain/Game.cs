@@ -4,6 +4,8 @@ namespace WordGame.Domain;
 
 public sealed class Game
 {
+    public const int MinimumPlayers = 2;
+    public const int MaximumPlayers = 4;
     private readonly List<GameRound> rounds = [];
     private readonly Dictionary<Guid, PlayerScore> scores;
     private readonly Dictionary<Guid, RoundResult> roundResults = [];
@@ -13,7 +15,7 @@ public sealed class Game
         Id = DomainGuard.Id(id, nameof(id));
         ArgumentNullException.ThrowIfNull(players);
         var roster = players.ToArray();
-        if (roster.Length is < 2 or > 4 || roster.Any(player => player is null))
+        if (roster.Length is < MinimumPlayers or > MaximumPlayers || roster.Any(player => player is null))
         {
             throw new ArgumentException("A game needs two to four non-null players.", nameof(players));
         }

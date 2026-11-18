@@ -14,7 +14,7 @@ The HTTP profile serves `http://localhost:5000`. `GET /health` returns HTTP 200 
 
 Set the frontend's `VITE_API_BASE_URL=http://localhost:5000` in `frontend/.env.local` for local HTTP development.
 
-F009 adds public metadata-only `/api/v1/categories` reads and a Development-only OpenAPI document at `/openapi/v1.json`. See [API contracts](../docs/api-contracts.md) for transport DTOs, Problem Details, TypeScript generation, and specified future game/lobby/matchmaking operations. F021 adds protected [game state/SSE synchronization](../docs/game-synchronization.md); guest credential issuance and gameplay action routes remain later work.
+F009 adds public metadata-only `/api/v1/categories` reads and a Development-only OpenAPI document at `/openapi/v1.json`. See [API contracts](../docs/api-contracts.md) for transport DTOs, Problem Details, TypeScript generation, and specified future game/lobby/matchmaking operations. F021 adds protected [game state/SSE synchronization](../docs/game-synchronization.md); F023 adds [guest identity and private lobby creation](../docs/private-lobbies.md). Joining/readiness and gameplay action routes remain later work.
 
 ## Project boundaries
 
@@ -44,7 +44,7 @@ See [bidding and bluff calls](../docs/bidding.md) for opening/raising bids, call
 - Unexpected request exceptions return HTTP 500 Problem Details with a generic title and trace ID; exception messages and stack traces stay out of responses, including in Development. Domain-specific error mapping is future gameplay work.
 - CORS is enabled only in Development, for the exact origins `http://localhost:5173` and `http://127.0.0.1:5173`. These are configured under `Cors:AllowedOrigins` in `appsettings.Development.json`; change the list if the Vite port changes. Credentials are not enabled. CORS does not authenticate players. Production cross-origin policy must be explicitly designed when deploying.
 - Configuration uses ASP.NET Core defaults (JSON, environment variables, command-line arguments). For example, `Cors__AllowedOrigins__0` overrides the first development origin. Keep secrets out of tracked files; future sensitive values belong in environment variables or user secrets.
-- Guest credential issuance, gameplay action endpoints, lobby/matchmaking integration, persistent storage, and production deployment remain planned. Category providers and in-memory storage are implemented as described above.
+- Gameplay action endpoints, remaining lobby/matchmaking integration, persistent storage, and production deployment remain planned. Category providers and in-memory storage are implemented as described above.
 
 Tests cover database-free startup, health responses, allowed development preflights, rejected origins, production CORS behavior, safe unexpected-error responses, and absence of demo endpoints.
 

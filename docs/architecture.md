@@ -11,7 +11,7 @@ The application supports two game modes:
 
 Both modes share the same server-authoritative gameplay engine.
 
-This is the intended product architecture. The current implementation includes domain models/invariants, word validation and [timed challenge submissions](word-challenges.md), local JSON category storage, an in-memory session store, the shared Application [GameEngine lifecycle](game-engine.md), public category metadata endpoints, authenticated [state/SSE synchronization](game-synchronization.md), API contracts, a placeholder React frontend, tests, and CI. Guest credential issuance, gameplay action endpoints/UI, lobbies, and matchmaking remain planned. See [project context](project-context.md) for changing progress.
+This is the intended product architecture. The current implementation includes domain models/invariants, word validation and [timed challenge submissions](word-challenges.md), local JSON category storage, an in-memory session store, the shared Application [GameEngine lifecycle](game-engine.md), public category metadata endpoints, authenticated [state/SSE synchronization](game-synchronization.md), API contracts, a placeholder React frontend, tests, and CI. F023 adds [guest identity and private waiting-lobby creation](private-lobbies.md). Lobby joining/readiness/start, gameplay action endpoints/UI, and matchmaking remain planned. See [project context](project-context.md) for changing progress.
 
 ## Architecture
 

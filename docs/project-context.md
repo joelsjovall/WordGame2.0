@@ -63,8 +63,9 @@ The planned backlog contains 57 issues across six milestones. Work proceeds one 
 - **Completed:** [F019, Implement round results and progression (#21)](https://github.com/joelsjovall/WordGame2.0/issues/21), merged through PR #78 (merge commit `64999a0`). See [round results](round-results.md) for retained results and guarded progression.
 - **Completed:** [F020, Implement match completion and win conditions (#22)](https://github.com/joelsjovall/WordGame2.0/issues/22), merged through PR #79 (merge commit `875a7d7`). See [match completion](match-completion.md) for confirmed formats, final standings, and ties.
 - **Completed:** [F021, Implement real-time game state synchronization (#23)](https://github.com/joelsjovall/WordGame2.0/issues/23), merged through PR #80 (merge commit `2afdae7`). See [game synchronization](game-synchronization.md) for protected reads, subscriptions, recovery, and deadlines.
-- **Active:** [F022, Refactor and test core gameplay engine (#24)](https://github.com/joelsjovall/WordGame2.0/issues/24). See [core gameplay review](core-gameplay-review.md) for the audit, targeted cleanup, error handling, and complete-match regression coverage.
-- **Current local state (2026-11-18):** Working on `refactor/F022-core-gameplay-review` from updated `main`. Commit and push require user authorization.
+- **Completed:** [F022, Refactor and test core gameplay engine (#24)](https://github.com/joelsjovall/WordGame2.0/issues/24), merged through PR #81 (merge commit `b26edef`). The Core Gameplay milestone F013–F022 is merged; see [core gameplay review](core-gameplay-review.md).
+- **Active:** [F023, Implement private game lobby creation (#25)](https://github.com/joelsjovall/WordGame2.0/issues/25). See [private lobbies](private-lobbies.md) for account-free identity, secure creation, codes, request replay, and expiry. Joining, readiness, and lobby UI remain later issues.
+- **Current local state (2026-11-18):** Working on `feature/F023-private-lobbies` from updated `main`. Commit and push require user authorization.
 - **Outstanding security follow-up:** A database credential was previously exposed in the public V1 repository. Never reuse or reproduce it. Rotation must be verified; this handoff provides no evidence that rotation has occurred.
 
 Update this section as issues are completed or the handoff state changes.

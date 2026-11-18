@@ -5,14 +5,16 @@ namespace WordGame.Api.Sessions;
 public sealed class SessionCleanupWorker : BackgroundService
 {
     private readonly IGameSessionStore sessions;
+    private readonly ILobbySessionStore lobbies;
     private readonly TimeProvider clock;
     private readonly ILogger<SessionCleanupWorker> logger;
     private readonly TimeSpan interval;
 
     public SessionCleanupWorker(
-        IGameSessionStore sessions, TimeProvider clock, IConfiguration configuration, ILogger<SessionCleanupWorker> logger)
+        IGameSessionStore sessions, ILobbySessionStore lobbies, TimeProvider clock, IConfiguration configuration, ILogger<SessionCleanupWorker> logger)
     {
         this.sessions = sessions;
+        this.lobbies = lobbies;
         this.clock = clock;
         this.logger = logger;
         interval = configuration.GetValue("Sessions:CleanupInterval", TimeSpan.FromMinutes(1));
@@ -32,9 +34,10 @@ public sealed class SessionCleanupWorker : BackgroundService
                 try
                 {
                     var removed = await sessions.CleanupAsync(stoppingToken);
-                    if (removed > 0)
+                    var expiredLobbies = await lobbies.CleanupAsync(stoppingToken);
+                    if (removed > 0 || expiredLobbies > 0)
                     {
-                        logger.LogInformation("Removed {SessionCount} retained game sessions.", removed);
+                        logger.LogInformation("Removed {SessionCount} retained game sessions and {LobbyCount} expired lobbies.", removed, expiredLobbies);
                     }
                 }
                 catch (Exception exception) when (exception is not OperationCanceledException)

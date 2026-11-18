@@ -18,7 +18,7 @@ internal sealed class ContractDocumentTransformer : IOpenApiDocumentTransformer
     {
         document.Info.Title = "WordGame API";
         document.Info.Version = "v1";
-        document.Info.Description = "Category metadata and authenticated game state/SSE endpoints are implemented. Game creation, lobby, and action schemas specify future handlers.";
+        document.Info.Description = "Category metadata, guest identity, private lobby creation, and authenticated game state/SSE endpoints are implemented. Game creation, lobby joining, and action schemas specify future handlers.";
         foreach (var type in ContractTypes)
         {
             var schema = await context.GetOrCreateSchemaAsync(type, null, cancellationToken);
