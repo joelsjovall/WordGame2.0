@@ -1,5 +1,37 @@
 // Generated from backend OpenAPI. Do not edit by hand.
 export interface paths {
+  '/api/v1/guests': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post: operations['EnsureGuestIdentity']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/lobbies': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post: operations['CreatePrivateLobby']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/categories': {
     parameters: {
       query?: never
@@ -77,6 +109,8 @@ export interface components {
     /** @enum {unknown} */
     ApiEventKind: 'updated' | 'removed'
     /** @enum {unknown} */
+    ApiLobbyStatus: 'waiting'
+    /** @enum {unknown} */
     ApiMatchFormat: 'party' | 'online'
     ApiProblemDetails: {
       type?: null | string
@@ -133,6 +167,12 @@ export interface components {
     CreateGameRequest: {
       /** Format: uuid */
       lobbyId: string
+    }
+    CreateGuestRequest: Record<string, never>
+    CreateLobbyRequest: {
+      /** Format: uuid */
+      requestId: string
+      displayName: string
     }
     GameActionRequest:
       | {
@@ -218,6 +258,10 @@ export interface components {
       match: components['schemas']['MatchSettingsResponse']
       result: null | components['schemas']['MatchResultResponse']
     }
+    GuestIdentityResponse: {
+      /** Format: uuid */
+      playerId: string
+    }
     JoinGameRequest: {
       lobbyCode: string
     }
@@ -227,6 +271,28 @@ export interface components {
       lobbyCode: string
       /** Format: uuid */
       gameId: null | string
+    }
+    LobbyPlayerResponse: {
+      /** Format: uuid */
+      id: string
+      displayName: string
+    }
+    LobbyResponse: {
+      /** Format: uuid */
+      id: string
+      lobbyCode: string
+      /** Format: uuid */
+      hostPlayerId: string
+      status: components['schemas']['ApiLobbyStatus']
+      players: components['schemas']['LobbyPlayerResponse'][]
+      /** Format: int32 */
+      minimumPlayers: number
+      /** Format: int32 */
+      maximumPlayers: number
+      /** Format: date-time */
+      createdAt: string
+      /** Format: date-time */
+      expiresAt: string
     }
     MatchResultResponse: {
       /** Format: uuid */
@@ -295,6 +361,105 @@ export interface components {
 }
 export type $defs = Record<string, never>
 export interface operations {
+  EnsureGuestIdentity: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateGuestRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['GuestIdentityResponse']
+        }
+      }
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  CreatePrivateLobby: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateLobbyRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['LobbyResponse']
+        }
+      }
+      /** @description Created */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['LobbyResponse']
+        }
+      }
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
   ListCategories: {
     parameters: {
       query?: {

@@ -9,6 +9,12 @@ internal sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> log
         Exception exception,
         CancellationToken cancellationToken)
     {
+        if (exception is BadHttpRequestException requestError)
+        {
+            await ApiProblems.WriteAsync(httpContext, ApiProblems.Create(httpContext, requestError.StatusCode,
+                "Invalid request body. Use JSON matching the required request fields."), cancellationToken);
+            return true;
+        }
         logger.LogError(exception, "Unhandled request exception. Trace ID: {TraceId}", httpContext.TraceIdentifier);
 
         await ApiProblems.WriteAsync(httpContext,

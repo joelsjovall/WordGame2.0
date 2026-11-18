@@ -23,10 +23,12 @@ Future DTO deserialization requires constructor fields, respects nullable annota
 | GET /api/v1/categories/{categoryId} | 200 CategoryResponse or 404 Problem Details |
 | GET /api/v1/games/{gameId}/state | 200 GameStateResponse; protected cookie and roster membership required |
 | GET /api/v1/games/{gameId}/events | 200 text/event-stream GameEventResponse invalidations; same authorization |
+| POST /api/v1/guests | JSON {} ensures a server-issued guest identity; 200 GuestIdentityResponse and a protected cookie when needed |
+| POST /api/v1/lobbies | CreateLobbyRequest requires the cookie; 201 LobbyResponse, 200 replay, 400 invalid input, or 409 request conflict |
 
 CategoryResponse contains only id, name, and difficulty. Accepted answers, aliases, canonical answer IDs, and internal indexes are never returned. Invalid/empty/numeric/repeated difficulty parameters produce 400 with a field error. Unknown product routes produce 404 Problem Details.
 
-Metadata reads are public. F021 adds protected state/SSE reads using a server-protected identity cookie and roster checks; see [game synchronization](game-synchronization.md) for authorization, reconnects, and guest issuance boundaries. No game creation/action POST, lobby, or matchmaking handlers are mapped.
+Metadata reads are public. F021 adds protected state/SSE reads using a server-protected identity cookie and roster checks; see [game synchronization](game-synchronization.md) for authorization, reconnects, and guest issuance boundaries. F023 adds [guest bootstrap and private lobby creation](private-lobbies.md). Game creation/actions, joining/readiness, and matchmaking remain later work.
 
 ## Specified future workflows
 
@@ -40,7 +42,7 @@ The following describes the reserved contract intent, not available endpoints:
 
 CreateGameRequest applies to a ready Party lobby. Online matchmaking creates games internally after selecting opponents. Both routes into play use the same GameStateResponse, action contracts, event shape, session store, and shared game engine; there are no duplicated mode-specific gameplay DTOs.
 
-Pregame lobby creation/settings, guest credential issuance, and a complete lobby response will be finalized in their own issues. F021 reserves protected-cookie transport for state and events. Identity comes from a verified server-issued credential, not playerId/hostId fields supplied in a gameplay body. Merely possessing a lobby code does not grant identity or host rights.
+F023 implements guest credential issuance, private lobby creation, and LobbyResponse. Lobby joining/settings/readiness are finalized in later issues. The protected cookie now authenticates lobby creation as well as state/events. Identity comes from a verified server-issued credential, not playerId/hostId fields supplied in a gameplay body. Merely possessing a lobby code does not grant identity or host rights.
 
 ### Actions and state
 
@@ -97,12 +99,12 @@ UUIDs, timestamps, and revisions remain strings in generated TypeScript; generat
 
 Use `createApiClient`/`apiClient` for JSON transport and feature service wrappers such as `categoriesApi` for typed operations. They use VITE_API_BASE_URL (empty means same-origin), encode path/query values, preserve request options and AbortSignal, and share error handling. Components must not duplicate fetch logic or API type declarations. Request/response wrappers import `components`/`operations` from generated.ts. Success types are compile-time contracts; no runtime response-schema validator is included.
 
-The client defaults to fetch's same-origin credentials behavior. A future guest/auth implementation must configure credentials centrally once the cookie/header and CORS policy is decided; no token storage or fake authentication is introduced here.
+The base client retains standard fetch behavior; credentialed feature wrappers explicitly send credentials. gamesApi retrieves protected state, while guestsApi and lobbiesApi implement account-free creation using the same cookie/CORS policy. No bearer token is stored in JavaScript.
 
 ## Validation and remaining scope
 
 Backend tests cover metadata privacy/filtering, Problem Details, route availability, development OpenAPI, schema references/nullability, strict action serialization, and the same state projection for 2/4 players. Frontend tests cover JSON transport, headers, cancellation, encoding, error handling, safe relative paths, and no retries. Live smoke checks exercise the actual frontend client against category success, 400, and 404 responses.
 
-Run backend build/tests/format checks and frontend test/lint/typecheck/build/format checks. Regenerate/check types against the rebuilt Development API whenever contracts change. F021 implements protected state/SSE reads and cookie authentication infrastructure. Guest issuance, lobby joining/creation, game action execution, matchmaking, and complete request semantic validation remain later work.
+Run backend build/tests/format checks and frontend test/lint/typecheck/build/format checks. Regenerate/check types against the rebuilt Development API whenever contracts change. F021 implements protected state/SSE reads and cookie authentication infrastructure. F023 implements guest issuance and private lobby creation. Lobby joining, game action execution, matchmaking, and remaining workflow validation are later work.
 
 Implementation references: [ASP.NET Core OpenAPI customization](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/openapi/customize-openapi?view=aspnetcore-10.0), [openapi-typescript tooling](https://openapi-ts.dev/cli).

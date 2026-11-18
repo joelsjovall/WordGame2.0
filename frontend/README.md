@@ -32,7 +32,7 @@ Vitest runs API client and React component tests with `npm test`. Playwright run
 
 See [API contracts](../docs/api-contracts.md) for implemented endpoints, future specifications, versioning, and errors. All JSON requests go through `src/services/api/client.ts`; typed category operations are in `categories.ts`. Import shared generated types from `generated.ts` instead of declaring response interfaces in components.
 
-With the Development backend running on port 5000, run `npm run api:generate` to refresh types and `npm run api:check` to detect drift. A trailing OpenAPI document URL overrides the default. Commit generated changes with backend DTO changes. F021 adds gamesApi state retrieval and a shared SSE synchronization service with useGameState; see [synchronization](../docs/game-synchronization.md). Gameplay screens and matchmaking remain later work.
+With the Development backend running on port 5000, run `npm run api:generate` to refresh types and `npm run api:check` to detect drift. A trailing OpenAPI document URL overrides the default. Commit generated changes with backend DTO changes. F021 adds gamesApi state retrieval and a shared SSE synchronization service with useGameState; see [synchronization](../docs/game-synchronization.md). F023 adds guestsApi/lobbiesApi for [account-free private lobby creation](../docs/private-lobbies.md). Gameplay/lobby screens and matchmaking remain later work.
 
 ## Structure and boundaries
 
@@ -55,6 +55,6 @@ Add the following directories only when their first real implementation is neede
 
 Pages compose features and reusable UI. Components delegate networking to services, and client state reflects authoritative backend state. Avoid empty folders, speculative abstractions, or duplicate gameplay rules.
 
-The homepage is intentionally a placeholder. Party lobbies, matchmaking, gameplay, and persistent state are later issues. No V1 frontend code is copied. Production static hosting must serve `index.html` for client routes so refreshes and direct links work with BrowserRouter.
+The homepage is intentionally a placeholder. Party lobby screens, matchmaking, gameplay, and persistent state are later issues; private lobby creation currently has API/service support. No V1 frontend code is copied. Production static hosting must serve `index.html` for client routes so refreshes and direct links work with BrowserRouter.
 
 See [coding standards](../docs/coding-standards.md#react-and-typescript) for component/service conventions and [CI](../docs/ci.md#dependency-policy) for the current development dependency limitation and its temporary exception.

@@ -5,7 +5,7 @@ F008 provides one server-owned session model and `IGameSessionStore` contract fo
 ## Ownership and access
 
 - A session has a server-generated GUID (also its Game ID), one Domain Game, a fixed 2-4-player roster, presence information, lifecycle status, timestamps, and a monotonically increasing revision.
-- Party lobbies can gather players separately before creating the fixed-roster game; matchmaking creates a session once opponents are selected. A single-player lobby is not a single-player gameplay session.
+- Party lobbies can gather players separately before creating the fixed-roster game; matchmaking creates a session once opponents are selected. A single-player lobby is not a single-player gameplay session. F023 adds the separate [lobby session store](private-lobbies.md), sharing this host, clock, and cleanup worker.
 - `CreateAsync` constructs its own Game from immutable Player values. Callers cannot inject a shared mutable Game into multiple sessions.
 - `GetAsync` returns null for a missing session, or a detached `SessionSnapshot`. Its Game is a deep copy of rounds, challenges, submission lists, score dictionaries, and replay guards. Mutating a returned copy has no effect on authoritative state.
 - `UpdateAsync` accepts synchronous trusted backend work against a private GameSession draft. A per-session semaphore serializes updates, reads, subscriptions, and cleanup for that session. Other sessions can progress independently.
@@ -45,7 +45,7 @@ Roster identity is stable across connections and is distinct from authentication
 
 When all players are offline, the session records the time of the last connection closing; newly created sessions initially have everyone offline. Any reconnect clears that whole-session offline timestamp. One connected player prevents automatic whole-session abandonment in a waiting session; starting/active matches also apply F014's eligibility rules and cancel when fewer than two players remain eligible.
 
-Completed sessions can reconnect during results retention without extending their expiration. Abandoned sessions cannot reconnect. Individual-player disconnect forfeits, grace UI, identity issuance, and transport heartbeat/stale-connection detection belong to later mode/transport issues. Transport handlers must report disconnects reliably; an unreported stale connection remains connected to this foundation.
+Completed sessions can reconnect during results retention without extending their expiration. Abandoned sessions cannot reconnect. F021 implements SSE presence and heartbeats, and F023 issues guest identity cookies. Individual-player disconnect forfeits, grace UI, and stronger stale-connection detection remain later work. Transport handlers must report disconnects reliably; an unreported stale connection remains connected to this foundation.
 
 ## Change notifications
 
@@ -76,7 +76,7 @@ All sessions, presence, subscriptions, and revisions live in one backend process
 
 A persistent store can replace `IGameSessionStore` while keeping Domain gameplay rules and the Application session model. It must preserve atomic draft/commit behavior, detached reads, per-session serialization or optimistic version checks, terminal cleanup safety, and post-commit notification semantics. Persistence mapping/restoration and durable notification delivery are not implemented by this issue.
 
-The in-memory store is registered once per backend host. Retention settings are resolved after host configuration is finalized. F013's [GameEngine](game-engine.md) now performs core lifecycle transitions through this boundary. API routes, lobby membership/readiness, forfeit policy, and actual SSE transport remain later issues.
+The in-memory store is registered once per backend host. Retention settings are resolved after host configuration is finalized. F013's [GameEngine](game-engine.md) now performs core lifecycle transitions through this boundary. F021 supplies protected state/SSE reads; F023 supplies guest issuance and waiting-lobby creation. Lobby joining/readiness, gameplay action routes, and forfeit policy remain later work.
 
 ## Acceptance evidence
 

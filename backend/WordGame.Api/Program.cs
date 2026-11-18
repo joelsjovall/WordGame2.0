@@ -8,6 +8,7 @@ using WordGame.Api.Sessions;
 using WordGame.Application.Categories;
 using WordGame.Application.Challenges;
 using WordGame.Application.Games;
+using WordGame.Application.Lobbies;
 using WordGame.Application.Sessions;
 using WordGame.Application.Synchronization;
 using WordGame.Application.Words;
@@ -41,6 +42,9 @@ builder.Services.AddSingleton(_ => new SessionRetention(
     builder.Configuration.GetValue("Sessions:CompletedRetention", TimeSpan.FromMinutes(10)),
     builder.Configuration.GetValue("Sessions:AbandonedRetention", TimeSpan.FromMinutes(5))));
 builder.Services.AddSingleton<IGameSessionStore, InMemoryGameSessionStore>();
+builder.Services.AddSingleton(_ => new LobbyRules(builder.Configuration.GetValue("Sessions:LobbyLifetime", TimeSpan.FromMinutes(30))));
+builder.Services.AddSingleton<ILobbySessionStore, InMemoryLobbySessionStore>();
+builder.Services.AddSingleton<LobbyService>();
 builder.Services.AddSingleton(_ => new CategorySelectionRules(
     builder.Configuration.GetValue("Gameplay:CategorySelectionTimeoutEnabled", true)
         ? builder.Configuration.GetValue("Gameplay:CategorySelectionTimeout", TimeSpan.FromSeconds(45)) : null,
@@ -91,6 +95,8 @@ if (app.Environment.IsDevelopment())
 }
 app.MapCategoryEndpoints();
 app.MapGameSynchronizationEndpoints();
+app.MapGuestEndpoints();
+app.MapLobbyEndpoints();
 
 if (app.Environment.IsDevelopment())
 {
