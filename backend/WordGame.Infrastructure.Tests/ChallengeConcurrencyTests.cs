@@ -38,6 +38,8 @@ public sealed class ChallengeConcurrencyTests
         var accepted = Assert.Single(results, result => result.Succeeded);
         Assert.Equal(ChallengeOutcome.Failed, accepted.ChallengeResult!.Outcome);
         Assert.Equal(1, accepted.ChallengeResult.AcceptedWordCount);
+        Assert.Equal(1, accepted.State!.Game.Scores[players[0].Id].Points);
+        Assert.Equal(50, accepted.State.Game.Scores[players[1].Id].Points);
         Assert.Equal(before.Version + 1, (await store.GetAsync(id))!.Version);
         Assert.All(results.Where(result => !result.Succeeded), result => Assert.Equal(GameEngineErrorCode.StaleState, result.Error!.Code));
     }
@@ -69,6 +71,8 @@ public sealed class ChallengeConcurrencyTests
         Assert.Equal(GameEngineErrorCode.StaleState, (await expiry).Error!.Code);
         var after = (await store.GetAsync(id))!;
         Assert.Equal(before.Version + 1, after.Version);
+        Assert.Equal(51, after.Game.Scores[players[0].Id].Points);
+        Assert.Equal(0, after.Game.Scores[players[1].Id].Points);
         var word = Assert.Single(after.Game.CurrentRound!.Challenge!.Submissions);
         Assert.Equal(after.Game.CurrentRound.Challenge.Deadline - TimeSpan.FromTicks(1), word.SubmittedAt);
         Assert.True(await changes.MoveNextAsync());

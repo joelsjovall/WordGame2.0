@@ -20,7 +20,7 @@ The next round clears the prior selection and starts a new selection window. F01
 
 ## Difficulty modifiers
 
-Each difficulty has a configurable positive integer score multiplier captured at selection. **Defaults are Easy 1×, Medium 1×, Hard 1×**: F018 explicitly requires final scoring rules to be confirmed, so F015 introduces no unapproved difficulty bonus or point awards. Configurations such as 1×/2×/3× are supported and tested, but they are not a finalized scoring formula. Challenge awards, application of modifiers, and score replay protection remain F018 work.
+Each difficulty has configurable positive integer points per word captured at selection. **Defaults are Easy 1, Medium 2, Hard 3**. F018 applies the retained value when the challenge completes; see [scoring](scoring.md) for the finalized formula, bonus, and replay protection. Set all values to 1 to disable difficulty differences.
 
 Rules copy and freeze allowed difficulties and multiplier mappings. Invalid enum values, an empty enabled set, nonpositive multipliers, and incomplete programmatic multiplier maps are rejected. Category or multiplier values cannot be chosen through a player action payload.
 

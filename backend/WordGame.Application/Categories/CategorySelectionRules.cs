@@ -31,7 +31,7 @@ public sealed class CategorySelectionRules
             throw new ArgumentException("At least one valid difficulty must be enabled.", nameof(allowedDifficulties));
         }
 
-        var multipliers = scoreMultipliers ?? Enum.GetValues<CategoryDifficulty>().ToDictionary(difficulty => difficulty, _ => 1);
+        var multipliers = scoreMultipliers ?? Enum.GetValues<CategoryDifficulty>().ToDictionary(difficulty => difficulty, difficulty => (int)difficulty + 1);
         if (multipliers.Count != Enum.GetValues<CategoryDifficulty>().Length ||
             Enum.GetValues<CategoryDifficulty>().Any(difficulty => !multipliers.TryGetValue(difficulty, out var value) || value <= 0))
         {

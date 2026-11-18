@@ -36,7 +36,9 @@ public sealed class WordSubmissionTests
                 Assert.Equal(result, (await game.Engine.GetStateAsync(game.Id)).ChallengeResult);
             }
         }
-        Assert.All((await game.State()).Game.Scores.Values, score => Assert.Equal(0, score.Points));
+        var scores = (await game.State()).Game.Scores;
+        Assert.Equal(55, scores[game.Players[0].Id].Points);
+        Assert.All(scores.Values.Where(score => score.PlayerId != game.Players[0].Id), score => Assert.Equal(0, score.Points));
     }
 
     [Fact]

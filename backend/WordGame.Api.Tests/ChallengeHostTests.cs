@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using WordGame.Api.Mapping;
 using WordGame.Api.Tests.Fixtures;
 using WordGame.Application.Games;
 using WordGame.Application.Sessions;
@@ -10,6 +11,28 @@ namespace WordGame.Api.Tests;
 
 public sealed class ChallengeHostTests
 {
+    [Theory]
+    [InlineData(4, 7, 11)]
+    [InlineData(1, 0, 1)]
+    public async Task ConfiguredAwardsAreProjectedIntoPublicPlayerScores(int wordPoints, int bonus, int expected)
+    {
+        using var factory = new WordGameApiFactory().WithWebHostBuilder(builder =>
+            builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(
+                new Dictionary<string, string?>
+                {
+                    ["Gameplay:DifficultyMultipliers:Easy"] = wordPoints.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    ["Gameplay:Scoring:OutcomeBonus"] = bonus.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                })));
+        var engine = factory.Services.GetRequiredService<GameEngine>();
+        var (id, players) = await Start(engine, 1);
+        var result = await engine.SubmitWordAsync(id, players[0].Id, "Paris",
+            new(Guid.NewGuid(), (await engine.GetStateAsync(id)).State!.Version));
+        Assert.True(result.Succeeded);
+        var projected = GameStateMapper.Map(result.State!, DateTimeOffset.UtcNow);
+        Assert.Equal(expected, projected.Players.Single(player => player.Id == players[0].Id).Score);
+        Assert.Equal(0, projected.Players.Single(player => player.Id == players[1].Id).Score);
+    }
+
     [Fact]
     public async Task IssueExampleSucceedsUsingTheConfiguredJsonProviderAndEngine()
     {
@@ -28,7 +51,8 @@ public sealed class ChallengeHostTests
         Assert.Equal(ChallengeOutcome.Succeeded, result!.ChallengeResult!.Outcome);
         Assert.Equal(5, result.ChallengeResult.AcceptedWordCount);
         Assert.Equal(RoundStatus.Completed, result.State!.Game.CurrentRound!.Status);
-        Assert.All(result.State.Game.Scores.Values, score => Assert.Equal(0, score.Points));
+        Assert.Equal(55, result.State.Game.Scores[players[0].Id].Points);
+        Assert.Equal(0, result.State.Game.Scores[players[1].Id].Points);
     }
 
     [Fact]
@@ -44,7 +68,7 @@ public sealed class ChallengeHostTests
                 })));
         var engine = factory.Services.GetRequiredService<GameEngine>();
         var store = factory.Services.GetRequiredService<IGameSessionStore>();
-        var (id, _) = await Start(engine, 2);
+        var (id, players) = await Start(engine, 2);
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         await foreach (var change in store.WatchAsync(id, timeout.Token))
         {
@@ -59,6 +83,8 @@ public sealed class ChallengeHostTests
             Assert.Equal(2, result.ChallengeResult.RequiredWordCount);
             Assert.Equal(TimeSpan.FromMilliseconds(50), result.ChallengeResult.Deadline - result.ChallengeResult.StartedAt);
             Assert.Empty(result.State.Game.CurrentRound.Challenge!.Submissions);
+            Assert.Equal(0, result.State.Game.Scores[players[0].Id].Points);
+            Assert.Equal(50, result.State.Game.Scores[players[1].Id].Points);
             break;
         }
     }

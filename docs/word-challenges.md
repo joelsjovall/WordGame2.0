@@ -1,6 +1,6 @@
 # Timed word challenges
 
-F017 adds Application's `ChallengeService`, composed through the shared GameEngine for both modes. It reuses Domain Challenge, retained category definitions, `IWordValidationService`, and the atomic/versioned session store. Scoring and match progression remain separate work; no game HTTP endpoints are introduced.
+F017 adds Application's `ChallengeService`, composed through the shared GameEngine for both modes. It reuses Domain Challenge, retained category definitions, `IWordValidationService`, and the atomic/versioned session store. F018 adds [scoring](scoring.md) at completion. Match progression remains separate work; no game HTTP endpoints are introduced.
 
 ## Starting and submitting
 
@@ -28,7 +28,7 @@ The window is `[StartedAt, Deadline)`. The server samples time when the update a
 
 Reaching the required accepted count marks the challenge Succeeded and completes the round in that same update. The timeout worker marks an incomplete challenge Failed at/after the deadline, retaining timely history. Late words are rejected even before a sweep commits the result. An incomplete challenge cannot resolve early; existing [disconnect/leave rules](turn-management.md) may cancel an unplayable match instead.
 
-History, action ID, outcome, and round completion commit atomically. Phase/outcome guards and expected revisions prevent another completion or submission after a terminal result. Competing final-word/timeout requests publish one completion revision. F017 awards no points and does not automatically start another round.
+History, action ID, outcome, round completion, and F018 score awards commit atomically. Phase/outcome guards and expected revisions prevent another completion or submission after a terminal result. Competing final-word/timeout requests publish one completion revision and one award batch. Completion does not automatically start another round.
 
 ## Structured result
 
