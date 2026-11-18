@@ -35,6 +35,8 @@ The API also registers the shared in-memory session store and automatic cleanup 
 
 The shared Application [GameEngine](../docs/game-engine.md) orchestrates creation, initialization, round phases, resolution, completion, and cancellation through that store. It returns structured internal results without exposing new HTTP routes. [Turn management](../docs/turn-management.md) adds rotating starters, versioned player actions, replay guards, and disconnect/leave handling. [Category selection](../docs/category-selection.md) adds provider-backed availability, retained answer snapshots, configurable difficulty modifiers, and a timeout worker. Word submission, scoring, and win-condition policies remain later work.
 
+See [bidding and bluff calls](../docs/bidding.md) for opening/raising bids, caller permissions, phase locking, and atomic request-race behavior shared by both modes.
+
 ## Configuration and conventions
 
 - Nullable reference types, implicit usings, and build-time code style enforcement are set in `Directory.Build.props`. `.editorconfig` defines formatting, file-scoped namespaces, PascalCase types and members, and the `I` prefix for interfaces. Run `dotnet format` to apply these conventions.

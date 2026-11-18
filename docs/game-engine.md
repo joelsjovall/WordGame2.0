@@ -24,6 +24,8 @@ Completed and abandoned sessions cannot restart; rematches create new sessions. 
 
 `SelectCategoryAsync`, `PlaceBidAsync`, and `CallBluffAsync` require a roster member holding the active turn. They use the existing Domain phase guards. Positive bids must exceed the highest bid and advance once to the next player in stable roster order through `Game.GetNextPlayerId`; selecting a category leaves that player ready to make the opening bid. A bluff call requires an existing bid, and the caller cannot challenge their own bid.
 
+See [bidding and bluff calls](bidding.md) for F016's initial state, provider-snapshot requirement, claim/raise rules, caller eligibility, challenge transition, and concurrent/replayed request behavior.
+
 F014's [turn policy](turn-management.md) now selects/rotates starters, skips unavailable players, handles disconnect/leave reconciliation, and requires action IDs with atomic expected-revision checks for player commands. Duplicate progression is prevented; replaying an original success response remains future transport-receipt work. Category/bidding timeout scheduling remains later work.
 
 F015's [selection service](category-selection.md) resolves player-selected IDs through the provider, enforces difficulty availability and deadlines, and pins immutable answer data. Challenge duration remains a **trusted backend input**: match settings must supply it, and `CallBluffAsync` creates the challenge ID/start/deadline on the server inside the transaction. Nonpositive or unrepresentable durations are rejected.
