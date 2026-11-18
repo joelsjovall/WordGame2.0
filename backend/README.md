@@ -12,7 +12,9 @@ dotnet run --project backend/WordGame.Api --launch-profile http
 
 The HTTP profile serves `http://localhost:5000`. `GET /health` returns HTTP 200 and `Healthy` with no database or external service required. This is a basic process health check, not a guarantee of future provider or storage readiness. The optional `https` profile also serves `https://localhost:7001` and requires a trusted development certificate (`dotnet dev-certs https --trust`).
 
-Set the frontend's `VITE_API_BASE_URL=http://localhost:5000` in `frontend/.env.local` for local HTTP development. No gameplay endpoints or frontend API calls are introduced here.
+Set the frontend's `VITE_API_BASE_URL=http://localhost:5000` in `frontend/.env.local` for local HTTP development.
+
+F009 adds public metadata-only `/api/v1/categories` reads and a Development-only OpenAPI document at `/openapi/v1.json`. See [API contracts](../docs/api-contracts.md) for transport DTOs, Problem Details, TypeScript generation, and specified future game/lobby/matchmaking operations. Game state/action routes remain unavailable until their authenticated workflows exist.
 
 ## Project boundaries
 

@@ -1,4 +1,8 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using WordGame.Api.Endpoints;
 using WordGame.Api.Errors;
+using WordGame.Api.OpenApi;
 using WordGame.Api.Sessions;
 using WordGame.Application.Categories;
 using WordGame.Application.Sessions;
@@ -13,6 +17,15 @@ builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
 builder.Services.AddProblemDetails();
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false));
+    options.SerializerOptions.RespectNullableAnnotations = true;
+    options.SerializerOptions.RespectRequiredConstructorParameters = true;
+    options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict;
+    options.SerializerOptions.UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow;
+});
+builder.Services.AddOpenApi("v1", options => options.AddDocumentTransformer<ContractDocumentTransformer>());
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddHealthChecks();
 builder.Services.AddSingleton(TimeProvider.System);
@@ -41,6 +54,22 @@ var app = builder.Build();
 _ = app.Services.GetRequiredService<ICategoryProvider>();
 
 app.UseExceptionHandler();
+app.UseStatusCodePages(async context =>
+{
+    if (context.HttpContext.Request.Path.StartsWithSegments("/api"))
+    {
+        await ApiProblems.WriteAsync(context.HttpContext, ApiProblems.Create(context.HttpContext,
+            context.HttpContext.Response.StatusCode,
+            Microsoft.AspNetCore.WebUtilities.ReasonPhrases.GetReasonPhrase(context.HttpContext.Response.StatusCode)),
+            context.HttpContext.RequestAborted);
+    }
+});
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
+app.MapCategoryEndpoints();
 
 if (app.Environment.IsDevelopment())
 {
