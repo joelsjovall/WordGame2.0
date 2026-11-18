@@ -35,6 +35,17 @@ public sealed class Challenge
     public ChallengeOutcome Outcome { get; private set; }
     public int AcceptedWordCount => submissions.Count(word => word.Status == WordSubmissionStatus.Accepted);
 
+    internal Challenge Copy()
+    {
+        var copy = new Challenge(Id, Bid, ChallengerId, StartedAt, Deadline)
+        {
+            Outcome = Outcome,
+            attachedToRound = attachedToRound
+        };
+        copy.submissions.AddRange(submissions);
+        return copy;
+    }
+
     // Validation and timestamps are supplied by trusted backend code, never a client DTO.
     public void RecordSubmission(SubmittedWord submission)
     {

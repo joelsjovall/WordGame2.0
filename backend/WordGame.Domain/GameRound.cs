@@ -22,6 +22,15 @@ public sealed class GameRound
     public Bid? HighestBid { get; private set; }
     public Challenge? Challenge { get; private set; }
 
+    internal GameRound Copy() => new(Id, Number, playerIds, Turn.PlayerId)
+    {
+        Status = Status,
+        Turn = Turn,
+        Category = Category,
+        HighestBid = HighestBid,
+        Challenge = Challenge?.Copy()
+    };
+
     public void SelectCategory(Guid playerId, Category category)
     {
         ArgumentNullException.ThrowIfNull(category);
