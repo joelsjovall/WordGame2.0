@@ -5,6 +5,7 @@ using WordGame.Api.Errors;
 using WordGame.Api.OpenApi;
 using WordGame.Api.Sessions;
 using WordGame.Application.Categories;
+using WordGame.Application.Games;
 using WordGame.Application.Sessions;
 using WordGame.Application.Words;
 using WordGame.Infrastructure.Categories;
@@ -34,6 +35,7 @@ builder.Services.AddSingleton(_ => new SessionRetention(
     builder.Configuration.GetValue("Sessions:CompletedRetention", TimeSpan.FromMinutes(10)),
     builder.Configuration.GetValue("Sessions:AbandonedRetention", TimeSpan.FromMinutes(5))));
 builder.Services.AddSingleton<IGameSessionStore, InMemoryGameSessionStore>();
+builder.Services.AddSingleton<GameEngine>();
 builder.Services.AddHostedService<SessionCleanupWorker>();
 builder.Services.AddSingleton<IWordValidationService, WordValidationService>();
 builder.Services.AddSingleton<ICategoryProvider>(_ => new JsonCategoryProvider(
