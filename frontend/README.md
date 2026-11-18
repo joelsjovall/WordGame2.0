@@ -4,7 +4,7 @@ React + TypeScript + Vite, with React Router. See the [architecture](../docs/arc
 
 ## Development
 
-Use Node.js 22.22+ and npm. From `frontend/`:
+Use Node.js 24 and npm to match CI (minimum supported by the project: 22.22). See [local development setup](../docs/development-setup.md) for running both applications. From `frontend/`:
 
 ```sh
 npm ci
@@ -36,14 +36,14 @@ With the Development backend running on port 5000, run `npm run api:generate` to
 
 ## Structure and boundaries
 
-| Location            | Responsibility                                         |
-| ------------------- | ------------------------------------------------------ |
-| `src/main.tsx`      | Browser entry point and router provider                |
-| `src/App.tsx`       | Route definitions: `/` and a not-found fallback        |
-| `src/pages/`        | Route-level presentation                               |
-| `src/services/api/` | Backend API configuration and future transport clients |
-| `src/styles/`       | Shared styles                                          |
-| `src/vite-env.d.ts` | Typed public environment variables                     |
+| Location            | Responsibility                                                        |
+| ------------------- | --------------------------------------------------------------------- |
+| `src/main.tsx`      | Browser entry point and router provider                               |
+| `src/App.tsx`       | Route definitions: `/` and a not-found fallback                       |
+| `src/pages/`        | Route-level presentation                                              |
+| `src/services/api/` | Centralized HTTP client, category operations, and generated contracts |
+| `src/styles/`       | Shared styles                                                         |
+| `src/vite-env.d.ts` | Typed public environment variables                                    |
 
 Add the following directories only when their first real implementation is needed:
 
@@ -57,8 +57,4 @@ Pages compose features and reusable UI. Components delegate networking to servic
 
 The homepage is intentionally a placeholder. Party lobbies, matchmaking, gameplay, and persistent state are later issues. No V1 frontend code is copied. Production static hosting must serve `index.html` for client routes so refreshes and direct links work with BrowserRouter.
 
-## Initial verification
-
-F002 was checked using Node 25.2.1 and npm 11.13.0. ESLint, strict TypeScript, formatting, and production build checks passed. Its temporary browser checks are now supplemented by the permanent F010 component and Playwright suites described in [automated testing](../docs/testing.md).
-
-Known dependency limitation: the initial npm audit reports 11 high-severity development-tool findings traced to the transitive `picomatch` dependency (GHSA-fc5q-39xc-vjpf). The latest registry version available during setup, 4.0.7, is affected. Recheck when a patched release is available; avoid forced toolchain downgrades. This is separate from the outstanding V1 credential rotation follow-up.
+See [coding standards](../docs/coding-standards.md#react-and-typescript) for component/service conventions and [CI](../docs/ci.md#dependency-policy) for the current development dependency limitation and its temporary exception.

@@ -11,6 +11,8 @@ The application supports two game modes:
 
 Both modes share the same server-authoritative gameplay engine.
 
+This is the intended product architecture. The current foundation implements domain models/invariants, word validation, local JSON category storage, an in-memory session store, public category metadata endpoints, API contracts, a placeholder React frontend, tests, and CI. Complete game orchestration, guest authentication, lobbies, matchmaking, and SSE endpoints remain planned. See [project context](project-context.md) for changing progress.
+
 ## Architecture
 
 The application consists of four backend layers:
@@ -72,6 +74,19 @@ The frontend is organized by features, including gameplay, party lobbies, and ma
 Reusable UI components and API communication are kept separate from feature-specific presentation.
 
 The application follows a mobile-first approach and should remain suitable for future mobile app packaging.
+
+## Foundation decisions
+
+| Decision                                                       | Reason and consequences                                                                                                                                                                                               |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| One shared authoritative engine for both modes                 | Prevents rule drift and client-controlled outcomes. Mode-specific lobby/matchmaking workflows must call shared gameplay use cases rather than introduce a second rules engine.                                        |
+| Separate Domain, Application, Infrastructure, and API          | Keeps gameplay testable without HTTP or storage. Provider/store interfaces let implementations change without moving business rules into adapters. See [backend boundaries](../backend/README.md#project-boundaries). |
+| Local JSON categories behind a provider contract               | Supports validation without database setup or network calls. Datasets are validated and cached at startup; external providers can implement the same boundary later. See [category datasets](category-datasets.md).   |
+| In-memory sessions on one backend instance                     | Avoids persistence/distributed coordination before it is needed. Restarts lose matches, and horizontal scaling requires a new storage/coordination design. See [session management](session-management.md).           |
+| REST actions/state plus SSE notifications (planned)            | Server-to-client notifications fit the chosen transport while commands remain HTTP operations. Reconnection retrieves authoritative state; bidirectional WebSockets are not introduced without a new requirement.     |
+| Separate versioned transport DTOs and generated frontend types | Avoids exposing mutable domain state or category answers and reduces contract drift. See [API contracts](api-contracts.md) for implemented endpoints and future specifications.                                       |
+
+Record significant changes with their context, rationale, tradeoffs, and consequences as described in [CONTRIBUTING](../CONTRIBUTING.md#configuration-security-and-decisions). Keep this overview and focused documents consistent with implementation.
 
 ## Quality Standards
 
