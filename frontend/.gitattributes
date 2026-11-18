@@ -1,1 +1,2 @@
-src/services/api/generated.ts text eol=lf
+# Keep Prettier checks consistent after checkout on Windows and Linux.
+* text=auto eol=lf

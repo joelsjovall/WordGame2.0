@@ -54,7 +54,7 @@ Playwright owns dedicated servers at `http://127.0.0.1:5175` (Vite) and `http://
 
 `frontend/e2e/smoke.spec.ts` checks homepage rendering, runtime errors, horizontal overflow, unknown-route recovery and refresh, backend health, and public category metadata. Tests run in desktop Chromium and Chromium with Pixel 5 emulation. Emulation does not replace testing on physical devices or other browser engines.
 
-Use `npm run test:e2e:ui` for interactive debugging or `npm exec playwright show-report` after a run. Reports, results, coverage, and failure traces/screenshots are ignored by Git. CI rejects focused tests, limits workers, and retries failures twice. GitHub Actions workflow wiring is a separate issue.
+Use `npm run test:e2e:ui` for interactive debugging or `npm exec playwright show-report` after a run. Reports, results, coverage, and failure traces/screenshots are ignored by Git. CI rejects focused tests, limits workers, and retries failures twice. See [continuous integration](ci.md) for automated runs and report artifacts.
 
 ## Extending the suites
 
