@@ -164,7 +164,7 @@ public sealed class BiddingTests
     private static async Task<GameEngineResult> Bid(TurnTestGame game, Guid actor, int count, PlayerActionContext? context = null) =>
         await game.Engine.PlaceBidAsync(game.Id, actor, count, context ?? await game.Context());
     private static async Task<GameEngineResult> Bluff(TurnTestGame game, Guid actor, PlayerActionContext? context = null) =>
-        await game.Engine.CallBluffAsync(game.Id, actor, TurnTestGame.Duration, context ?? await game.Context());
+        await game.Engine.CallBluffAsync(game.Id, actor, context ?? await game.Context());
 
     private static async Task Rejected(TurnTestGame game, Func<Task<GameEngineResult>> action, GameEngineErrorCode code)
     {

@@ -1,11 +1,12 @@
 using WordGame.Application.Categories;
+using WordGame.Application.Challenges;
 using WordGame.Application.Sessions;
 using WordGame.Domain;
 
 namespace WordGame.Application.Games;
 
 // Shared backend orchestration. Transport adapters must authenticate callers before invoking player actions.
-public sealed class GameEngine(IGameSessionStore sessions, TimeProvider clock, SessionRetention retention, CategorySelectionService categories)
+public sealed class GameEngine(IGameSessionStore sessions, SessionRetention retention, CategorySelectionService categories, ChallengeService challenges)
 {
     private readonly GameCommandExecutor commands = new(sessions, retention);
     public async Task<GameEngineResult> CreateAsync(IEnumerable<Player> players, CancellationToken cancellationToken = default)
@@ -33,7 +34,7 @@ public sealed class GameEngine(IGameSessionStore sessions, TimeProvider clock, S
     public Task<GameEngineResult> StartAsync(Guid gameId, CancellationToken cancellationToken = default) =>
         commands.UpdateAsync(gameId, session =>
         {
-            Require(session.Status == SessionStatus.Starting, "Only an initialized game can start.");
+            GamePhaseGuard.Require(session.Status == SessionStatus.Starting, "Only an initialized game can start.");
             session.Game.StartRound(Guid.NewGuid(), TurnPolicy.FirstPlayer(session, retention.DisconnectedGrace));
             session.Activate();
             session.BeginCategorySelection(categories.Rules.Timeout);
@@ -48,40 +49,24 @@ public sealed class GameEngine(IGameSessionStore sessions, TimeProvider clock, S
         Guid gameId, Guid playerId, int wordCount, PlayerActionContext context, CancellationToken cancellationToken = default) =>
         commands.PlayerUpdateAsync(gameId, playerId, context, session =>
         {
-            var round = BiddingRound(session, playerId);
+            var round = GamePhaseGuard.BiddingRound(session, playerId);
             round.RecordBid(new Bid(playerId, wordCount));
             round.AssignTurn(TurnPolicy.NextPlayer(session, playerId, retention.DisconnectedGrace));
         }, cancellationToken);
 
-    // Duration is supplied by backend match policy. Client actions must not choose their own deadline.
-    public Task<GameEngineResult> CallBluffAsync(
-        Guid gameId, Guid playerId, TimeSpan duration, PlayerActionContext context, CancellationToken cancellationToken = default) =>
-        commands.PlayerUpdateAsync(gameId, playerId, context, session =>
-        {
-            var round = BiddingRound(session, playerId);
-            Require(round.HighestBid is not null, "A bluff call requires an existing bid.");
-            Require(session.CanTakeTurn(round.HighestBid!.PlayerId, retention.DisconnectedGrace), "The bidder is unavailable.");
-            var now = clock.GetUtcNow();
-            round.BeginChallenge(new Challenge(Guid.NewGuid(), round.HighestBid!, playerId, now, now.Add(duration)));
-        }, cancellationToken);
+    public Task<GameEngineResult> CallBluffAsync(Guid gameId, Guid playerId, PlayerActionContext context, CancellationToken cancellationToken = default) =>
+        challenges.BeginAsync(gameId, playerId, context, cancellationToken);
 
-    // Word validation/submission is a separate use case. Outcome is derived from stored server-validated submissions.
+    public Task<GameEngineResult> SubmitWordAsync(Guid gameId, Guid playerId, string word, PlayerActionContext context, CancellationToken cancellationToken = default) =>
+        challenges.SubmitAsync(gameId, playerId, word, context, cancellationToken);
+
     public Task<GameEngineResult> ResolveChallengeAsync(Guid gameId, CancellationToken cancellationToken = default) =>
-        commands.UpdateAsync(gameId, session =>
-        {
-            var round = ActiveRound(session);
-            Require(round.Status == RoundStatus.Challenge && round.Challenge is not null, "There is no active challenge.");
-            var challenge = round.Challenge!;
-            var succeeded = challenge.AcceptedWordCount >= challenge.Bid.WordCount;
-            Require(succeeded || clock.GetUtcNow() >= challenge.Deadline, "An incomplete challenge cannot end before its deadline.");
-            challenge.Resolve(succeeded ? ChallengeOutcome.Succeeded : ChallengeOutcome.Failed);
-            round.Complete();
-        }, cancellationToken);
+        challenges.ResolveAsync(gameId, cancellationToken: cancellationToken);
 
     public Task<GameEngineResult> NextRoundAsync(Guid gameId, CancellationToken cancellationToken = default) =>
         commands.UpdateAsync(gameId, session =>
         {
-            Require(ActiveRound(session).Status == RoundStatus.Completed, "The current round must finish first.");
+            GamePhaseGuard.Require(GamePhaseGuard.ActiveRound(session).Status == RoundStatus.Completed, "The current round must finish first.");
             var previousStarter = session.Game.CurrentRound!.StartingPlayerId;
             session.Game.StartRound(Guid.NewGuid(), TurnPolicy.NextPlayer(session, previousStarter, retention.DisconnectedGrace));
             session.BeginCategorySelection(categories.Rules.Timeout);
@@ -91,7 +76,7 @@ public sealed class GameEngine(IGameSessionStore sessions, TimeProvider clock, S
     public Task<GameEngineResult> CompleteAsync(Guid gameId, CancellationToken cancellationToken = default) =>
         commands.UpdateAsync(gameId, session =>
         {
-            _ = ActiveRound(session);
+            _ = GamePhaseGuard.ActiveRound(session);
             session.Game.Complete();
             session.Complete();
         }, cancellationToken);
@@ -119,31 +104,5 @@ public sealed class GameEngine(IGameSessionStore sessions, TimeProvider clock, S
             session.Leave(playerId);
             session.ReconcileTurns(retention.DisconnectedGrace);
         }, cancellationToken);
-
-    private static GameRound BiddingRound(GameSession session, Guid playerId)
-    {
-        var round = ActiveRound(session);
-        Require(round.Status == RoundStatus.Bidding && session.SelectedCategory?.RoundId == round.Id,
-            "Bidding requires a provider-validated category selected for this round.");
-        if (round.Turn.PlayerId != playerId)
-        {
-            throw new GameActionRejectedException(GameEngineErrorCode.NotYourTurn, "The player does not hold the current turn.");
-        }
-        return round;
-    }
-
-    private static GameRound ActiveRound(GameSession session)
-    {
-        Require(session.Status == SessionStatus.Active && session.Game.CurrentRound is not null, "The game is not active.");
-        return session.Game.CurrentRound!;
-    }
-
-    private static void Require(bool condition, string message)
-    {
-        if (!condition)
-        {
-            throw new GameActionRejectedException(GameEngineErrorCode.InvalidState, message);
-        }
-    }
 
 }

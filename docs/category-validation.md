@@ -52,11 +52,11 @@ Different answers may not share any normalized canonical value or alias. Ambiguo
 
 The result also includes normalized text. Rejected/duplicate history entries do not consume an answer. Null category/history arguments or null history entries are programming errors and fail explicitly.
 
-The future submission use case must obtain history from the current server-owned `Challenge.Submissions`, use the snapshot for that round's selected category, and validate the acting identity/phase/deadline. Client-supplied lists of existing words or validation statuses are not authoritative.
+F017's [submission service](word-challenges.md) obtains history from server-owned `Challenge.Submissions`, uses the retained round snapshot, and checks actor/phase/deadline. Client-supplied lists of existing words or validation statuses are not authoritative.
 
 For nonblank input, that use case can construct a `SubmittedWord` using the result, acting player, and server timestamp, then call `Challenge.RecordSubmission`. Blank requests are rejected before constructing a SubmittedWord, whose text invariant forbids blanks. Challenge's canonical identity guard remains a second defense against double counting. Validation and recording must be serialized together within a game session; two concurrent calls must not both validate against stale accepted history.
 
-`WordValidationService` is stateless and registered as a singleton in the API composition root. There is no validation HTTP endpoint or automatic challenge completion yet; F017 will provide orchestration.
+`WordValidationService` is stateless and registered as a singleton in the API composition root. There is no validation HTTP endpoint; F017 now provides submission orchestration and automatic challenge completion.
 
 ## Retrieval and cache contract
 
@@ -73,7 +73,7 @@ The F007 JSON provider loads and validates the complete configured dataset once 
 
 A future external provider can implement the same contract, mapping remote answers and aliases to stable canonical IDs. Its caching, expiration, retry, and failure rules belong to that provider. Word validation itself remains unchanged.
 
-F015's [category selection](category-selection.md) now retains each active round's definition in `GameSession.SelectedCategory`. Future word-submission orchestration must use that immutable snapshot; provider refreshes affect new selections only and cannot alter accepted answers mid-challenge.
+F015's [category selection](category-selection.md) now retains each active round's definition in `GameSession.SelectedCategory`. Word-submission orchestration uses that immutable snapshot; provider refreshes affect new selections only and cannot alter accepted answers mid-challenge.
 
 ## Verification and remaining scope
 

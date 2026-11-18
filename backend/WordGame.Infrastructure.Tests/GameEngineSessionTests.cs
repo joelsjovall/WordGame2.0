@@ -10,7 +10,7 @@ public sealed class GameEngineSessionTests
     {
         var clock = new ManualSessionClock();
         var store = SessionTestData.Store(clock);
-        var engine = Engine(store, clock);
+        var engine = Engine(store);
         var players = SessionTestData.Players();
         var id = (await engine.CreateAsync(players)).State!.Id;
         Assert.True((await engine.InitializeAsync(id)).Succeeded);
@@ -36,8 +36,8 @@ public sealed class GameEngineSessionTests
     {
         var clock = new ManualSessionClock();
         var store = SessionTestData.Store(clock);
-        var firstEngine = Engine(store, clock);
-        var secondEngine = Engine(store, clock);
+        var firstEngine = Engine(store);
+        var secondEngine = Engine(store);
         var players = SessionTestData.Players(4);
         var firstId = (await firstEngine.CreateAsync(players)).State!.Id;
         var secondId = (await secondEngine.CreateAsync(players)).State!.Id;
@@ -54,6 +54,6 @@ public sealed class GameEngineSessionTests
         Assert.Equal(players[0].Id, unchanged.Game.CurrentRound!.Turn.PlayerId);
     }
 
-    private static GameEngine Engine(WordGame.Application.Sessions.IGameSessionStore store, TimeProvider clock) =>
-        SessionTestData.Engine(store, clock);
+    private static GameEngine Engine(WordGame.Application.Sessions.IGameSessionStore store) =>
+        SessionTestData.Engine(store);
 }

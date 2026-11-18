@@ -11,7 +11,7 @@ public sealed class TurnMaintenanceTests
     {
         var clock = new ManualSessionClock();
         var store = SessionTestData.Store(clock);
-        var engine = SessionTestData.Engine(store, clock);
+        var engine = SessionTestData.Engine(store);
         var players = SessionTestData.Players(3);
         var id = (await engine.CreateAsync(players)).State!.Id;
         var connections = players.Select(_ => Guid.NewGuid()).ToArray();
@@ -61,7 +61,7 @@ public sealed class TurnMaintenanceTests
     {
         var clock = new ManualSessionClock();
         var store = SessionTestData.Store(clock);
-        var engine = SessionTestData.Engine(store, clock);
+        var engine = SessionTestData.Engine(store);
         var players = SessionTestData.Players(2);
         var id = (await engine.CreateAsync(players)).State!.Id;
         Assert.True((await engine.InitializeAsync(id)).Succeeded);
@@ -81,7 +81,7 @@ public sealed class TurnMaintenanceTests
     {
         var clock = new ManualSessionClock();
         var store = SessionTestData.Store(clock);
-        var engine = SessionTestData.Engine(store, clock);
+        var engine = SessionTestData.Engine(store);
         var players = SessionTestData.Players(2);
         var id = (await engine.CreateAsync(players)).State!.Id;
         Assert.True((await engine.ConnectAsync(id, players[0].Id, Guid.NewGuid())).Succeeded);

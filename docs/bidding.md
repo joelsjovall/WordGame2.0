@@ -16,11 +16,11 @@ A bid is a bluffable claim, not a guarantee that the dataset contains that many 
 
 Only the eligible player currently holding the bidding turn may challenge the current highest bid. A bid must already exist, its bidder must still be eligible under the disconnect policy, and a player cannot challenge their own bid. Other participants wait for their turn; nonmembers cannot initiate a challenge.
 
-The call captures the **current** highest Bid in a new server-generated Challenge. The highest bidder becomes the challenged player and active participant; the caller becomes ChallengerId. The server supplies the challenge ID and current start time, with a positive challenge duration supplied by trusted backend policy. The deadline follows the start. Client action DTOs supply neither actor identity nor authoritative timestamps/duration.
+The call captures the **current** highest Bid in a new server-generated Challenge. The highest bidder becomes the challenged player and active participant; the caller becomes ChallengerId. The server supplies the challenge ID and current start time, with a positive duration from the server's configured challenge rules. The deadline follows the start. Client action DTOs supply neither actor identity nor authoritative timestamps/duration.
 
 For the issue's example: A bids 3, B raises to 5, A calls bluff; B must attempt 5 words. The challenge refers to B's 5-word bid, not A's earlier claim. Challenge starts Pending with no submissions.
 
-The round then enters Challenge. Neither participant can place another bid or create another challenge, including the bidder now holding the challenge turn. Word submission, timed challenge orchestration, and scoring remain their own issues. No bidding-timeout rule or additional game HTTP endpoint is introduced by F016.
+The round then enters Challenge. Neither participant can place another bid or create another challenge, including the bidder now holding the challenge turn. F017 supplies [word submission and timed challenge orchestration](word-challenges.md); scoring remains separate. No bidding-timeout rule or additional game HTTP endpoint is introduced by F016.
 
 ## Rejections, replays, and races
 

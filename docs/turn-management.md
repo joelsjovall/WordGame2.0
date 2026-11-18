@@ -14,7 +14,7 @@ The stable roster and historical scores remain intact after someone leaves; elig
 
 ## Repeated and stale commands
 
-Every implemented player command (select category, bid, call bluff, leave) requires `PlayerActionContext(ActionId, ExpectedVersion)`. Action IDs must be nonempty UUIDs and revisions nonnegative Int64 values. Future HTTP adapters must parse the canonical decimal revision string described in [API contracts](api-contracts.md).
+Every implemented player command (select category, bid, call bluff, submit word, leave) requires `PlayerActionContext(ActionId, ExpectedVersion)`. Action IDs must be nonempty UUIDs and revisions nonnegative Int64 values. Future HTTP adapters must parse the canonical decimal revision string described in [API contracts](api-contracts.md).
 
 The store checks the expected revision under the same per-session gate as the update, before invoking its callback. A mismatch returns `StaleState`; it never mutates the draft or publishes a revision. Presence, maintenance, and gameplay updates all affect the shared revision, so clients must refresh after any conflict.
 
@@ -41,7 +41,7 @@ Expiry is evaluated on actions/reconciliation/sweeps rather than an exact wall-c
 
 `LeaveAsync` permanently marks a participant as departed, clears their connections, and reconciles without waiting for grace. `PlayerPresence.HasLeft` records this internal session state. A departed player cannot reconnect or act in that match. Explicitly leaving a waiting session with fewer than two remaining participants cancels it too. Transport heartbeat/stale-connection detection remains necessary: an unreported disconnect still appears connected.
 
-This is a shared safety policy, not Online forfeit scoring: abandonment awards no points and declares no winner. F015 adds [category-selection timeouts](category-selection.md). Party/Online-specific forfeit results, challenge submission, bidding timeouts, and broader scoring remain their own issues. The API still exposes no game/action/SSE routes; public player-departure presentation and HTTP error/receipt mapping remain adapter work.
+This is a shared safety policy, not Online forfeit scoring: abandonment awards no points and declares no winner. F015 adds [category-selection timeouts](category-selection.md). F017 adds [timed word submissions](word-challenges.md). Party/Online-specific forfeit results, bidding timeouts, and broader scoring remain their own issues. The API still exposes no game/action/SSE routes; public player-departure presentation and HTTP error/receipt mapping remain adapter work.
 
 ## Tests
 

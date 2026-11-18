@@ -5,6 +5,7 @@ using WordGame.Api.Errors;
 using WordGame.Api.OpenApi;
 using WordGame.Api.Sessions;
 using WordGame.Application.Categories;
+using WordGame.Application.Challenges;
 using WordGame.Application.Games;
 using WordGame.Application.Sessions;
 using WordGame.Application.Words;
@@ -44,9 +45,11 @@ builder.Services.AddSingleton(_ => new CategorySelectionRules(
         difficulty => builder.Configuration.GetValue($"Gameplay:DifficultyMultipliers:{difficulty}", 1)),
     builder.Configuration.GetValue("Gameplay:CategorySelectionTimeoutBehavior", CategoryTimeoutBehavior.AutoSelect)));
 builder.Services.AddSingleton<CategorySelectionService>();
+builder.Services.AddSingleton(_ => new ChallengeRules(builder.Configuration.GetValue("Gameplay:ChallengeDuration", TimeSpan.FromSeconds(30))));
+builder.Services.AddSingleton<ChallengeService>();
 builder.Services.AddSingleton<GameEngine>();
 builder.Services.AddHostedService<SessionCleanupWorker>();
-builder.Services.AddHostedService<CategorySelectionTimeoutWorker>();
+builder.Services.AddHostedService<GameplayTimeoutWorker>();
 builder.Services.AddSingleton<IWordValidationService, WordValidationService>();
 builder.Services.AddSingleton<ICategoryProvider>(_ => new JsonCategoryProvider(
     Path.GetFullPath(builder.Configuration["Categories:Directory"] ?? "Data/Categories",
