@@ -12,11 +12,13 @@ F004 defines the model foundation in `backend/WordGame.Domain`. The assembly ref
 | `Category` | Immutable stable string ID, display name, and Easy/Medium/Hard difficulty. Answers, aliases, and provider data belong to F006/F007. |
 | `Bid` | Immutable bidder ID and positive required word count. |
 | `Challenge` | Owns the challenged bid, caller, start/deadline, submissions, and outcome. A mutable challenge instance can belong to only one round. |
-| `SubmittedWord` | Immutable bidder ID, text, server-supplied timestamp, validation status, and canonical accepted-answer identity. |
+| `SubmittedWord` | Immutable bidder ID, display/normalized text, server-supplied timestamp, validation status, and canonical accepted-answer identity. |
 | `PlayerTurn` | Immutable participant ID and positive sequence number within a round. |
 | `PlayerScore` | Immutable participant ID and nonnegative points; used for totals and externally calculated round awards. |
 
 IDs cannot be empty; required text cannot be blank. Display text is trimmed. Category IDs are provider-neutral strings; participant, game, round, and challenge IDs are GUIDs. Collections are read-only views, the input roster is copied, and value properties have no public setters.
+
+F005 adds the reviewed V1 normalization baseline through `WordNormalizer` and `SubmittedWord.NormalizedText`: trim and invariant lowercase, without alias matching or word validation. `Game.GetNextPlayerId` performs a side-effect-free cyclic roster lookup; it does not automatically advance a turn or pick a starting-player policy. See the [V1 migration review](v1-migration-review.md).
 
 ## States and allowed transitions
 
