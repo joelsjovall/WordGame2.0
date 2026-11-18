@@ -97,7 +97,8 @@ public sealed class Game
     {
         ArgumentNullException.ThrowIfNull(awards);
         DomainGuard.State(Status == GameStatus.InProgress, "Scoring requires an active game.");
-        DomainGuard.State(rounds.Any(round => round.Id == roundId && round.Status == RoundStatus.Completed),
+        var round = rounds.SingleOrDefault(round => round.Id == roundId && round.Status == RoundStatus.Completed);
+        DomainGuard.State(round is not null,
             "Only completed rounds can award points.");
         DomainGuard.State(!roundResults.ContainsKey(roundId), "This round has already awarded points.");
         var changes = awards.ToArray();
@@ -107,13 +108,11 @@ public sealed class Game
             "A player can receive only one award entry per round.");
 
         // Compute everything first so an invalid award or overflow cannot partially update scores.
-        var updated = changes.Select(award =>
-            new PlayerScore(award.PlayerId, checked(scores[award.PlayerId].Points + award.Points))).ToArray();
         var awardsByPlayer = changes.ToDictionary(award => award.PlayerId, award => award.Points);
-        var totalsByPlayer = updated.ToDictionary(score => score.PlayerId, score => score.Points);
-        var result = new RoundResult(rounds.Single(round => round.Id == roundId), Players.Select(player =>
-            new RoundPlayerScore(player.Id, awardsByPlayer.GetValueOrDefault(player.Id),
-                totalsByPlayer.GetValueOrDefault(player.Id, scores[player.Id].Points))).ToArray());
+        var updated = Players.Select(player => new PlayerScore(player.Id,
+            checked(scores[player.Id].Points + awardsByPlayer.GetValueOrDefault(player.Id)))).ToArray();
+        var result = new RoundResult(round!, updated.Select(score =>
+            new RoundPlayerScore(score.PlayerId, awardsByPlayer.GetValueOrDefault(score.PlayerId), score.Points)).ToArray());
         foreach (var score in updated)
         {
             scores[score.PlayerId] = score;

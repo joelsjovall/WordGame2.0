@@ -42,10 +42,12 @@ internal sealed class GameCommandExecutor(IGameSessionStore sessions, SessionRet
 
     internal async Task<GameEngineResult> UpdateAsync(Guid gameId, Action<GameSession> action, CancellationToken cancellationToken, long? expectedVersion = null)
     {
+        var actionInvoked = false;
         try
         {
             void Apply(GameSession session)
             {
+                actionInvoked = true;
                 try
                 {
                     action(session);
@@ -72,7 +74,7 @@ internal sealed class GameCommandExecutor(IGameSessionStore sessions, SessionRet
         {
             return GameEngineResult.Rejected(rejection.Code, rejection.Message);
         }
-        catch (KeyNotFoundException)
+        catch (KeyNotFoundException) when (!actionInvoked)
         {
             return GameEngineResult.Missing();
         }

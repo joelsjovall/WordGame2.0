@@ -19,7 +19,7 @@ F004 defines the model foundation in `backend/WordGame.Domain`. The assembly ref
 
 IDs cannot be empty; required text cannot be blank. Display text is trimmed. Category IDs are provider-neutral strings; participant, game, round, and challenge IDs are GUIDs. Collections are read-only views, the input roster is copied, and value properties have no public setters.
 
-F005 introduced normalization and cyclic roster lookup; see the [V1 migration review](v1-migration-review.md). F006 extends `WordNormalizer` to collapse internal whitespace as well as lowercase invariantly. `SubmittedWord.NormalizedText` uses that shared rule. `Game.GetNextPlayerId` remains a side-effect-free lookup rather than automatic turn progression.
+F005 introduced normalization and cyclic roster lookup; see the [V1 migration review](v1-migration-review.md). F006 extends `WordNormalizer` to collapse internal whitespace as well as lowercase invariantly. CategoryDefinition lookup uses that shared rule; F022 removes unused normalized diagnostic storage from SubmittedWord and WordValidationResult. `Game.GetNextPlayerId` remains a side-effect-free lookup rather than automatic turn progression.
 
 ## States and allowed transitions
 

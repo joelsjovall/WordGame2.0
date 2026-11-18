@@ -15,7 +15,7 @@ public sealed class GameplayTimeoutIsolationTests
     [Fact]
     public async Task SlowCategoryProviderCannotBlockAnotherGamesChallengeExpiry()
     {
-        var clock = new ManualClock();
+        var clock = new ControlledGameplayClock();
         using var factory = new WordGameApiFactory().WithWebHostBuilder(builder =>
         {
             builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(
@@ -69,13 +69,6 @@ public sealed class GameplayTimeoutIsolationTests
         {
             provider.Release.TrySetResult();
         }
-    }
-
-    private sealed class ManualClock : TimeProvider
-    {
-        private long ticks = new DateTimeOffset(2026, 11, 18, 12, 0, 0, TimeSpan.Zero).Ticks;
-        public override DateTimeOffset GetUtcNow() => new(Interlocked.Read(ref ticks), TimeSpan.Zero);
-        internal void Advance(TimeSpan duration) => Interlocked.Add(ref ticks, duration.Ticks);
     }
 
     private sealed class PausedProvider(ICategoryProvider inner) : ICategoryProvider

@@ -48,7 +48,7 @@ public sealed class ChallengeService(IGameSessionStore sessions, SessionRetentio
             var validation = validator.Validate(session.SelectedCategory!.Definition, word, challenge.Submissions);
             challenge.RecordSubmission(new SubmittedWord(playerId, word, session.UpdatedAt, validation.Status, validation.CanonicalAnswerId));
             status = validation.Status;
-            if (challenge.AcceptedWordCount >= challenge.Bid.WordCount)
+            if (challenge.HasMetBid)
             {
                 Complete(session, round);
             }
@@ -61,7 +61,7 @@ public sealed class ChallengeService(IGameSessionStore sessions, SessionRetentio
         {
             var round = GamePhaseGuard.ChallengeRound(session);
             var challenge = round.Challenge!;
-            GamePhaseGuard.Require(challenge.AcceptedWordCount >= challenge.Bid.WordCount || session.UpdatedAt >= challenge.Deadline,
+            GamePhaseGuard.Require(challenge.HasMetBid || session.UpdatedAt >= challenge.Deadline,
                 "An incomplete challenge cannot end before its deadline.");
             session.ReconcileTurns(retention.DisconnectedGrace);
             if (session.Status == SessionStatus.Active)
@@ -74,7 +74,7 @@ public sealed class ChallengeService(IGameSessionStore sessions, SessionRetentio
     {
         GamePhaseGuard.Require(session.SelectedCategory?.RoundId == round.Id, "Scoring requires the retained category snapshot.");
         var challenge = round.Challenge!;
-        challenge.Resolve(challenge.AcceptedWordCount >= challenge.Bid.WordCount ? ChallengeOutcome.Succeeded : ChallengeOutcome.Failed);
+        challenge.Resolve(challenge.HasMetBid ? ChallengeOutcome.Succeeded : ChallengeOutcome.Failed);
         round.Complete();
         session.Game.RecordRoundScores(round.Id, scoringRules.Calculate(round, session.SelectedCategory!.ScoreMultiplier));
         if (session.Game.Rounds.Count == session.Game.Settings.RoundCount)

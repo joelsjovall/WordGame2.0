@@ -40,13 +40,12 @@ public sealed class WordNormalizerTests
     }
 
     [Fact]
-    public void SubmittedWordUsesSharedNormalizationWithoutChangingCanonicalIdentity()
+    public void SubmittedWordPreservesDisplayTextAndCanonicalIdentity()
     {
         var submission = new SubmittedWord(Guid.NewGuid(), "  BMW  ", DomainTestData.StartedAt,
             WordSubmissionStatus.Accepted, "manufacturer:BMW");
 
         Assert.Equal("BMW", submission.Text);
-        Assert.Equal("bmw", submission.NormalizedText);
         Assert.Equal("manufacturer:BMW", submission.CanonicalAnswerId);
     }
 }

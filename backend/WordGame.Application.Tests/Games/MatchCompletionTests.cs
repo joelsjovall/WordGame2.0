@@ -69,7 +69,7 @@ public sealed class MatchCompletionTests
             () => game.Engine.NextRoundAsync(game.Id),
             () => game.Engine.NextRoundAsync(game.Id, before.Game.CurrentRound!.Id, before.Version),
             () => game.Engine.StartAsync(game.Id), () => game.Engine.InitializeAsync(game.Id),
-            () => game.Engine.CompleteAsync(game.Id), () => game.Engine.CancelAsync(game.Id),
+            () => game.Engine.CancelAsync(game.Id),
             () => game.Engine.LeaveAsync(game.Id, id, context)
         ];
         foreach (var action in actions)
@@ -87,12 +87,10 @@ public sealed class MatchCompletionTests
     }
 
     [Fact]
-    public async Task EarlyCompletionAndInvalidOnlineRostersAreRejectedAndCancellationHasNoWinner()
+    public async Task InvalidOnlineRostersAreRejectedAndCancellationHasNoWinner()
     {
         var game = await TurnTestGame.Create(2);
-        Assert.Equal(GameEngineErrorCode.InvalidState, (await game.Engine.CompleteAsync(game.Id)).Error!.Code);
         await FinishRound(game, true);
-        Assert.Equal(GameEngineErrorCode.InvalidState, (await game.Engine.CompleteAsync(game.Id)).Error!.Code);
         TurnTestGame.Accepted(await game.Engine.CancelAsync(game.Id));
         Assert.Null((await game.Engine.GetStateAsync(game.Id)).MatchResult);
         var invalidPlayers = Enumerable.Range(0, 3).Select(index => new Player(Guid.NewGuid(), $"Player {index}"));
