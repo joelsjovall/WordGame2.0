@@ -1,3 +1,4 @@
+using WordGame.Application.Categories;
 using WordGame.Domain;
 
 namespace WordGame.Application.Sessions;
@@ -11,6 +12,8 @@ public sealed record SessionSnapshot(
     DateTimeOffset UpdatedAt,
     DateTimeOffset? EndedAt,
     IReadOnlyList<PlayerPresence> Players,
-    Game Game);
+    Game Game,
+    DateTimeOffset? CategorySelectionDeadline = null,
+    RoundCategorySelection? SelectedCategory = null);
 
 public sealed record PlayerPresence(Guid PlayerId, int ConnectionCount, DateTimeOffset? DisconnectedAt, bool HasLeft = false);

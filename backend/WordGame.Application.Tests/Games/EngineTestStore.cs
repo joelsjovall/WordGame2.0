@@ -22,6 +22,14 @@ internal sealed class EngineTestStore(TimeProvider clock) : IGameSessionStore
         return Task.FromResult(entries.TryGetValue(sessionId, out var entry) ? entry.Session.Snapshot(entry.Version) : null);
     }
 
+    public Task<IReadOnlyList<SessionSnapshot>> GetActiveAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        IReadOnlyList<SessionSnapshot> active = entries.Values.Where(entry => entry.Session.Status == SessionStatus.Active)
+            .Select(entry => entry.Session.Snapshot(entry.Version)).ToArray();
+        return Task.FromResult(active);
+    }
+
     public Task<SessionSnapshot> UpdateAsync(Guid sessionId, Action<GameSession> update, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

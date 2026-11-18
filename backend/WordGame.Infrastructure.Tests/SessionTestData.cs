@@ -1,3 +1,5 @@
+using WordGame.Application.Categories;
+using WordGame.Application.Games;
 using WordGame.Application.Sessions;
 using WordGame.Domain;
 using WordGame.Infrastructure.Sessions;
@@ -6,6 +8,21 @@ namespace WordGame.Infrastructure.Tests;
 
 internal static class SessionTestData
 {
+    internal static GameEngine Engine(IGameSessionStore store, TimeProvider clock)
+    {
+        var retention = new SessionRetention(TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(5));
+        return new GameEngine(store, clock, retention, new CategorySelectionService(new EngineCategoryProvider(), new CategorySelectionRules(null), store, retention));
+    }
+
+    private sealed class EngineCategoryProvider : ICategoryProvider
+    {
+        private static readonly CategoryDefinition Cars = new(new Category("cars", "Cars", CategoryDifficulty.Easy), [new AcceptedAnswer("Volvo")]);
+        public Task<CategoryDefinition?> GetByIdAsync(string categoryId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(categoryId == Cars.Category.Id ? Cars : null);
+        public Task<IReadOnlyList<Category>> GetCategoriesAsync(CategoryDifficulty? difficulty = null, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<Category>>(difficulty is null or CategoryDifficulty.Easy ? [Cars.Category] : []);
+    }
+
     internal static Player[] Players(int count = 2) => Enumerable.Range(1, count)
         .Select(index => new Player(Guid.NewGuid(), $"Player {index}")).ToArray();
 

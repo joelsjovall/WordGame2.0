@@ -16,7 +16,7 @@ public sealed class GameEngineSessionTests
         Assert.True((await engine.InitializeAsync(id)).Succeeded);
         Assert.True((await engine.StartAsync(id)).Succeeded);
         Assert.True((await engine.SelectCategoryAsync(id, players[0].Id,
-            new Category("cars", "Cars", CategoryDifficulty.Easy), new(Guid.NewGuid(), (await store.GetAsync(id))!.Version))).Succeeded);
+            "cars", new(Guid.NewGuid(), (await store.GetAsync(id))!.Version))).Succeeded);
         var before = await store.GetAsync(id);
 
         var results = await Task.WhenAll(Enumerable.Range(0, 20)
@@ -55,5 +55,5 @@ public sealed class GameEngineSessionTests
     }
 
     private static GameEngine Engine(WordGame.Application.Sessions.IGameSessionStore store, TimeProvider clock) =>
-        new(store, clock, new WordGame.Application.Sessions.SessionRetention(TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(5)));
+        SessionTestData.Engine(store, clock);
 }

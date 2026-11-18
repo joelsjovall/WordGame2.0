@@ -73,7 +73,7 @@ The F007 JSON provider loads and validates the complete configured dataset once 
 
 A future external provider can implement the same contract, mapping remote answers and aliases to stable canonical IDs. Its caching, expiration, retry, and failure rules belong to that provider. Word validation itself remains unchanged.
 
-When gameplay orchestration is implemented, each active round should retain its selected snapshot until completion so provider refreshes do not alter accepted answers mid-challenge. Snapshot replacement affects new selections only. The round/session snapshot retention policy is designed here; it is not a live engine implementation.
+F015's [category selection](category-selection.md) now retains each active round's definition in `GameSession.SelectedCategory`. Future word-submission orchestration must use that immutable snapshot; provider refreshes affect new selections only and cannot alter accepted answers mid-challenge.
 
 ## Verification and remaining scope
 

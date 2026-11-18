@@ -8,6 +8,7 @@ using WordGame.Application.Categories;
 using WordGame.Application.Games;
 using WordGame.Application.Sessions;
 using WordGame.Application.Words;
+using WordGame.Domain;
 using WordGame.Infrastructure.Categories;
 using WordGame.Infrastructure.Sessions;
 
@@ -35,8 +36,17 @@ builder.Services.AddSingleton(_ => new SessionRetention(
     builder.Configuration.GetValue("Sessions:CompletedRetention", TimeSpan.FromMinutes(10)),
     builder.Configuration.GetValue("Sessions:AbandonedRetention", TimeSpan.FromMinutes(5))));
 builder.Services.AddSingleton<IGameSessionStore, InMemoryGameSessionStore>();
+builder.Services.AddSingleton(_ => new CategorySelectionRules(
+    builder.Configuration.GetValue("Gameplay:CategorySelectionTimeoutEnabled", true)
+        ? builder.Configuration.GetValue("Gameplay:CategorySelectionTimeout", TimeSpan.FromSeconds(45)) : null,
+    builder.Configuration.GetSection("Gameplay:AllowedDifficulties").Get<CategoryDifficulty[]>(),
+    Enum.GetValues<CategoryDifficulty>().ToDictionary(difficulty => difficulty,
+        difficulty => builder.Configuration.GetValue($"Gameplay:DifficultyMultipliers:{difficulty}", 1)),
+    builder.Configuration.GetValue("Gameplay:CategorySelectionTimeoutBehavior", CategoryTimeoutBehavior.AutoSelect)));
+builder.Services.AddSingleton<CategorySelectionService>();
 builder.Services.AddSingleton<GameEngine>();
 builder.Services.AddHostedService<SessionCleanupWorker>();
+builder.Services.AddHostedService<CategorySelectionTimeoutWorker>();
 builder.Services.AddSingleton<IWordValidationService, WordValidationService>();
 builder.Services.AddSingleton<ICategoryProvider>(_ => new JsonCategoryProvider(
     Path.GetFullPath(builder.Configuration["Categories:Directory"] ?? "Data/Categories",

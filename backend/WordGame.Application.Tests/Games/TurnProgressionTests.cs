@@ -39,7 +39,7 @@ public sealed class TurnProgressionTests
     {
         var clock = new EngineTestClock();
         var store = new EngineTestStore(clock);
-        var engine = new GameEngine(store, clock, new SessionRetention(TurnTestGame.Grace, TurnTestGame.Grace, TurnTestGame.Grace));
+        var engine = TestCategoryProvider.Engine(store, clock, new SessionRetention(TurnTestGame.Grace, TurnTestGame.Grace, TurnTestGame.Grace));
         var players = Enumerable.Range(0, 4).Select(index => new Player(Guid.NewGuid(), $"Player {index}")).ToArray();
         var created = TurnTestGame.Accepted(await engine.CreateAsync(players));
         TurnTestGame.Accepted(await engine.LeaveAsync(created.Id, players[0].Id, new(Guid.NewGuid(), created.Version)));
@@ -78,7 +78,7 @@ public sealed class TurnProgressionTests
         Assert.Equal(game.Players[1].Id, left.Game.CurrentRound!.Turn.PlayerId);
         Assert.Equal(2, left.Game.CurrentRound.Turn.Number);
         Assert.Equal(GameEngineErrorCode.PlayerUnavailable,
-            (await game.Engine.SelectCategoryAsync(game.Id, game.Players[0].Id, TurnTestGame.Category, await game.Context())).Error!.Code);
+            (await game.Engine.SelectCategoryAsync(game.Id, game.Players[0].Id, TurnTestGame.Category.Id, await game.Context())).Error!.Code);
         Assert.Equal(GameEngineErrorCode.InvalidState,
             (await game.Engine.ConnectAsync(game.Id, game.Players[0].Id, Guid.NewGuid())).Error!.Code);
         await game.Select(1);
@@ -109,7 +109,7 @@ public sealed class TurnProgressionTests
         game.Clock.Advance(TimeSpan.FromTicks(1));
         var before = await game.State();
         Assert.Equal(GameEngineErrorCode.PlayerUnavailable,
-            (await game.Engine.SelectCategoryAsync(game.Id, game.Players[0].Id, TurnTestGame.Category, await game.Context())).Error!.Code);
+            (await game.Engine.SelectCategoryAsync(game.Id, game.Players[0].Id, TurnTestGame.Category.Id, await game.Context())).Error!.Code);
         Assert.Equal(before.Version, (await game.State()).Version);
         var skipped = await game.Reconcile();
         Assert.Equal(game.Players[1].Id, skipped.Game.CurrentRound!.Turn.PlayerId);
