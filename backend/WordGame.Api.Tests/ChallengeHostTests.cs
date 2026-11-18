@@ -85,6 +85,9 @@ public sealed class ChallengeHostTests
             Assert.Empty(result.State.Game.CurrentRound.Challenge!.Submissions);
             Assert.Equal(0, result.State.Game.Scores[players[0].Id].Points);
             Assert.Equal(50, result.State.Game.Scores[players[1].Id].Points);
+            Assert.Equal(players[1].Id, result.RoundResult!.WinnerId);
+            Assert.Empty(result.RoundResult.Submissions);
+            Assert.Equal(50, result.RoundResult.Scores.Single(score => score.PlayerId == players[1].Id).PointsAwarded);
             break;
         }
     }

@@ -13,7 +13,7 @@ public static class GameStateMapper
         return new GameStateResponse(snapshot.Id, MapStatus(snapshot.Status), snapshot.Version.ToString(CultureInfo.InvariantCulture), serverTime,
             snapshot.Game.Players.Select(player => new GamePlayerResponse(
                 player.Id, player.DisplayName, snapshot.Game.Scores[player.Id].Points, connected[player.Id])).ToArray(),
-            snapshot.Game.CurrentRound is { } round ? MapRound(round) : null);
+            snapshot.Game.CurrentRound is { } round ? MapRound(round, snapshot.Game.RoundResults.GetValueOrDefault(round.Id)) : null);
     }
 
     private static ApiSessionStatus MapStatus(SessionStatus status) => status switch
@@ -26,7 +26,14 @@ public static class GameStateMapper
         _ => throw new InvalidOperationException("Unsupported session status.")
     };
 
-    private static GameRoundResponse MapRound(Domain.GameRound round) => new(
+    public static RoundResultResponse MapResult(Domain.RoundResult result) => new(
+        result.RoundId, result.RoundNumber, CategoryMapper.Map(result.Category), result.ChallengeId,
+        result.BidderId, result.CallerId, result.WinnerId, result.RequiredWordCount, result.AcceptedWordCount,
+        result.Outcome == Domain.ChallengeOutcome.Succeeded ? ApiChallengeOutcome.Succeeded : ApiChallengeOutcome.Failed,
+        result.Submissions.Select(MapSubmission).ToArray(),
+        result.Scores.Select(score => new RoundPlayerScoreResponse(score.PlayerId, score.PointsAwarded, score.TotalPoints)).ToArray());
+
+    private static GameRoundResponse MapRound(Domain.GameRound round, Domain.RoundResult? result) => new(
         round.Id, round.Number, round.Status switch
         {
             Domain.RoundStatus.CategorySelection => ApiRoundStatus.CategorySelection,
@@ -37,7 +44,7 @@ public static class GameStateMapper
             _ => throw new InvalidOperationException("Unsupported round status.")
         }, round.Turn.PlayerId, round.Category is { } category ? CategoryMapper.Map(category) : null,
         round.HighestBid is { } bid ? new BidResponse(bid.PlayerId, bid.WordCount) : null,
-        round.Challenge is { } challenge ? MapChallenge(challenge) : null);
+        round.Challenge is { } challenge ? MapChallenge(challenge) : null, result is null ? null : MapResult(result));
 
     private static ChallengeResponse MapChallenge(Domain.Challenge challenge) => new(
         challenge.Id, challenge.Bid.PlayerId, challenge.ChallengerId, challenge.Bid.WordCount,
@@ -48,12 +55,14 @@ public static class GameStateMapper
             Domain.ChallengeOutcome.Failed => ApiChallengeOutcome.Failed,
             Domain.ChallengeOutcome.Cancelled => ApiChallengeOutcome.Cancelled,
             _ => throw new InvalidOperationException("Unsupported challenge outcome.")
-        }, challenge.AcceptedWordCount, challenge.Submissions.Select(word => new SubmittedWordResponse(word.Text,
-            word.Status switch
-            {
-                Domain.WordSubmissionStatus.Accepted => ApiSubmissionStatus.Accepted,
-                Domain.WordSubmissionStatus.Rejected => ApiSubmissionStatus.Rejected,
-                Domain.WordSubmissionStatus.Duplicate => ApiSubmissionStatus.Duplicate,
-                _ => throw new InvalidOperationException("Unsupported submission status.")
-            })).ToArray());
+        }, challenge.AcceptedWordCount, challenge.Submissions.Select(MapSubmission).ToArray());
+
+    private static SubmittedWordResponse MapSubmission(Domain.SubmittedWord word) => new(word.Text,
+        word.Status switch
+        {
+            Domain.WordSubmissionStatus.Accepted => ApiSubmissionStatus.Accepted,
+            Domain.WordSubmissionStatus.Rejected => ApiSubmissionStatus.Rejected,
+            Domain.WordSubmissionStatus.Duplicate => ApiSubmissionStatus.Duplicate,
+            _ => throw new InvalidOperationException("Unsupported submission status.")
+        });
 }

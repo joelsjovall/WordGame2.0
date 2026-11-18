@@ -44,7 +44,7 @@ internal sealed class ContractDocumentTransformer : IOpenApiDocumentTransformer
                 roundSchema is OpenApiSchema round)
             {
                 round.Type = (round.Type ?? JsonSchemaType.Object) | JsonSchemaType.Null;
-                foreach (var name in new[] { "category", "highestBid", "challenge" })
+                foreach (var name in new[] { "category", "highestBid", "challenge", "result" })
                 {
                     if (round.Properties?.TryGetValue(name, out var field) == true && field is OpenApiSchema nullable)
                     {

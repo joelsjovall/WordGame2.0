@@ -23,11 +23,12 @@ public sealed record GameEngineError(GameEngineErrorCode Code, string Message);
 // State is a detached backend snapshot, not a public transport response.
 public sealed class GameEngineResult
 {
-    private GameEngineResult(SessionSnapshot? state, GameEngineError? error, WordSubmissionStatus? submissionStatus = null)
+    private GameEngineResult(SessionSnapshot? state, GameEngineError? error, WordSubmissionStatus? submissionStatus = null, RoundResult? roundResult = null)
     {
         State = state;
         Error = error;
         SubmissionStatus = submissionStatus;
+        RoundResult = roundResult ?? (state?.Game.CurrentRound is { } current ? state.Game.RoundResults.GetValueOrDefault(current.Id) : null);
         ChallengeResult = state?.Game.CurrentRound is { Challenge: { Outcome: not ChallengeOutcome.Pending } } round
             ? Challenges.ChallengeResult.From(round) : null;
     }
@@ -37,8 +38,9 @@ public sealed class GameEngineResult
     public GameEngineError? Error { get; }
     public WordSubmissionStatus? SubmissionStatus { get; }
     public ChallengeResult? ChallengeResult { get; }
+    public RoundResult? RoundResult { get; }
 
-    internal static GameEngineResult Accepted(SessionSnapshot state, WordSubmissionStatus? submissionStatus = null) => new(state, null, submissionStatus);
+    internal static GameEngineResult Accepted(SessionSnapshot state, WordSubmissionStatus? submissionStatus = null, RoundResult? roundResult = null) => new(state, null, submissionStatus, roundResult);
     internal static GameEngineResult Missing() => Rejected(GameEngineErrorCode.NotFound, "The game was not found.");
     internal static GameEngineResult Rejected(GameEngineErrorCode code, string message) => new(null, new(code, message));
 }
