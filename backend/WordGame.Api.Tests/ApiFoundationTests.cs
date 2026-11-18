@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using WordGame.Api.Tests.Fixtures;
 using WordGame.Application.Categories;
+using WordGame.Application.Games;
 using WordGame.Application.Sessions;
 using WordGame.Application.Words;
 using WordGame.Domain;
@@ -14,6 +15,18 @@ namespace WordGame.Api.Tests;
 
 public sealed class ApiFoundationTests
 {
+    [Fact]
+    public async Task GameEngineUsesTheRegisteredSharedSessionStore()
+    {
+        using var factory = new WordGameApiFactory();
+        var engine = factory.Services.GetRequiredService<GameEngine>();
+        var store = factory.Services.GetRequiredService<IGameSessionStore>();
+        var result = await engine.CreateAsync([new Player(Guid.NewGuid(), "Alice"), new Player(Guid.NewGuid(), "Bob")]);
+
+        Assert.True(result.Succeeded);
+        Assert.NotNull(await store.GetAsync(result.State!.Id));
+    }
+
     [Fact]
     public async Task HostedCleanupAutomaticallyRemovesExpiredSessions()
     {

@@ -11,7 +11,7 @@ The application supports two game modes:
 
 Both modes share the same server-authoritative gameplay engine.
 
-This is the intended product architecture. The current foundation implements domain models/invariants, word validation, local JSON category storage, an in-memory session store, public category metadata endpoints, API contracts, a placeholder React frontend, tests, and CI. Complete game orchestration, guest authentication, lobbies, matchmaking, and SSE endpoints remain planned. See [project context](project-context.md) for changing progress.
+This is the intended product architecture. The current implementation includes domain models/invariants, word validation, local JSON category storage, an in-memory session store, the shared Application [GameEngine lifecycle](game-engine.md), public category metadata endpoints, API contracts, a placeholder React frontend, tests, and CI. Complete gameplay policies, guest authentication, lobbies, matchmaking, and SSE endpoints remain planned. See [project context](project-context.md) for changing progress.
 
 ## Architecture
 

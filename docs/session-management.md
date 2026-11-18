@@ -27,7 +27,7 @@ Session status describes multiplayer lifecycle separately from Domain's gameplay
 | Active -> Completed | Domain Game is Completed. |
 | Waiting / Starting / Active -> Abandoned | Explicit abandonment, or everyone has been disconnected for the configured grace period. Domain Game is cancelled too. |
 
-Waiting/Starting must accompany GameStatus.WaitingToStart; Active must accompany InProgress; Completed must accompany Completed; Abandoned must accompany Cancelled. Inconsistent combinations cannot commit. The future engine performs gameplay transitions and sets the corresponding session status within the same update. Terminal sessions cannot restart; a rematch creates a new session.
+Waiting/Starting must accompany GameStatus.WaitingToStart; Active must accompany InProgress; Completed must accompany Completed; Abandoned must accompany Cancelled. Inconsistent combinations cannot commit. The engine performs gameplay transitions and sets the corresponding session status within the same update. Terminal sessions cannot restart; a rematch creates a new session.
 
 An update for a missing/removed session throws KeyNotFoundException. Removal and updates use the same entry gate, so a queued request cannot commit against a removed session or recreate it.
 
@@ -72,7 +72,7 @@ All sessions, presence, subscriptions, and revisions live in one backend process
 
 A persistent store can replace `IGameSessionStore` while keeping Domain gameplay rules and the Application session model. It must preserve atomic draft/commit behavior, detached reads, per-session serialization or optimistic version checks, terminal cleanup safety, and post-commit notification semantics. Persistence mapping/restoration and durable notification delivery are not implemented by this issue.
 
-The in-memory store is registered once per backend host. Retention settings are resolved after host configuration is finalized. API routes, lobby membership/readiness, the GameEngine, forfeit policy, and actual SSE transport remain later issues.
+The in-memory store is registered once per backend host. Retention settings are resolved after host configuration is finalized. F013's [GameEngine](game-engine.md) now performs core lifecycle transitions through this boundary. API routes, lobby membership/readiness, forfeit policy, and actual SSE transport remain later issues.
 
 ## Acceptance evidence
 
