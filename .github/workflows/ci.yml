@@ -1,0 +1,212 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: 'true'
+  DOTNET_NOLOGO: 'true'
+  DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  backend:
+    name: Backend build and tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: ga
+      - name: Restore backend
+        run: dotnet restore backend/WordGame.sln
+      - name: Check backend formatting
+        run: dotnet format backend/WordGame.sln --verify-no-changes --no-restore
+      - name: Build backend
+        run: dotnet build backend/WordGame.sln --configuration Release --no-restore --warnaserror
+      - name: Run backend unit tests
+        run: |
+          for layer in Domain Application Infrastructure; do
+            dotnet test "backend/WordGame.$layer.Tests/WordGame.$layer.Tests.csproj" \
+              --configuration Release --no-build \
+              --logger "trx;LogFileName=$layer.trx" --results-directory "$RUNNER_TEMP/backend-results"
+          done
+      - name: Run API integration tests
+        run: >-
+          dotnet test backend/WordGame.Api.Tests/WordGame.Api.Tests.csproj
+          --configuration Release --no-build
+          --logger 'trx;LogFileName=Api.trx' --results-directory "$RUNNER_TEMP/backend-results"
+      - name: Upload backend test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: backend-test-results
+          path: ${{ runner.temp }}/backend-results
+          retention-days: 7
+          if-no-files-found: warn
+
+  frontend:
+    name: Frontend build and tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.x'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Check TypeScript
+        run: npm run typecheck
+      - name: Lint frontend
+        run: npm run lint
+      - name: Check frontend formatting
+        run: npm run format:check
+      - name: Run frontend tests
+        run: npm test -- --reporter=default --reporter=junit --outputFile.junit=test-results/vitest.xml
+      - name: Build frontend
+        run: npm run build
+      - name: Upload frontend test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: frontend-test-results
+          path: frontend/test-results/vitest.xml
+          retention-days: 7
+          if-no-files-found: warn
+
+  e2e:
+    name: Browser smoke tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.x'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: ga
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Install Chromium and system dependencies
+        run: npm exec playwright install --with-deps chromium
+      - name: Run desktop and mobile browser tests
+        run: npm run test:e2e -- --reporter=list,html,junit
+        env:
+          PLAYWRIGHT_JUNIT_OUTPUT_FILE: test-results/playwright.xml
+      - name: Upload browser reports and failure traces
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: browser-test-results
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+          retention-days: 7
+          if-no-files-found: warn
+
+  dependencies:
+    name: Dependency scanning
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.x'
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: ga
+      - name: Verify dependency audit failure policy
+        run: node --test scripts/tests/*.test.mjs
+      - name: Audit npm dependencies
+        run: node scripts/check-npm-audit.mjs
+      - name: Audit direct and transitive NuGet dependencies
+        if: ${{ !cancelled() }}
+        run: >-
+          dotnet restore backend/WordGame.sln --force-evaluate
+          -p:NuGetAudit=true -p:NuGetAuditMode=all -p:NuGetAuditLevel=high
+          -warnaserror
+
+  secrets:
+    name: Secret scanning
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install checksum-verified Gitleaks
+        run: |
+          curl --fail --silent --show-error --location \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz \
+            --output "$RUNNER_TEMP/gitleaks.tar.gz"
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  $RUNNER_TEMP/gitleaks.tar.gz" | sha256sum --check
+          tar -xzf "$RUNNER_TEMP/gitleaks.tar.gz" -C "$RUNNER_TEMP" gitleaks
+      - name: Scan complete repository history with redacted output
+        run: '"$RUNNER_TEMP/gitleaks" git . --redact=100 --no-banner --log-opts="--all"'
+
+  ci:
+    name: CI status
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    needs: [backend, frontend, e2e, dependencies, secrets]
+    if: ${{ always() }}
+    steps:
+      - name: Summarize and enforce every required job
+        env:
+          JOB_RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import sys
+
+          results = json.loads(os.environ['JOB_RESULTS'])
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write('## CI results\n\n| Job | Result |\n| --- | --- |\n')
+              for name, job in results.items():
+                  summary.write(f"| {name} | {job['result']} |\n")
+          failed = [name for name, job in results.items() if job['result'] != 'success']
+          if failed:
+              print('::error::Required jobs did not succeed: ' + ', '.join(failed))
+              sys.exit(1)
+          PY
