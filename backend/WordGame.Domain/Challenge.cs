@@ -34,6 +34,7 @@ public sealed class Challenge
     public IReadOnlyList<SubmittedWord> Submissions { get; }
     public ChallengeOutcome Outcome { get; private set; }
     public int AcceptedWordCount => submissions.Count(word => word.Status == WordSubmissionStatus.Accepted);
+    public bool HasMetBid => AcceptedWordCount >= Bid.WordCount;
 
     internal Challenge Copy()
     {
@@ -75,10 +76,7 @@ public sealed class Challenge
         }
 
         DomainGuard.State(Outcome == ChallengeOutcome.Pending, "The challenge has already ended.");
-        DomainGuard.State(
-            outcome == ChallengeOutcome.Succeeded
-                ? AcceptedWordCount >= Bid.WordCount
-                : AcceptedWordCount < Bid.WordCount,
+        DomainGuard.State(outcome == (HasMetBid ? ChallengeOutcome.Succeeded : ChallengeOutcome.Failed),
             "The outcome must agree with the accepted word count.");
         Outcome = outcome;
     }

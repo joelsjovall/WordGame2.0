@@ -62,8 +62,9 @@ The planned backlog contains 57 issues across six milestones. Work proceeds one 
 - **Completed:** [F018, Implement scoring and points system (#20)](https://github.com/joelsjovall/WordGame2.0/issues/20), merged through PR #77 (merge commit `fa22249`). See [scoring](scoring.md) for finalized rules and atomic awards.
 - **Completed:** [F019, Implement round results and progression (#21)](https://github.com/joelsjovall/WordGame2.0/issues/21), merged through PR #78 (merge commit `64999a0`). See [round results](round-results.md) for retained results and guarded progression.
 - **Completed:** [F020, Implement match completion and win conditions (#22)](https://github.com/joelsjovall/WordGame2.0/issues/22), merged through PR #79 (merge commit `875a7d7`). See [match completion](match-completion.md) for confirmed formats, final standings, and ties.
-- **Active:** [F021, Implement real-time game state synchronization (#23)](https://github.com/joelsjovall/WordGame2.0/issues/23). See [game synchronization](game-synchronization.md) for authenticated state/SSE reads, notifications, client recovery, and deadlines. Guest credential issuance and gameplay UI/actions remain later work.
-- **Current local state (2026-11-18):** Working on `feature/F021-state-synchronization` from updated `main`. Commit and push require user authorization.
+- **Completed:** [F021, Implement real-time game state synchronization (#23)](https://github.com/joelsjovall/WordGame2.0/issues/23), merged through PR #80 (merge commit `2afdae7`). See [game synchronization](game-synchronization.md) for protected reads, subscriptions, recovery, and deadlines.
+- **Active:** [F022, Refactor and test core gameplay engine (#24)](https://github.com/joelsjovall/WordGame2.0/issues/24). See [core gameplay review](core-gameplay-review.md) for the audit, targeted cleanup, error handling, and complete-match regression coverage.
+- **Current local state (2026-11-18):** Working on `refactor/F022-core-gameplay-review` from updated `main`. Commit and push require user authorization.
 - **Outstanding security follow-up:** A database credential was previously exposed in the public V1 repository. Never reuse or reproduce it. Rotation must be verified; this handoff provides no evidence that rotation has occurred.
 
 Update this section as issues are completed or the handoff state changes.

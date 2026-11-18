@@ -98,15 +98,6 @@ public sealed class GameEngine(IGameSessionStore sessions, SessionRetention rete
         session.BeginCategorySelection(categories.Rules.Timeout);
     }
 
-    // Normal completion is automatic; this trusted operation cannot bypass the configured limit.
-    public Task<GameEngineResult> CompleteAsync(Guid gameId, CancellationToken cancellationToken = default) =>
-        commands.UpdateAsync(gameId, session =>
-        {
-            _ = GamePhaseGuard.ActiveRound(session);
-            session.Game.Complete();
-            session.Complete();
-        }, cancellationToken);
-
     public Task<GameEngineResult> CancelAsync(Guid gameId, CancellationToken cancellationToken = default) =>
         commands.UpdateAsync(gameId, session => session.Abandon(), cancellationToken);
 

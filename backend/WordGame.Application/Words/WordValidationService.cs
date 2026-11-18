@@ -16,11 +16,10 @@ public sealed class WordValidationService : IWordValidationService
             throw new ArgumentException("Submission history must not contain null entries.", nameof(previousSubmissions));
         }
 
-        var normalized = WordNormalizer.Normalize(word);
-        var answer = category.FindAnswer(normalized);
+        var answer = category.FindAnswer(word);
         if (answer is null)
         {
-            return new WordValidationResult(normalized, WordSubmissionStatus.Rejected, null);
+            return new WordValidationResult(WordSubmissionStatus.Rejected, null);
         }
 
         var duplicate = previousSubmissions.Any(submission =>
@@ -28,7 +27,6 @@ public sealed class WordValidationService : IWordValidationService
             StringComparer.Ordinal.Equals(submission.CanonicalAnswerId, answer.Id));
 
         return new WordValidationResult(
-            normalized,
             duplicate ? WordSubmissionStatus.Duplicate : WordSubmissionStatus.Accepted,
             answer.Id);
     }

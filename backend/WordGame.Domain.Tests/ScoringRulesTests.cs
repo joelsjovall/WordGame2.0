@@ -3,6 +3,17 @@ namespace WordGame.Domain.Tests;
 public sealed class ScoringRulesTests
 {
     [Theory]
+    [InlineData(CategoryDifficulty.Easy, 1)]
+    [InlineData(CategoryDifficulty.Medium, 2)]
+    [InlineData(CategoryDifficulty.Hard, 3)]
+    public void DefaultWordPointsAreExplicitForEachDifficulty(CategoryDifficulty difficulty, int expected) =>
+        Assert.Equal(expected, ScoringRules.DefaultPointsPerWord(difficulty));
+
+    [Fact]
+    public void UnknownDifficultyHasNoImplicitScore() =>
+        Assert.Throws<ArgumentOutOfRangeException>(() => ScoringRules.DefaultPointsPerWord((CategoryDifficulty)99));
+
+    [Theory]
     [InlineData(1, true, 52, 0)]
     [InlineData(2, true, 54, 0)]
     [InlineData(3, true, 56, 0)]

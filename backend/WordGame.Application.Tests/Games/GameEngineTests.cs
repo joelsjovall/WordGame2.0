@@ -46,7 +46,6 @@ public sealed class GameEngineTests
         Assert.Equal(players[1].Id, next.Game.CurrentRound.Turn.PlayerId);
         await FinishRound(created.Id, players[1].Id, players[(2 % count)].Id);
         var completed = State(await engine.GetStateAsync(created.Id));
-        await Reject(created.Id, () => engine.CompleteAsync(created.Id), GameEngineErrorCode.InvalidState);
         Assert.Equal(SessionStatus.Completed, completed.Status);
         Assert.Equal(GameStatus.Completed, completed.Game.Status);
         Assert.Equal(clock.GetUtcNow(), completed.EndedAt);
@@ -62,7 +61,6 @@ public sealed class GameEngineTests
         var players = Players();
         var id = State(await engine.CreateAsync(players)).Id;
         await Reject(id, () => engine.StartAsync(id), GameEngineErrorCode.InvalidState);
-        await Reject(id, () => engine.CompleteAsync(id), GameEngineErrorCode.InvalidState);
         State(await engine.InitializeAsync(id));
         await Reject(id, () => engine.InitializeAsync(id), GameEngineErrorCode.InvalidState);
         State(await engine.StartAsync(id));
@@ -82,7 +80,6 @@ public sealed class GameEngineTests
         await Reject(id, () => PlaceBidAsync(id, players[1].Id, 2), GameEngineErrorCode.InvalidState);
         State(await CallBluffAsync(id, players[1].Id));
         await Reject(id, () => engine.ResolveChallengeAsync(id), GameEngineErrorCode.InvalidState);
-        await Reject(id, () => engine.CompleteAsync(id), GameEngineErrorCode.InvalidState);
         clock.Advance(Duration);
         State(await engine.ResolveChallengeAsync(id));
         await Reject(id, () => engine.ResolveChallengeAsync(id), GameEngineErrorCode.InvalidState);

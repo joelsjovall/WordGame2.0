@@ -46,7 +46,7 @@ builder.Services.AddSingleton(_ => new CategorySelectionRules(
         ? builder.Configuration.GetValue("Gameplay:CategorySelectionTimeout", TimeSpan.FromSeconds(45)) : null,
     builder.Configuration.GetSection("Gameplay:AllowedDifficulties").Get<CategoryDifficulty[]>(),
     Enum.GetValues<CategoryDifficulty>().ToDictionary(difficulty => difficulty,
-        difficulty => builder.Configuration.GetValue($"Gameplay:DifficultyMultipliers:{difficulty}", (int)difficulty + 1)),
+        difficulty => builder.Configuration.GetValue($"Gameplay:DifficultyMultipliers:{difficulty}", ScoringRules.DefaultPointsPerWord(difficulty))),
     builder.Configuration.GetValue("Gameplay:CategorySelectionTimeoutBehavior", CategoryTimeoutBehavior.AutoSelect)));
 builder.Services.AddSingleton<CategorySelectionService>();
 builder.Services.AddSingleton(_ => new ChallengeRules(builder.Configuration.GetValue("Gameplay:ChallengeDuration", TimeSpan.FromSeconds(30))));

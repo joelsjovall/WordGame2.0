@@ -40,6 +40,7 @@ public sealed class ChallengeTests
 
         Assert.Equal(3, challenge.Submissions.Count);
         Assert.Equal(1, challenge.AcceptedWordCount);
+        Assert.False(challenge.HasMetBid);
         Assert.Throws<NotSupportedException>(() => ((IList<SubmittedWord>)challenge.Submissions).Clear());
     }
 
@@ -58,9 +59,11 @@ public sealed class ChallengeTests
     public void SuccessRequiresEnoughAcceptedWordsAndIsTerminal()
     {
         var challenge = CreateChallenge();
+        Assert.False(challenge.HasMetBid);
         Assert.Throws<InvalidOperationException>(() => challenge.Resolve(ChallengeOutcome.Succeeded));
         challenge.RecordSubmission(DomainTestData.AcceptedWord(challenge, "answer:1"));
         challenge.RecordSubmission(DomainTestData.AcceptedWord(challenge, "answer:2"));
+        Assert.True(challenge.HasMetBid);
         Assert.Throws<InvalidOperationException>(() => challenge.Resolve(ChallengeOutcome.Failed));
         challenge.Resolve(ChallengeOutcome.Succeeded);
 

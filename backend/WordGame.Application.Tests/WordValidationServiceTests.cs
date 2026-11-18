@@ -49,8 +49,6 @@ public sealed class WordValidationServiceTests
         var alias = service.Validate(category, "BIG\u00a0  APPLE", []);
         Assert.Equal(WordSubmissionStatus.Accepted, value.Status);
         Assert.Equal(WordSubmissionStatus.Accepted, alias.Status);
-        Assert.Equal("new york", value.NormalizedText);
-        Assert.Equal("big apple", alias.NormalizedText);
         Assert.Equal(value.CanonicalAnswerId, alias.CanonicalAnswerId);
     }
 

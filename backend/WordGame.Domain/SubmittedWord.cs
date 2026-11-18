@@ -16,7 +16,6 @@ public sealed record SubmittedWord
 
         PlayerId = DomainGuard.Id(playerId, nameof(playerId));
         Text = DomainGuard.Text(text, nameof(text));
-        NormalizedText = WordNormalizer.Normalize(Text);
         SubmittedAt = submittedAt;
         Status = status;
         CanonicalAnswerId = status == WordSubmissionStatus.Accepted
@@ -26,7 +25,6 @@ public sealed record SubmittedWord
 
     public Guid PlayerId { get; }
     public string Text { get; }
-    public string NormalizedText { get; }
     public DateTimeOffset SubmittedAt { get; }
     public WordSubmissionStatus Status { get; }
     public string? CanonicalAnswerId { get; }

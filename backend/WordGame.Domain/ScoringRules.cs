@@ -10,6 +10,14 @@ public sealed class ScoringRules
 
     public int OutcomeBonus { get; }
 
+    public static int DefaultPointsPerWord(CategoryDifficulty difficulty) => difficulty switch
+    {
+        CategoryDifficulty.Easy => 1,
+        CategoryDifficulty.Medium => 2,
+        CategoryDifficulty.Hard => 3,
+        _ => throw new ArgumentOutOfRangeException(nameof(difficulty))
+    };
+
     // Accept only authoritative, completed rounds; the game owns the award replay guard.
     public IReadOnlyList<PlayerScore> Calculate(GameRound round, int pointsPerWord)
     {
