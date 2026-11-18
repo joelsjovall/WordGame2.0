@@ -37,6 +37,20 @@ public sealed class Game
     public GameStatus Status { get; private set; } = GameStatus.WaitingToStart;
     public GameRound? CurrentRound => rounds.LastOrDefault();
 
+    // Copies mutable aggregates for isolated session transactions and detached reads.
+    public Game Copy()
+    {
+        var copy = new Game(Id, Players) { Status = Status };
+        copy.rounds.AddRange(rounds.Select(round => round.Copy()));
+        foreach (var score in scores)
+        {
+            copy.scores[score.Key] = score.Value;
+        }
+
+        copy.scoredRounds.UnionWith(scoredRounds);
+        return copy;
+    }
+
     // Pure roster lookup; the engine decides when to advance a turn or start a round.
     public Guid GetNextPlayerId(Guid currentPlayerId)
     {

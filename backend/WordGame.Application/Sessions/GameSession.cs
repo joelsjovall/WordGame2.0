@@ -1,0 +1,130 @@
+using WordGame.Domain;
+
+namespace WordGame.Application.Sessions;
+
+public sealed class GameSession
+{
+    private readonly Dictionary<Guid, HashSet<Guid>> connections;
+    private readonly Dictionary<Guid, DateTimeOffset?> disconnectedAt;
+
+    public GameSession(Guid id, IEnumerable<Player> players, DateTimeOffset createdAt)
+    {
+        Game = new Game(id, players);
+        CreatedAt = UpdatedAt = createdAt;
+        AllDisconnectedSince = createdAt;
+        connections = Game.Players.ToDictionary(player => player.Id, _ => new HashSet<Guid>());
+        disconnectedAt = Game.Players.ToDictionary(player => player.Id, _ => (DateTimeOffset?)createdAt);
+    }
+
+    private GameSession(GameSession original, DateTimeOffset now)
+    {
+        Game = original.Game.Copy();
+        Status = original.Status;
+        CreatedAt = original.CreatedAt;
+        UpdatedAt = now;
+        EndedAt = original.EndedAt;
+        AllDisconnectedSince = original.AllDisconnectedSince;
+        connections = original.connections.ToDictionary(pair => pair.Key, pair => new HashSet<Guid>(pair.Value));
+        disconnectedAt = new Dictionary<Guid, DateTimeOffset?>(original.disconnectedAt);
+    }
+
+    public Guid Id => Game.Id;
+    public Game Game { get; }
+    public SessionStatus Status { get; private set; }
+    public DateTimeOffset CreatedAt { get; }
+    public DateTimeOffset UpdatedAt { get; }
+    public DateTimeOffset? EndedAt { get; private set; }
+    public DateTimeOffset? AllDisconnectedSince { get; private set; }
+
+    public GameSession Copy(DateTimeOffset now) => new(this, now);
+
+    public SessionSnapshot Snapshot(long version) => new(Id, Status, version, CreatedAt, UpdatedAt, EndedAt,
+        Array.AsReadOnly(Game.Players.Select(player =>
+            new PlayerPresence(player.Id, connections[player.Id].Count, disconnectedAt[player.Id])).ToArray()),
+        Game.Copy());
+
+    public void BeginStarting()
+    {
+        Require(Status == SessionStatus.Waiting, "Only a waiting session can start.");
+        Status = SessionStatus.Starting;
+    }
+
+    public void Activate()
+    {
+        Require(Status == SessionStatus.Starting && Game.Status == GameStatus.InProgress,
+            "Activation requires a starting session and an initialized game.");
+        Status = SessionStatus.Active;
+    }
+
+    public void Complete()
+    {
+        Require(Status == SessionStatus.Active && Game.Status == GameStatus.Completed,
+            "Completion requires an active session and a completed game.");
+        Status = SessionStatus.Completed;
+        EndedAt = UpdatedAt;
+    }
+
+    public void Abandon()
+    {
+        Require(Status is not (SessionStatus.Completed or SessionStatus.Abandoned), "The session has already ended.");
+        if (Game.Status != GameStatus.Cancelled)
+        {
+            Game.Cancel();
+        }
+
+        Status = SessionStatus.Abandoned;
+        EndedAt = UpdatedAt;
+    }
+
+    public void Connect(Guid playerId, Guid connectionId)
+    {
+        Require(Status != SessionStatus.Abandoned, "An abandoned session cannot reconnect.");
+        Require(connections.ContainsKey(playerId), "The player must belong to this session.");
+        if (connectionId == Guid.Empty)
+        {
+            throw new ArgumentException("Connection IDs must not be empty.", nameof(connectionId));
+        }
+
+        Require(!connections.Any(pair => pair.Key != playerId && pair.Value.Contains(connectionId)),
+            "A connection cannot belong to multiple players.");
+        connections[playerId].Add(connectionId);
+        disconnectedAt[playerId] = null;
+        AllDisconnectedSince = null;
+    }
+
+    public void Disconnect(Guid playerId, Guid connectionId)
+    {
+        Require(connections.ContainsKey(playerId), "The player must belong to this session.");
+        if (!connections[playerId].Remove(connectionId) || connections[playerId].Count > 0)
+        {
+            return;
+        }
+
+        disconnectedAt[playerId] = UpdatedAt;
+        if (connections.Values.All(ids => ids.Count == 0))
+        {
+            AllDisconnectedSince = UpdatedAt;
+        }
+    }
+
+    public void EnsureConsistent()
+    {
+        var expected = Status switch
+        {
+            SessionStatus.Waiting or SessionStatus.Starting => GameStatus.WaitingToStart,
+            SessionStatus.Active => GameStatus.InProgress,
+            SessionStatus.Completed => GameStatus.Completed,
+            SessionStatus.Abandoned => GameStatus.Cancelled,
+            _ => throw new InvalidOperationException("Unknown session status.")
+        };
+        Require(Game.Status == expected, "Session and game lifecycle states must agree before commit.");
+    }
+
+    private static void Require(bool condition, string message)
+    {
+        if (!condition)
+        {
+            throw new InvalidOperationException(message);
+        }
+    }
+}

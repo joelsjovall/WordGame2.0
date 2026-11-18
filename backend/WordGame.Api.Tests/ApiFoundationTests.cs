@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using WordGame.Application.Categories;
+using WordGame.Application.Sessions;
 using WordGame.Application.Words;
 using WordGame.Domain;
 
@@ -13,6 +14,28 @@ namespace WordGame.Api.Tests;
 
 public sealed class ApiFoundationTests
 {
+    [Fact]
+    public async Task HostedCleanupAutomaticallyRemovesExpiredSessions()
+    {
+        using var factory = CreateFactory("Production").WithWebHostBuilder(builder =>
+            builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(
+                new Dictionary<string, string?>
+                {
+                    ["Sessions:DisconnectedGrace"] = "00:00:00",
+                    ["Sessions:AbandonedRetention"] = "00:00:00",
+                    ["Sessions:CleanupInterval"] = "00:00:00.020"
+                })));
+        var store = factory.Services.GetRequiredService<IGameSessionStore>();
+        var session = await store.CreateAsync(
+            [new Player(Guid.NewGuid(), "Alice"), new Player(Guid.NewGuid(), "Bob")]);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        while (await store.GetAsync(session.Id, timeout.Token) is not null)
+        {
+            await Task.Delay(10, timeout.Token);
+        }
+        Assert.Null(await store.GetAsync(session.Id));
+    }
+
     [Fact]
     public async Task ShippedDatasetsAreRegisteredAndUsableByTheValidator()
     {

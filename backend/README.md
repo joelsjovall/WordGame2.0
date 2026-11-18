@@ -19,15 +19,17 @@ Set the frontend's `VITE_API_BASE_URL=http://localhost:5000` in `frontend/.env.l
 | Project | References | Responsibility |
 | --- | --- | --- |
 | `WordGame.Domain` | None | Shared entities, lifecycle guards, turns, scores, and challenge models |
-| `WordGame.Application` | Domain | Word validation and category-provider contracts; future session orchestration |
-| `WordGame.Infrastructure` | Application | JSON category loading/caching; future external providers and storage |
+| `WordGame.Application` | Domain | Validation, session lifecycle, and provider/store contracts |
+| `WordGame.Infrastructure` | Application | JSON category loading/caching and the in-memory session store |
 | `WordGame.Api` | Application, Infrastructure | HTTP endpoints, middleware, configuration, composition root |
 | `WordGame.Api.Tests` | API | xUnit HTTP integration tests using WebApplicationFactory |
 | `WordGame.Domain.Tests` | Domain | xUnit model and invariant tests without an API host |
 | `WordGame.Application.Tests` | Application | xUnit word validation and provider-boundary tests |
-| `WordGame.Infrastructure.Tests` | Infrastructure | xUnit JSON loading, validation, and cache tests |
+| `WordGame.Infrastructure.Tests` | Infrastructure | xUnit JSON loading/cache and session concurrency/cleanup tests |
 
 The Domain remains independent of ASP.NET Core and infrastructure; see [domain models](../docs/domain-models.md) for relationships and [category validation](../docs/category-validation.md) for validation rules. The API registers the stateless word validator and a JSON category provider through built-in dependency injection. The provider loads and validates all datasets before traffic is accepted, with cached reads afterward. See [dataset setup](../docs/category-datasets.md) to add categories or configure `Categories:Directory`. No database or extra runtime package is needed.
+
+The API also registers the shared in-memory session store and automatic cleanup worker. See [session management](../docs/session-management.md) for isolation, lifecycle, reconnection, change notifications, and `Sessions` retention settings. Active sessions are lost on restart; this store supports one backend instance.
 
 ## Configuration and conventions
 

@@ -54,7 +54,7 @@ Terminal states cannot restart. State changes use guarded methods, not public st
 
 F013-F019 will supply engine orchestration, automatic turn progression and starting-player policy, timeout scheduling, category availability, submission orchestration using F006 validation, automatic challenge resolution, and match win conditions. There is no `GameEngine`, networking, or provider implementation here.
 
-The domain does not read a clock, retrieve datasets, or calculate a points formula. Its category snapshot provides pure answer lookup; Application's F006 validator combines lookup with authoritative accepted history. Callers must be trusted backend code; these objects are not request DTOs. A future engine must serialize actions within a session; these mutable aggregates are not thread-safe.
+The domain does not read a clock, retrieve datasets, or calculate a points formula. Its category snapshot provides pure answer lookup; Application's F006 validator combines lookup with authoritative accepted history. Callers must be trusted backend code; these objects are not request DTOs. The F008 [session store](session-management.md) serializes updates against isolated drafts and uses `Game.Copy` for deep copies of mutable round/challenge/history/score containers. Bare Domain aggregates remain non-thread-safe and must not bypass that store when shared by multiplayer requests.
 
 F018 explicitly leaves the scoring formula unfinalized. The nonnegative integer score representation makes no choice about difficulty multipliers, winning targets, or actual award amounts. Confirm those rules in F018; penalties or negative totals would require revisiting this representation.
 
