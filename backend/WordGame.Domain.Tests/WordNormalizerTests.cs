@@ -12,9 +12,11 @@ public sealed class WordNormalizerTests
     [InlineData("", "")]
     [InlineData(" \t\r\n ", "")]
     [InlineData("\u00a0STOCKHOLM\u00a0", "stockholm")]
-    [InlineData(" New  York ", "new  york")]
+    [InlineData(" New  York ", "new york")]
+    [InlineData("New\t\r\n York", "new york")]
+    [InlineData("New\u00a0\u2003York", "new york")]
     [InlineData(" SÃO-PAULO ", "são-paulo")]
-    public void NormalizationPreservesTheReviewedV1Contract(string? input, string expected)
+    public void NormalizationIgnoresCaseAndCollapsesWhitespace(string? input, string expected)
     {
         Assert.Equal(expected, WordNormalizer.Normalize(input));
     }
