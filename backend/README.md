@@ -40,7 +40,7 @@ The API also registers the shared in-memory session store and automatic cleanup 
 - Unexpected request exceptions return HTTP 500 Problem Details with a generic title and trace ID; exception messages and stack traces stay out of responses, including in Development. Domain-specific error mapping is future gameplay work.
 - CORS is enabled only in Development, for the exact origins `http://localhost:5173` and `http://127.0.0.1:5173`. These are configured under `Cors:AllowedOrigins` in `appsettings.Development.json`; change the list if the Vite port changes. Credentials are not enabled. CORS does not authenticate players. Production cross-origin policy must be explicitly designed when deploying.
 - Configuration uses ASP.NET Core defaults (JSON, environment variables, command-line arguments). For example, `Cors__AllowedOrigins__0` overrides the first development origin. Keep secrets out of tracked files; future sensitive values belong in environment variables or user secrets.
-- HTTPS termination, identity, SSE, gameplay, category providers, storage, and production deployment are outside F003.
+- Identity, SSE endpoints, complete game orchestration, persistent storage, and production deployment remain planned. Category providers and in-memory storage are implemented as described above.
 
 Tests cover database-free startup, health responses, allowed development preflights, rejected origins, production CORS behavior, safe unexpected-error responses, and absence of demo endpoints.
 

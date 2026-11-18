@@ -9,7 +9,7 @@ WordGame 2.0 is a multiplayer word-bidding and bluffing game. Players select cat
 - [Architecture](architecture.md) is the source of truth for technical responsibilities and constraints.
 - [Development instructions](../AGENTS.md) define implementation standards and the issue workflow.
 
-This handoff captures the project decisions supplied by the owner on 2026-11-17. Roadmap and progress below have not been independently checked against live GitHub issues or Projects.
+This handoff records the project decisions supplied by the owner on 2026-11-17. Completed progress is checked against GitHub and Git history as issues finish; the full roadmap and GitHub Projects cards have not been independently audited.
 
 ## Product scope
 
@@ -52,8 +52,9 @@ The planned backlog contains 57 issues across six milestones. Work proceeds one 
 - **Completed:** [F008, Design multiplayer game state management (#10)](https://github.com/joelsjovall/WordGame2.0/issues/10), merged through PR #67 (merge commit `ec7bede`). See [session management](session-management.md) for isolation, retention, and restart limitations.
 - **Completed:** [F009, Define shared API contracts (#11)](https://github.com/joelsjovall/WordGame2.0/issues/11), merged through PR #68 (merge commit `2896d8c`). See [API contracts](api-contracts.md) for implemented metadata endpoints and future route specifications. Game/lobby/action/SSE/matchmaking handlers and identity remain later work.
 - **Completed:** [F010, Set up automated testing projects (#12)](https://github.com/joelsjovall/WordGame2.0/issues/12), merged through PR #69 (merge commit `63fca23`). See [automated testing](testing.md) for the shared API factory, Vitest, Playwright, and suite commands.
-- **Active:** [F011, Configure GitHub Actions CI pipeline (#13)](https://github.com/joelsjovall/WordGame2.0/issues/13). Workflow jobs cover builds, tests, dependency/secret scanning, reports, and a final status gate. See [continuous integration](ci.md) for maintenance and the temporary advisory exception. Hosted execution remains pending until the branch is pushed.
-- **Current local state (2026-11-18):** The user authorized preparing `feature/F011-github-actions-ci` from updated `main` and continuing implementation. Committing, pushing, and merging require user authorization.
+- **Completed:** [F011, Configure GitHub Actions CI pipeline (#13)](https://github.com/joelsjovall/WordGame2.0/issues/13), merged through PR #70 (merge commit `5ff4285`). Hosted PR and push-to-main CI both passed all six jobs. See [continuous integration](ci.md) for maintenance, required-check setup, and the temporary advisory exception.
+- **Active:** [F012, Create project documentation and coding standards (#14)](https://github.com/joelsjovall/WordGame2.0/issues/14). Root overview, contribution workflow, setup, coding conventions, and architecture decision rationale are implemented locally and reviewed against the foundation. Local links, builds/checks, and a live setup walkthrough passed; commit/PR workflow remains pending.
+- **Current local state (2026-11-18):** The user authorized preparing `docs/F012-project-documentation` from updated `main` and continuing implementation. Committing, pushing, and merging require user authorization.
 - **Outstanding security follow-up:** A database credential was previously exposed in the public V1 repository. Never reuse or reproduce it. Rotation must be verified; this handoff provides no evidence that rotation has occurred.
 
 Update this section as issues are completed or the handoff state changes.
