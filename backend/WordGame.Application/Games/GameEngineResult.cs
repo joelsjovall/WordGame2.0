@@ -8,7 +8,10 @@ public enum GameEngineErrorCode
     InvalidAction,
     InvalidState,
     PlayerNotInGame,
-    NotYourTurn
+    NotYourTurn,
+    PlayerUnavailable,
+    DuplicateAction,
+    StaleState
 }
 
 public sealed record GameEngineError(GameEngineErrorCode Code, string Message);

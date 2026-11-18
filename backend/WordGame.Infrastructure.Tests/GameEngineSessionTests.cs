@@ -10,20 +10,20 @@ public sealed class GameEngineSessionTests
     {
         var clock = new ManualSessionClock();
         var store = SessionTestData.Store(clock);
-        var engine = new GameEngine(store, clock);
+        var engine = Engine(store, clock);
         var players = SessionTestData.Players();
         var id = (await engine.CreateAsync(players)).State!.Id;
         Assert.True((await engine.InitializeAsync(id)).Succeeded);
-        Assert.True((await engine.StartAsync(id, players[0].Id)).Succeeded);
+        Assert.True((await engine.StartAsync(id)).Succeeded);
         Assert.True((await engine.SelectCategoryAsync(id, players[0].Id,
-            new Category("cars", "Cars", CategoryDifficulty.Easy))).Succeeded);
+            new Category("cars", "Cars", CategoryDifficulty.Easy), new(Guid.NewGuid(), (await store.GetAsync(id))!.Version))).Succeeded);
         var before = await store.GetAsync(id);
 
         var results = await Task.WhenAll(Enumerable.Range(0, 20)
-            .Select(_ => Task.Run(() => engine.PlaceBidAsync(id, players[0].Id, 1))));
+            .Select(_ => Task.Run(() => engine.PlaceBidAsync(id, players[0].Id, 1, new(Guid.NewGuid(), before!.Version)))));
 
         Assert.Single(results, result => result.Succeeded);
-        Assert.All(results.Where(result => !result.Succeeded), result => Assert.Equal(GameEngineErrorCode.NotYourTurn, result.Error!.Code));
+        Assert.All(results.Where(result => !result.Succeeded), result => Assert.Equal(GameEngineErrorCode.StaleState, result.Error!.Code));
         var after = await store.GetAsync(id);
         Assert.Equal(before!.Version + 1, after!.Version);
         Assert.Equal(2, after.Game.CurrentRound!.Turn.Number);
@@ -36,13 +36,13 @@ public sealed class GameEngineSessionTests
     {
         var clock = new ManualSessionClock();
         var store = SessionTestData.Store(clock);
-        var firstEngine = new GameEngine(store, clock);
-        var secondEngine = new GameEngine(store, clock);
+        var firstEngine = Engine(store, clock);
+        var secondEngine = Engine(store, clock);
         var players = SessionTestData.Players(4);
         var firstId = (await firstEngine.CreateAsync(players)).State!.Id;
         var secondId = (await secondEngine.CreateAsync(players)).State!.Id;
         await Task.WhenAll(firstEngine.InitializeAsync(firstId), secondEngine.InitializeAsync(secondId));
-        await Task.WhenAll(firstEngine.StartAsync(firstId, players[0].Id), secondEngine.StartAsync(secondId, players[2].Id));
+        await Task.WhenAll(firstEngine.StartAsync(firstId), secondEngine.StartAsync(secondId));
         var before = await store.GetAsync(secondId);
 
         Assert.True((await secondEngine.CancelAsync(firstId)).Succeeded);
@@ -51,6 +51,9 @@ public sealed class GameEngineSessionTests
         var unchanged = (await firstEngine.GetStateAsync(secondId)).State!;
         Assert.Equal(before!.Version, unchanged.Version);
         Assert.Equal(GameStatus.InProgress, unchanged.Game.Status);
-        Assert.Equal(players[2].Id, unchanged.Game.CurrentRound!.Turn.PlayerId);
+        Assert.Equal(players[0].Id, unchanged.Game.CurrentRound!.Turn.PlayerId);
     }
+
+    private static GameEngine Engine(WordGame.Application.Sessions.IGameSessionStore store, TimeProvider clock) =>
+        new(store, clock, new WordGame.Application.Sessions.SessionRetention(TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(5)));
 }

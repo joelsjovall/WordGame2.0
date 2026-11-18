@@ -11,6 +11,10 @@ public interface IGameSessionStore
     Task<SessionSnapshot> UpdateAsync(
         Guid sessionId, Action<GameSession> update, CancellationToken cancellationToken = default);
 
+    // Compare and execute under the same session lock. A conflict must not invoke the callback.
+    Task<SessionSnapshot> UpdateAsync(
+        Guid sessionId, long expectedVersion, Action<GameSession> update, CancellationToken cancellationToken = default);
+
     // Emits the current revision on subscription; slow consumers may receive only the latest revision.
     IAsyncEnumerable<SessionChange> WatchAsync(Guid sessionId, CancellationToken cancellationToken = default);
     Task<int> CleanupAsync(CancellationToken cancellationToken = default);

@@ -35,6 +35,17 @@ internal sealed class EngineTestStore(TimeProvider clock) : IGameSessionStore
         return Task.FromResult(next.Session.Snapshot(next.Version));
     }
 
+    public Task<SessionSnapshot> UpdateAsync(Guid sessionId, long expectedVersion, Action<GameSession> update, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (entries[sessionId].Version != expectedVersion)
+        {
+            throw new SessionVersionConflictException();
+        }
+
+        return UpdateAsync(sessionId, update, cancellationToken);
+    }
+
     public IAsyncEnumerable<SessionChange> WatchAsync(Guid sessionId, CancellationToken cancellationToken = default) =>
         throw new NotSupportedException("Engine unit tests do not use notifications.");
 

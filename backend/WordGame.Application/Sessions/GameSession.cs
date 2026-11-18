@@ -1,3 +1,4 @@
+using WordGame.Application.Games;
 using WordGame.Domain;
 
 namespace WordGame.Application.Sessions;
@@ -6,6 +7,8 @@ public sealed class GameSession
 {
     private readonly Dictionary<Guid, HashSet<Guid>> connections;
     private readonly Dictionary<Guid, DateTimeOffset?> disconnectedAt;
+    private readonly HashSet<Guid> departed = [];
+    private readonly HashSet<Guid> processedActions = [];
 
     public GameSession(Guid id, IEnumerable<Player> players, DateTimeOffset createdAt)
     {
@@ -26,6 +29,8 @@ public sealed class GameSession
         AllDisconnectedSince = original.AllDisconnectedSince;
         connections = original.connections.ToDictionary(pair => pair.Key, pair => new HashSet<Guid>(pair.Value));
         disconnectedAt = new Dictionary<Guid, DateTimeOffset?>(original.disconnectedAt);
+        departed.UnionWith(original.departed);
+        processedActions.UnionWith(original.processedActions);
     }
 
     public Guid Id => Game.Id;
@@ -40,7 +45,7 @@ public sealed class GameSession
 
     public SessionSnapshot Snapshot(long version) => new(Id, Status, version, CreatedAt, UpdatedAt, EndedAt,
         Array.AsReadOnly(Game.Players.Select(player =>
-            new PlayerPresence(player.Id, connections[player.Id].Count, disconnectedAt[player.Id])).ToArray()),
+            new PlayerPresence(player.Id, connections[player.Id].Count, disconnectedAt[player.Id], departed.Contains(player.Id))).ToArray()),
         Game.Copy());
 
     public void BeginStarting()
@@ -80,6 +85,7 @@ public sealed class GameSession
     {
         Require(Status != SessionStatus.Abandoned, "An abandoned session cannot reconnect.");
         Require(connections.ContainsKey(playerId), "The player must belong to this session.");
+        Require(!departed.Contains(playerId), "A player who left this match cannot reconnect.");
         if (connectionId == Guid.Empty)
         {
             throw new ArgumentException("Connection IDs must not be empty.", nameof(connectionId));
@@ -119,6 +125,32 @@ public sealed class GameSession
         };
         Require(Game.Status == expected, "Session and game lifecycle states must agree before commit.");
     }
+
+    internal bool HasProcessedAction(Guid actionId) => processedActions.Contains(actionId);
+    internal void RecordAction(Guid actionId) => processedActions.Add(actionId);
+    internal bool HasLeft(Guid playerId) => departed.Contains(playerId);
+    internal bool CanTakeTurn(Guid playerId, TimeSpan grace) => !departed.Contains(playerId) &&
+        (connections[playerId].Count > 0 || disconnectedAt[playerId] is { } since && UpdatedAt - since < grace);
+
+    internal void Leave(Guid playerId)
+    {
+        Require(connections.ContainsKey(playerId) && !departed.Contains(playerId), "The player is not eligible to leave.");
+        departed.Add(playerId);
+        connections[playerId].Clear();
+        disconnectedAt[playerId] = UpdatedAt;
+        if (connections.Values.All(ids => ids.Count == 0))
+        {
+            AllDisconnectedSince = UpdatedAt;
+        }
+
+        if (Status == SessionStatus.Waiting && Game.Players.Count(player => !HasLeft(player.Id)) < 2)
+        {
+            Abandon();
+        }
+    }
+
+    // Used by engine presence operations and the periodic cleanup sweep, using this draft's timestamp.
+    public bool ReconcileTurns(TimeSpan disconnectedGrace) => TurnPolicy.Reconcile(this, disconnectedGrace);
 
     private static void Require(bool condition, string message)
     {

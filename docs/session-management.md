@@ -12,6 +12,8 @@ F008 provides one server-owned session model and `IGameSessionStore` contract fo
 - After the callback, lifecycle consistency and cancellation are checked. The store makes another deep copy before committing, so retaining the callback's draft cannot mutate committed state afterward. Exceptions, invalid lifecycle combinations, and cancellation before commit discard the draft without changing state or publishing a revision.
 - A successful update increments the revision even if its operation is idempotent. Revision means successful transaction, not a gameplay action ID. Gameplay request deduplication remains engine/action work.
 
+F014 adds an expected-revision `UpdateAsync` overload: the store compares under the session gate before invoking the callback and throws `SessionVersionConflictException` on mismatch. Failed comparisons publish nothing. The engine uses it with session-owned processed action IDs; see [turn management](turn-management.md).
+
 Update callbacks must be short, synchronous, and free of external side effects. Do provider/network I/O before the transaction and revalidate relevant state inside it. Do not start background mutation of the draft or synchronously reenter the store from its callback. These are trusted backend interfaces, not a mechanism for executing client-supplied delegates.
 
 `Game.Copy` supplies detached state without persistence attributes or storage dependencies. Immutable values can be shared; mutable aggregate containers cannot. This correctness-first approach copies round history, so cost grows with match length. Serialization/storage adapters can later optimize state handling while preserving these isolation guarantees.
@@ -39,7 +41,7 @@ Roster identity is stable across connections and is distinct from authentication
 
 `Disconnect` removes only the named connection. A stale disconnect from an old tab cannot disconnect a newer connection. A player is offline only after their final connection closes. Reconnect preserves their Player, scores, current round, and game history.
 
-When all players are offline, the session records the time of the last connection closing; newly created sessions initially have everyone offline. Any reconnect clears that whole-session offline timestamp. One connected player prevents automatic whole-session abandonment.
+When all players are offline, the session records the time of the last connection closing; newly created sessions initially have everyone offline. Any reconnect clears that whole-session offline timestamp. One connected player prevents automatic whole-session abandonment in a waiting session; starting/active matches also apply F014's eligibility rules and cancel when fewer than two players remain eligible.
 
 Completed sessions can reconnect during results retention without extending their expiration. Abandoned sessions cannot reconnect. Individual-player disconnect forfeits, grace UI, identity issuance, and transport heartbeat/stale-connection detection belong to later mode/transport issues. Transport handlers must report disconnects reliably; an unreported stale connection remains connected to this foundation.
 
@@ -64,7 +66,7 @@ The API's SessionCleanupWorker sweeps on a PeriodicTimer using the injected Time
 
 Retention/grace durations cannot be negative; zero permits immediate eligibility on a sweep. Expiration is evaluated during sweeps rather than at exact wall-clock deadlines. End timestamps remain fixed despite later presence updates. Environment overrides use double underscores, for example `Sessions__CompletedRetention`.
 
-Cleanup checks each entry under its own gate, cancels abandoned games, publishes version changes, and removes terminal entries once. Concurrent sweeps cannot remove/count a session twice. Removal closes observer streams; waiters see a removed entry rather than reviving it. Failed cleanup is logged and retried on a later sweep; shutdown cancels the worker cleanly.
+Cleanup checks each entry under its own gate, applies [turn reconciliation](turn-management.md#disconnects-and-leaving), cancels abandoned games, publishes version changes, and removes terminal entries once. Concurrent sweeps cannot advance the same expired turn twice or remove/count a session twice. A sweep with no changes publishes nothing. Removal closes observer streams; waiters see a removed entry rather than reviving it. Failed cleanup is logged and retried on a later sweep; shutdown cancels the worker cleanly.
 
 ## Limits and persistence boundary
 

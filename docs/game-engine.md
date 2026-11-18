@@ -10,7 +10,7 @@ The engine derives phases from existing session/game/round states rather than ma
 | --------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | Waiting for initialization  | Session Waiting, Game WaitingToStart, no round           | `CreateAsync` accepts a fixed roster of 2–4 distinct players with zero scores.                            |
 | Initialized, ready to start | Session Starting, Game WaitingToStart                    | `InitializeAsync` begins trusted backend initialization.                                                  |
-| Category selection          | Session Active, Game InProgress, Round CategorySelection | `StartAsync` creates round 1 with a backend-selected roster member as starting player.                    |
+| Category selection          | Session Active, Game InProgress, Round CategorySelection | `StartAsync` creates round 1 with the first eligible roster member as starting player.                    |
 | Bidding                     | Active / InProgress / Bidding                            | `SelectCategoryAsync` records category metadata and locks category selection.                             |
 | Bluff challenge             | Active / InProgress / Challenge                          | `CallBluffAsync` challenges the current highest bid and makes its bidder the active player.               |
 | Round results               | Active / InProgress / Completed round                    | `ResolveChallengeAsync` derives the outcome from accepted submissions and completes the round atomically. |
@@ -24,7 +24,7 @@ Completed and abandoned sessions cannot restart; rematches create new sessions. 
 
 `SelectCategoryAsync`, `PlaceBidAsync`, and `CallBluffAsync` require a roster member holding the active turn. They use the existing Domain phase guards. Positive bids must exceed the highest bid and advance once to the next player in stable roster order through `Game.GetNextPlayerId`; selecting a category leaves that player ready to make the opening bid. A bluff call requires an existing bid, and the caller cannot challenge their own bid.
 
-Backend start/next-round operations explicitly supply a starting player from the roster. Detailed starting-player selection, disconnect/leave handling, automatic timeout scheduling, and action-ID/revision deduplication remain later work. F013 provides the basic cyclic advancement needed to traverse the lifecycle, not those broader F014 policies. An exact retried command is not generally idempotent; future adapters must not expose these methods as retry-safe network operations before concurrency/idempotency requirements are implemented.
+F014's [turn policy](turn-management.md) now selects/rotates starters, skips unavailable players, handles disconnect/leave reconciliation, and requires action IDs with atomic expected-revision checks for player commands. Duplicate progression is prevented; replaying an original success response remains future transport-receipt work. Category/bidding timeout scheduling remains later work.
 
 Category metadata and challenge duration are **trusted backend inputs**, not client-supplied settings or arbitrary DTOs. Category-provider availability/selection policy is F015 work. Match settings must supply the allowed duration; `CallBluffAsync` creates the challenge ID/start/deadline on the server inside the transaction. Nonpositive or unrepresentable durations are rejected.
 
@@ -34,7 +34,7 @@ The backend match/scoring policy chooses `NextRoundAsync` or `CompleteAsync` aft
 
 ## Transactions and results
 
-Creation and reads return `GameEngineResult`; successful results contain a detached `SessionSnapshot`. Rejections contain a structured `GameEngineError` with `NotFound`, `InvalidAction`, `InvalidState`, `PlayerNotInGame`, or `NotYourTurn`. Rejections contain no state. These are internal application results, not public API responses; snapshots include internal gameplay data and must be mapped through authorized transport DTOs.
+Creation and reads return `GameEngineResult`; successful results contain a detached `SessionSnapshot`. Rejections contain a structured `GameEngineError` for missing games, invalid arguments/state, membership/turn/eligibility failures, duplicate actions, or stale revisions. Rejections contain no state. These are internal application results, not public API responses; snapshots include internal gameplay data and must be mapped through authorized transport DTOs.
 
 Every mutation executes in one store update. A rejected action throws an internal signal inside the callback so the store discards the draft; the engine then returns a structured rejection. A rejected bid, invalid starter, repeated transition, or premature resolution cannot publish a revision or partially change the authoritative state. Session and Domain lifecycle changes commit together. Cancellation propagates as `OperationCanceledException`; unexpected infrastructure failures are not converted into successful/rejected gameplay outcomes.
 

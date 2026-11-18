@@ -41,8 +41,14 @@ public sealed class InMemoryGameSessionStore(TimeProvider clock, SessionRetentio
         }
     }
 
-    public async Task<SessionSnapshot> UpdateAsync(
-        Guid sessionId, Action<GameSession> update, CancellationToken cancellationToken = default)
+    public Task<SessionSnapshot> UpdateAsync(Guid sessionId, Action<GameSession> update, CancellationToken cancellationToken = default) =>
+        UpdateCoreAsync(sessionId, update, null, cancellationToken);
+
+    public Task<SessionSnapshot> UpdateAsync(Guid sessionId, long expectedVersion, Action<GameSession> update, CancellationToken cancellationToken = default) =>
+        UpdateCoreAsync(sessionId, update, expectedVersion, cancellationToken);
+
+    private async Task<SessionSnapshot> UpdateCoreAsync(
+        Guid sessionId, Action<GameSession> update, long? expectedVersion, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(update);
         cancellationToken.ThrowIfCancellationRequested();
@@ -51,6 +57,11 @@ public sealed class InMemoryGameSessionStore(TimeProvider clock, SessionRetentio
         try
         {
             EnsurePresent(entry);
+            if (expectedVersion is { } version && version != entry.Version)
+            {
+                throw new SessionVersionConflictException();
+            }
+
             var draft = entry.Session.Copy(clock.GetUtcNow());
             update(draft);
             draft.EnsureConsistent();
@@ -131,17 +142,28 @@ public sealed class InMemoryGameSessionStore(TimeProvider clock, SessionRetentio
                 }
 
                 var now = clock.GetUtcNow();
-                if (entry.Session.Status is not (SessionStatus.Completed or SessionStatus.Abandoned) &&
-                    entry.Session.AllDisconnectedSince is { } disconnected &&
-                    now - disconnected >= retention.DisconnectedGrace)
+                if (entry.Session.Status is not (SessionStatus.Completed or SessionStatus.Abandoned))
                 {
-                    var abandoned = entry.Session.Copy(now);
-                    abandoned.Abandon();
-                    abandoned.EnsureConsistent();
-                    var nextVersion = checked(entry.Version + 1);
-                    entry.Session = abandoned;
-                    entry.Version = nextVersion;
-                    entry.Publish(SessionChangeKind.Updated);
+                    var draft = entry.Session.Copy(now);
+                    bool changed;
+                    if (draft.AllDisconnectedSince is { } disconnected && now - disconnected >= retention.DisconnectedGrace)
+                    {
+                        draft.Abandon();
+                        changed = true;
+                    }
+                    else
+                    {
+                        changed = draft.ReconcileTurns(retention.DisconnectedGrace);
+                    }
+
+                    if (changed)
+                    {
+                        draft.EnsureConsistent();
+                        var nextVersion = checked(entry.Version + 1);
+                        entry.Session = draft;
+                        entry.Version = nextVersion;
+                        entry.Publish(SessionChangeKind.Updated);
+                    }
                 }
 
                 var keepFor = entry.Session.Status == SessionStatus.Completed
