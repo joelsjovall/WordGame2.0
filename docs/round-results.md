@@ -20,7 +20,7 @@ These are application queries and transport contracts, not new HTTP endpoints. F
 
 ## Next round policy
 
-- Results remain visible until a trusted backend workflow explicitly invokes NextRoundAsync or ends the match. There is no automatic results timer or per-player ready-up requirement between rounds. Pregame lobby readiness remains separate.
+- Intermediate results remain visible until a trusted backend workflow explicitly invokes NextRoundAsync. F020 automatically completes the match when its configured final round is scored. There is no automatic results timer or per-player ready-up requirement between rounds. Pregame lobby readiness remains separate.
 - The starter rotates from the previous round's **original starting player**, following stable roster order and skipping unavailable/departed players under F014 rules. It does not depend on winner, bidder, or the final bidding turn. Two eligible participants are required.
 - `NextRoundAsync(gameId, completedRoundId, expectedVersion)` verifies the result is the current completed/scored round and checks the session revision under the store gate. Use this overload for delayed workflows. An old round ID cannot advance a later completed round, even with a refreshed revision. Competing requests publish one new round.
 - The existing gameId-only overload is a trusted immediate backend operation against the current round. It shares the same scored-result/phase and player eligibility guards; it carries no stale-result intent and must not be used to execute delayed client requests.
@@ -28,7 +28,7 @@ These are application queries and transport contracts, not new HTTP endpoints. F
 - The match ID, ordered player identities/names, presence/connections, departure state, scores, action replay guards, and completed round/result history survive. Prior action IDs/versions cannot be used to repeat gameplay in a new round.
 - Incomplete, cancelled, terminal-match, wrong-round, stale, or repeated transitions are rejected. Expired challenges reject new words before the timeout sweep, and completed rounds reject category/bid/bluff/word actions.
 
-Win conditions, match limits, results UI, host controls, and public actions/SSE endpoints remain their own issues.
+F020 adds [win conditions, match limits, and final standings](match-completion.md). Results UI, host controls, and public actions/SSE endpoints remain later work.
 
 ## Acceptance review and tests
 

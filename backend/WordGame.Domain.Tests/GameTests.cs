@@ -79,9 +79,10 @@ public sealed class GameTests
     [Fact]
     public void CompletedGamesCannotRestartOrCancel()
     {
-        var game = DomainTestData.CreateGame();
+        var game = new Game(Guid.NewGuid(), DomainTestData.CreateGame().Players, MatchSettings.Party(1));
         Assert.Throws<InvalidOperationException>(() => game.Complete());
-        DomainTestData.CompleteRound(game);
+        var round = DomainTestData.CompleteRound(game);
+        game.RecordRoundScores(round.Id, []);
         game.Complete();
 
         Assert.Equal(GameStatus.Completed, game.Status);

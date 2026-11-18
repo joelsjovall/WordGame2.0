@@ -8,10 +8,10 @@ internal sealed class EngineTestStore(TimeProvider clock) : IGameSessionStore
 {
     private readonly Dictionary<Guid, (GameSession Session, long Version)> entries = [];
 
-    public Task<SessionSnapshot> CreateAsync(IEnumerable<Player> players, CancellationToken cancellationToken = default)
+    public Task<SessionSnapshot> CreateAsync(IEnumerable<Player> players, CancellationToken cancellationToken = default, MatchSettings? settings = null)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var session = new GameSession(Guid.NewGuid(), players, clock.GetUtcNow());
+        var session = new GameSession(Guid.NewGuid(), players, clock.GetUtcNow(), settings);
         entries.Add(session.Id, (session, 0));
         return Task.FromResult(session.Snapshot(0));
     }

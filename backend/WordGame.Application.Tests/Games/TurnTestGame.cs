@@ -33,10 +33,10 @@ internal sealed class TurnTestGame
     }
 
     internal static async Task<TurnTestGame> Create(int count = 3, TestCategoryProvider? provider = null,
-        CategorySelectionRules? rules = null, ChallengeRules? challengeRules = null)
+        CategorySelectionRules? rules = null, ChallengeRules? challengeRules = null, MatchSettings? settings = null)
     {
         var game = new TurnTestGame(count, provider, rules, challengeRules);
-        game.Id = Accepted(await game.Engine.CreateAsync(game.Players)).Id;
+        game.Id = Accepted(settings is null ? await game.Engine.CreateAsync(game.Players) : await game.Engine.CreateAsync(game.Players, settings)).Id;
         for (var index = 0; index < count; index++)
         {
             Accepted(await game.Engine.ConnectAsync(game.Id, game.Players[index].Id, game.Connections[index]));

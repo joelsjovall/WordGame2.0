@@ -50,7 +50,7 @@ public sealed class ChallengeConcurrencyTests
     [Fact]
     public async Task ConcurrentTimeoutSweepsPublishOneFailureAndRetainPartialHistory()
     {
-        var (engine, store, clock, id, players) = await Game(required: 2);
+        var (engine, store, clock, id, players) = await Game(required: 2, settings: MatchSettings.Party(1));
         var initial = (await store.GetAsync(id))!;
         Assert.True((await engine.SubmitWordAsync(id, players[0].Id, "Volvo", new(Guid.NewGuid(), initial.Version))).Succeeded);
         var before = (await store.GetAsync(id))!;
@@ -62,6 +62,8 @@ public sealed class ChallengeConcurrencyTests
         Assert.Equal(1, accepted.ChallengeResult.AcceptedWordCount);
         Assert.Equal(1, accepted.State!.Game.Scores[players[0].Id].Points);
         Assert.Equal(50, accepted.State.Game.Scores[players[1].Id].Points);
+        Assert.Equal(SessionStatus.Completed, accepted.State.Status);
+        Assert.Equal(players[1].Id, Assert.Single(accepted.MatchResult!.WinnerIds));
         Assert.Equal(before.Version + 1, (await store.GetAsync(id))!.Version);
         Assert.All(results.Where(result => !result.Succeeded), result => Assert.Equal(GameEngineErrorCode.StaleState, result.Error!.Code));
     }
@@ -70,7 +72,7 @@ public sealed class ChallengeConcurrencyTests
     public async Task SubmissionLinearizedBeforeDeadlineWinsAgainstAQueuedTimeoutExactlyOnce()
     {
         using var validator = new BlockingValidator();
-        var (engine, store, clock, id, players) = await Game(required: 1, validator);
+        var (engine, store, clock, id, players) = await Game(required: 1, validator, MatchSettings.Party(1));
         clock.Advance(TimeSpan.FromSeconds(30) - TimeSpan.FromTicks(1));
         var before = (await store.GetAsync(id))!;
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
@@ -95,6 +97,8 @@ public sealed class ChallengeConcurrencyTests
         Assert.Equal(before.Version + 1, after.Version);
         Assert.Equal(51, after.Game.Scores[players[0].Id].Points);
         Assert.Equal(0, after.Game.Scores[players[1].Id].Points);
+        Assert.Equal(SessionStatus.Completed, after.Status);
+        Assert.Equal(players[0].Id, Assert.Single(after.Game.Result!.WinnerIds));
         var word = Assert.Single(after.Game.CurrentRound!.Challenge!.Submissions);
         Assert.Equal(after.Game.CurrentRound.Challenge.Deadline - TimeSpan.FromTicks(1), word.SubmittedAt);
         Assert.True(await changes.MoveNextAsync());
@@ -117,13 +121,13 @@ public sealed class ChallengeConcurrencyTests
     }
 
     private static async Task<(GameEngine Engine, IGameSessionStore Store, ManualSessionClock Clock, Guid Id, Player[] Players)> Game(
-        int required, IWordValidationService? validator = null)
+        int required, IWordValidationService? validator = null, MatchSettings? settings = null)
     {
         var clock = new ManualSessionClock();
         var store = SessionTestData.Store(clock);
         var engine = SessionTestData.Engine(store, validator);
         var players = SessionTestData.Players();
-        var id = (await engine.CreateAsync(players)).State!.Id;
+        var id = (settings is null ? await engine.CreateAsync(players) : await engine.CreateAsync(players, settings)).State!.Id;
         Assert.True((await engine.InitializeAsync(id)).Succeeded);
         Assert.True((await engine.StartAsync(id)).Succeeded);
         Assert.True((await engine.SelectCategoryAsync(id, players[0].Id, "cars", new(Guid.NewGuid(), (await store.GetAsync(id))!.Version))).Succeeded);

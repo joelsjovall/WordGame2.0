@@ -83,7 +83,7 @@ public sealed class ScoringTests
     public async Task OverflowRollsBackFinalWordOutcomeAndActionId()
     {
         var multipliers = Enum.GetValues<CategoryDifficulty>().ToDictionary(difficulty => difficulty, _ => int.MaxValue);
-        var game = await TurnTestGame.Create(rules: new CategorySelectionRules(null, scoreMultipliers: multipliers));
+        var game = await TurnTestGame.Create(rules: new CategorySelectionRules(null, scoreMultipliers: multipliers), settings: MatchSettings.Party(1));
         await game.Select();
         await game.Bid(0, 1);
         await game.Bluff(1);
@@ -94,6 +94,7 @@ public sealed class ScoringTests
         Assert.Equal(before.Version, after.Version);
         Assert.Equal(ChallengeOutcome.Pending, after.Game.CurrentRound!.Challenge!.Outcome);
         Assert.Empty(after.Game.CurrentRound.Challenge.Submissions);
+        Assert.Null(after.Game.Result);
         Assert.All(after.Game.Scores.Values, score => Assert.Equal(0, score.Points));
         Assert.Equal(GameEngineErrorCode.InvalidState, (await game.Submit(0, "Volvo", context)).Error!.Code);
     }

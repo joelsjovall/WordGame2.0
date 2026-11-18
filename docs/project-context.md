@@ -60,8 +60,9 @@ The planned backlog contains 57 issues across six milestones. Work proceeds one 
 - **Completed:** [F016, Implement bidding and bluff-calling system (#18)](https://github.com/joelsjovall/WordGame2.0/issues/18), merged through PR #75 (merge commit `ac46ef7`). See [bidding](bidding.md) for the shared rules and concurrency guarantees.
 - **Completed:** [F017, Implement timed word challenge and answer submission (#19)](https://github.com/joelsjovall/WordGame2.0/issues/19), merged through PR #76 (merge commit `2e0f6b8`). See [word challenges](word-challenges.md) for cutoffs and result semantics.
 - **Completed:** [F018, Implement scoring and points system (#20)](https://github.com/joelsjovall/WordGame2.0/issues/20), merged through PR #77 (merge commit `fa22249`). See [scoring](scoring.md) for finalized rules and atomic awards.
-- **Active:** [F019, Implement round results and progression (#21)](https://github.com/joelsjovall/WordGame2.0/issues/21). See [round results](round-results.md) for retained results, rotating starters, no between-round readiness, and guarded progression.
-- **Current local state (2026-11-18):** Working on `feature/F019-round-results` from updated `main`. Commit and push require user authorization.
+- **Completed:** [F019, Implement round results and progression (#21)](https://github.com/joelsjovall/WordGame2.0/issues/21), merged through PR #78 (merge commit `64999a0`). See [round results](round-results.md) for retained results and guarded progression.
+- **Active:** [F020, Implement match completion and win conditions (#22)](https://github.com/joelsjovall/WordGame2.0/issues/22). The owner confirmed configurable Party length (default two rounds per player), six-round Online matches, highest score wins, and shared top-score wins. See [match completion](match-completion.md).
+- **Current local state (2026-11-18):** Working on `feature/F020-match-completion` from updated `main`. Commit and push require user authorization.
 - **Outstanding security follow-up:** A database credential was previously exposed in the public V1 repository. Never reuse or reproduce it. Rotation must be verified; this handoff provides no evidence that rotation has occurred.
 
 Update this section as issues are completed or the handoff state changes.

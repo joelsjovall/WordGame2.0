@@ -11,10 +11,17 @@ public enum ApiRoundStatus { CategorySelection, Bidding, Challenge, Completed, C
 public enum ApiChallengeOutcome { Pending, Succeeded, Failed, Cancelled }
 public enum ApiSubmissionStatus { Accepted, Rejected, Duplicate }
 public enum ApiEventKind { Updated, Removed }
+public enum ApiMatchFormat { Party, Online }
 
 public sealed record GameStateResponse(
     Guid Id, ApiSessionStatus Status, string Version, DateTimeOffset ServerTime,
-    IReadOnlyList<GamePlayerResponse> Players, GameRoundResponse? Round);
+    IReadOnlyList<GamePlayerResponse> Players, GameRoundResponse? Round,
+    MatchSettingsResponse Match, MatchResultResponse? Result);
+
+public sealed record MatchSettingsResponse(ApiMatchFormat Format, int RoundCount);
+public sealed record MatchResultResponse(Guid GameId, ApiMatchFormat Format, int CompletedRoundCount,
+    bool IsTie, IReadOnlyList<Guid> WinnerIds, IReadOnlyList<MatchStandingResponse> Standings);
+public sealed record MatchStandingResponse(Guid PlayerId, string DisplayName, int Score, int Rank);
 
 public sealed record GamePlayerResponse(Guid Id, string DisplayName, int Score, bool IsConnected);
 public sealed record GameRoundResponse(

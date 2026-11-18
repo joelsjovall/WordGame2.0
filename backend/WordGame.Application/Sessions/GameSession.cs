@@ -11,9 +11,9 @@ public sealed class GameSession
     private readonly HashSet<Guid> departed = [];
     private readonly HashSet<Guid> processedActions = [];
 
-    public GameSession(Guid id, IEnumerable<Player> players, DateTimeOffset createdAt)
+    public GameSession(Guid id, IEnumerable<Player> players, DateTimeOffset createdAt, MatchSettings? settings = null)
     {
-        Game = new Game(id, players);
+        Game = new Game(id, players, settings);
         CreatedAt = UpdatedAt = createdAt;
         AllDisconnectedSince = createdAt;
         connections = Game.Players.ToDictionary(player => player.Id, _ => new HashSet<Guid>());

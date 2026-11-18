@@ -220,6 +220,31 @@ export interface components {
           }[]
         }
       }
+      match: {
+        /** @enum {unknown} */
+        format: 'party' | 'online'
+        /** Format: int32 */
+        roundCount: number
+      }
+      result: null | {
+        /** Format: uuid */
+        gameId: string
+        /** @enum {unknown} */
+        format: 'party' | 'online'
+        /** Format: int32 */
+        completedRoundCount: number
+        isTie: boolean
+        winnerIds: string[]
+        standings: {
+          /** Format: uuid */
+          playerId: string
+          displayName: string
+          /** Format: int32 */
+          score: number
+          /** Format: int32 */
+          rank: number
+        }[]
+      }
     }
     JoinGameRequest: {
       lobbyCode: string

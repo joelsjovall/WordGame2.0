@@ -39,6 +39,7 @@ public sealed class GameEngineResult
     public WordSubmissionStatus? SubmissionStatus { get; }
     public ChallengeResult? ChallengeResult { get; }
     public RoundResult? RoundResult { get; }
+    public MatchResult? MatchResult => State?.Game.Result;
 
     internal static GameEngineResult Accepted(SessionSnapshot state, WordSubmissionStatus? submissionStatus = null, RoundResult? roundResult = null) => new(state, null, submissionStatus, roundResult);
     internal static GameEngineResult Missing() => Rejected(GameEngineErrorCode.NotFound, "The game was not found.");

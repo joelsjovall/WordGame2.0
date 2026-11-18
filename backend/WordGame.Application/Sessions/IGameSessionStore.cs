@@ -4,7 +4,7 @@ namespace WordGame.Application.Sessions;
 
 public interface IGameSessionStore
 {
-    Task<SessionSnapshot> CreateAsync(IEnumerable<Player> players, CancellationToken cancellationToken = default);
+    Task<SessionSnapshot> CreateAsync(IEnumerable<Player> players, CancellationToken cancellationToken = default, MatchSettings? settings = null);
     Task<SessionSnapshot?> GetAsync(Guid sessionId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<SessionSnapshot>> GetActiveAsync(CancellationToken cancellationToken = default);
 

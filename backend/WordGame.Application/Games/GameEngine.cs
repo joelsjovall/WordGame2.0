@@ -9,15 +9,22 @@ namespace WordGame.Application.Games;
 public sealed class GameEngine(IGameSessionStore sessions, SessionRetention retention, CategorySelectionService categories, ChallengeService challenges)
 {
     private readonly GameCommandExecutor commands = new(sessions, retention);
-    public async Task<GameEngineResult> CreateAsync(IEnumerable<Player> players, CancellationToken cancellationToken = default)
+    public Task<GameEngineResult> CreateAsync(IEnumerable<Player> players, CancellationToken cancellationToken = default) =>
+        CreateCoreAsync(players, null, cancellationToken);
+
+    // Settings come from trusted lobby/matchmaking workflows, never arbitrary gameplay actions.
+    public Task<GameEngineResult> CreateAsync(IEnumerable<Player> players, MatchSettings settings, CancellationToken cancellationToken = default) =>
+        CreateCoreAsync(players, settings, cancellationToken);
+
+    private async Task<GameEngineResult> CreateCoreAsync(IEnumerable<Player> players, MatchSettings? settings, CancellationToken cancellationToken)
     {
         try
         {
-            return GameEngineResult.Accepted(await sessions.CreateAsync(players, cancellationToken));
+            return GameEngineResult.Accepted(await sessions.CreateAsync(players, cancellationToken, settings));
         }
         catch (ArgumentException)
         {
-            return GameEngineResult.Rejected(GameEngineErrorCode.InvalidAction, "A game requires two to four distinct valid players.");
+            return GameEngineResult.Rejected(GameEngineErrorCode.InvalidAction, "The roster or match settings are invalid.");
         }
     }
 
@@ -91,7 +98,7 @@ public sealed class GameEngine(IGameSessionStore sessions, SessionRetention rete
         session.BeginCategorySelection(categories.Rules.Timeout);
     }
 
-    // Match/scoring policy decides whether to continue or finish; F013 does not invent win conditions.
+    // Normal completion is automatic; this trusted operation cannot bypass the configured limit.
     public Task<GameEngineResult> CompleteAsync(Guid gameId, CancellationToken cancellationToken = default) =>
         commands.UpdateAsync(gameId, session =>
         {

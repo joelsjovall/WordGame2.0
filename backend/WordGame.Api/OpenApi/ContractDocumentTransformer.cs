@@ -39,6 +39,12 @@ internal sealed class ContractDocumentTransformer : IOpenApiDocumentTransformer
             }
             // Schemas requested outside endpoint metadata need explicit nullable
             // reference annotations for phase-dependent response fields.
+            if (type == typeof(GameStateResponse) && schema is OpenApiSchema matchStateSchema &&
+                matchStateSchema.Properties?.TryGetValue("result", out var matchResultSchema) == true &&
+                matchResultSchema is OpenApiSchema matchResult)
+            {
+                matchResult.Type = (matchResult.Type ?? JsonSchemaType.Object) | JsonSchemaType.Null;
+            }
             if (type == typeof(GameStateResponse) && schema is OpenApiSchema stateSchema &&
                 stateSchema.Properties?.TryGetValue("round", out var roundSchema) == true &&
                 roundSchema is OpenApiSchema round)
