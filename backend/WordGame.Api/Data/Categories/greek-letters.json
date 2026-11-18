@@ -1,0 +1,12 @@
+{
+  "id": "greek-letters",
+  "name": "Greek Letters",
+  "difficulty": "hard",
+  "answers": [
+    { "value": "Alpha", "aliases": ["α"] },
+    { "value": "Beta", "aliases": ["β"] },
+    { "value": "Gamma", "aliases": ["γ"] },
+    { "value": "Delta", "aliases": ["δ"] },
+    { "value": "Omega", "aliases": ["ω"] }
+  ]
+}

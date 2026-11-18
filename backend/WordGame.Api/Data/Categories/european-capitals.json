@@ -1,0 +1,13 @@
+{
+  "id": "european-capitals",
+  "name": "European Capitals",
+  "difficulty": "easy",
+  "answers": [
+    { "value": "Stockholm", "aliases": [] },
+    { "value": "Copenhagen", "aliases": ["Köpenhamn", "Kobenhavn"] },
+    { "value": "Helsinki", "aliases": ["Helsingfors"] },
+    { "value": "Oslo", "aliases": [] },
+    { "value": "Paris", "aliases": [] },
+    { "value": "Berlin", "aliases": [] }
+  ]
+}

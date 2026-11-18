@@ -2,8 +2,10 @@ using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using WordGame.Application.Categories;
 using WordGame.Application.Words;
 using WordGame.Domain;
 
@@ -11,6 +13,35 @@ namespace WordGame.Api.Tests;
 
 public sealed class ApiFoundationTests
 {
+    [Fact]
+    public async Task ShippedDatasetsAreRegisteredAndUsableByTheValidator()
+    {
+        using var factory = CreateFactory("Production");
+        var provider = factory.Services.GetRequiredService<ICategoryProvider>();
+        var catalog = await provider.GetCategoriesAsync();
+        Assert.Equal(3, catalog.Count);
+        Assert.Single(await provider.GetCategoriesAsync(CategoryDifficulty.Easy));
+        Assert.Single(await provider.GetCategoriesAsync(CategoryDifficulty.Medium));
+        Assert.Single(await provider.GetCategoriesAsync(CategoryDifficulty.Hard));
+        var category = await provider.GetByIdAsync("european-capitals");
+        Assert.NotNull(category);
+        var result = factory.Services.GetRequiredService<IWordValidationService>()
+            .Validate(category, "Köpenhamn", []);
+        Assert.Equal(WordSubmissionStatus.Accepted, result.Status);
+        Assert.Same(category, await provider.GetByIdAsync("european-capitals"));
+    }
+
+    [Fact]
+    public void MissingConfiguredDatasetDirectoryPreventsStartup()
+    {
+        var missing = Path.Combine(Path.GetTempPath(), "wordgame-f007-missing-" + Guid.NewGuid().ToString("N"));
+        using var factory = CreateFactory("Production").WithWebHostBuilder(builder =>
+            builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(
+                new Dictionary<string, string?> { ["Categories:Directory"] = missing })));
+
+        Assert.Throws<DirectoryNotFoundException>(() => factory.CreateClient());
+    }
+
     [Fact]
     public void ValidationServiceIsRegisteredWithoutDatabaseOrProviderDependencies()
     {
