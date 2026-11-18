@@ -13,4 +13,4 @@ public sealed record SessionSnapshot(
     IReadOnlyList<PlayerPresence> Players,
     Game Game);
 
-public sealed record PlayerPresence(Guid PlayerId, int ConnectionCount, DateTimeOffset? DisconnectedAt);
+public sealed record PlayerPresence(Guid PlayerId, int ConnectionCount, DateTimeOffset? DisconnectedAt, bool HasLeft = false);

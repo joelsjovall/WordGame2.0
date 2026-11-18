@@ -4,7 +4,7 @@ using WordGame.Domain;
 namespace WordGame.Application.Games;
 
 // Shared backend orchestration. Transport adapters must authenticate callers before invoking player actions.
-public sealed class GameEngine(IGameSessionStore sessions, TimeProvider clock)
+public sealed class GameEngine(IGameSessionStore sessions, TimeProvider clock, SessionRetention retention)
 {
     public async Task<GameEngineResult> CreateAsync(IEnumerable<Player> players, CancellationToken cancellationToken = default)
     {
@@ -28,35 +28,36 @@ public sealed class GameEngine(IGameSessionStore sessions, TimeProvider clock)
     public Task<GameEngineResult> InitializeAsync(Guid gameId, CancellationToken cancellationToken = default) =>
         UpdateAsync(gameId, session => session.BeginStarting(), cancellationToken);
 
-    public Task<GameEngineResult> StartAsync(Guid gameId, Guid startingPlayerId, CancellationToken cancellationToken = default) =>
+    public Task<GameEngineResult> StartAsync(Guid gameId, CancellationToken cancellationToken = default) =>
         UpdateAsync(gameId, session =>
         {
             Require(session.Status == SessionStatus.Starting, "Only an initialized game can start.");
-            session.Game.StartRound(Guid.NewGuid(), startingPlayerId);
+            session.Game.StartRound(Guid.NewGuid(), TurnPolicy.FirstPlayer(session, retention.DisconnectedGrace));
             session.Activate();
         }, cancellationToken);
 
     // Category metadata must be resolved by trusted backend category-selection code, never copied from a client DTO.
     public Task<GameEngineResult> SelectCategoryAsync(
-        Guid gameId, Guid playerId, Category category, CancellationToken cancellationToken = default) =>
-        UpdateAsync(gameId, session => PlayerRound(session, playerId).SelectCategory(playerId, category), cancellationToken);
+        Guid gameId, Guid playerId, Category category, PlayerActionContext context, CancellationToken cancellationToken = default) =>
+        PlayerUpdateAsync(gameId, playerId, context, session => PlayerRound(session, playerId).SelectCategory(playerId, category), cancellationToken);
 
     public Task<GameEngineResult> PlaceBidAsync(
-        Guid gameId, Guid playerId, int wordCount, CancellationToken cancellationToken = default) =>
-        UpdateAsync(gameId, session =>
+        Guid gameId, Guid playerId, int wordCount, PlayerActionContext context, CancellationToken cancellationToken = default) =>
+        PlayerUpdateAsync(gameId, playerId, context, session =>
         {
             var round = PlayerRound(session, playerId);
             round.RecordBid(new Bid(playerId, wordCount));
-            round.AssignTurn(session.Game.GetNextPlayerId(playerId));
+            round.AssignTurn(TurnPolicy.NextPlayer(session, playerId, retention.DisconnectedGrace));
         }, cancellationToken);
 
     // Duration is supplied by backend match policy. Client actions must not choose their own deadline.
     public Task<GameEngineResult> CallBluffAsync(
-        Guid gameId, Guid playerId, TimeSpan duration, CancellationToken cancellationToken = default) =>
-        UpdateAsync(gameId, session =>
+        Guid gameId, Guid playerId, TimeSpan duration, PlayerActionContext context, CancellationToken cancellationToken = default) =>
+        PlayerUpdateAsync(gameId, playerId, context, session =>
         {
             var round = PlayerRound(session, playerId);
             Require(round.Status == RoundStatus.Bidding && round.HighestBid is not null, "A bluff call requires an existing bid.");
+            Require(session.CanTakeTurn(round.HighestBid!.PlayerId, retention.DisconnectedGrace), "The bidder is unavailable.");
             var now = clock.GetUtcNow();
             round.BeginChallenge(new Challenge(Guid.NewGuid(), round.HighestBid!, playerId, now, now.Add(duration)));
         }, cancellationToken);
@@ -74,11 +75,12 @@ public sealed class GameEngine(IGameSessionStore sessions, TimeProvider clock)
             round.Complete();
         }, cancellationToken);
 
-    public Task<GameEngineResult> NextRoundAsync(Guid gameId, Guid startingPlayerId, CancellationToken cancellationToken = default) =>
+    public Task<GameEngineResult> NextRoundAsync(Guid gameId, CancellationToken cancellationToken = default) =>
         UpdateAsync(gameId, session =>
         {
             Require(ActiveRound(session).Status == RoundStatus.Completed, "The current round must finish first.");
-            session.Game.StartRound(Guid.NewGuid(), startingPlayerId);
+            var previousStarter = session.Game.CurrentRound!.StartingPlayerId;
+            session.Game.StartRound(Guid.NewGuid(), TurnPolicy.NextPlayer(session, previousStarter, retention.DisconnectedGrace));
         }, cancellationToken);
 
     // Match/scoring policy decides whether to continue or finish; F013 does not invent win conditions.
@@ -93,11 +95,63 @@ public sealed class GameEngine(IGameSessionStore sessions, TimeProvider clock)
     public Task<GameEngineResult> CancelAsync(Guid gameId, CancellationToken cancellationToken = default) =>
         UpdateAsync(gameId, session => session.Abandon(), cancellationToken);
 
-    private async Task<GameEngineResult> UpdateAsync(Guid gameId, Action<GameSession> action, CancellationToken cancellationToken)
+    public Task<GameEngineResult> ConnectAsync(Guid gameId, Guid playerId, Guid connectionId, CancellationToken cancellationToken = default) =>
+        UpdateAsync(gameId, session =>
+        {
+            session.Connect(playerId, connectionId);
+            session.ReconcileTurns(retention.DisconnectedGrace);
+        }, cancellationToken);
+
+    public Task<GameEngineResult> DisconnectAsync(Guid gameId, Guid playerId, Guid connectionId, CancellationToken cancellationToken = default) =>
+        UpdateAsync(gameId, session =>
+        {
+            session.Disconnect(playerId, connectionId);
+            session.ReconcileTurns(retention.DisconnectedGrace);
+        }, cancellationToken);
+
+    public Task<GameEngineResult> LeaveAsync(Guid gameId, Guid playerId, PlayerActionContext context, CancellationToken cancellationToken = default) =>
+        PlayerUpdateAsync(gameId, playerId, context, session =>
+        {
+            session.Leave(playerId);
+            session.ReconcileTurns(retention.DisconnectedGrace);
+        }, cancellationToken);
+
+    private Task<GameEngineResult> PlayerUpdateAsync(Guid gameId, Guid playerId, PlayerActionContext context,
+        Action<GameSession> action, CancellationToken cancellationToken)
+    {
+        if (context is null || context.ActionId == Guid.Empty || context.ExpectedVersion < 0)
+        {
+            return Task.FromResult(GameEngineResult.Rejected(GameEngineErrorCode.InvalidAction, "An action ID and nonnegative revision are required."));
+        }
+
+        return UpdateAsync(gameId, session =>
+        {
+            Require(session.Status is not (SessionStatus.Completed or SessionStatus.Abandoned), "The game has ended.");
+            if (!session.Game.Players.Any(player => player.Id == playerId))
+            {
+                throw new ActionRejected(GameEngineErrorCode.PlayerNotInGame, "The player is not in this game.");
+            }
+
+            if (session.HasProcessedAction(context.ActionId))
+            {
+                throw new ActionRejected(GameEngineErrorCode.DuplicateAction, "This action has already been processed.");
+            }
+
+            if (!session.CanTakeTurn(playerId, retention.DisconnectedGrace))
+            {
+                throw new ActionRejected(GameEngineErrorCode.PlayerUnavailable, "The player is not eligible to act.");
+            }
+
+            action(session);
+            session.RecordAction(context.ActionId);
+        }, cancellationToken, context.ExpectedVersion);
+    }
+
+    private async Task<GameEngineResult> UpdateAsync(Guid gameId, Action<GameSession> action, CancellationToken cancellationToken, long? expectedVersion = null)
     {
         try
         {
-            var state = await sessions.UpdateAsync(gameId, session =>
+            void Apply(GameSession session)
             {
                 try
                 {
@@ -111,7 +165,10 @@ public sealed class GameEngine(IGameSessionStore sessions, TimeProvider clock)
                 {
                     throw new ActionRejected(GameEngineErrorCode.InvalidState, exception.Message);
                 }
-            }, cancellationToken);
+            }
+            var state = expectedVersion is { } version
+                ? await sessions.UpdateAsync(gameId, version, Apply, cancellationToken)
+                : await sessions.UpdateAsync(gameId, Apply, cancellationToken);
             return GameEngineResult.Accepted(state);
         }
         catch (ActionRejected rejection)
@@ -122,15 +179,15 @@ public sealed class GameEngine(IGameSessionStore sessions, TimeProvider clock)
         {
             return Missing();
         }
+        catch (SessionVersionConflictException)
+        {
+            return GameEngineResult.Rejected(GameEngineErrorCode.StaleState, "The game state has changed; retrieve a fresh snapshot.");
+        }
     }
 
     private static GameRound PlayerRound(GameSession session, Guid playerId)
     {
         var round = ActiveRound(session);
-        if (!session.Game.Players.Any(player => player.Id == playerId))
-        {
-            throw new ActionRejected(GameEngineErrorCode.PlayerNotInGame, "The player is not in this game.");
-        }
         if (round.Turn.PlayerId != playerId)
         {
             throw new ActionRejected(GameEngineErrorCode.NotYourTurn, "The player does not hold the current turn.");

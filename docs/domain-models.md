@@ -52,7 +52,7 @@ Terminal states cannot restart. State changes use guarded methods, not public st
 
 ## Deliberately deferred
 
-F013's Application [GameEngine](game-engine.md) supplies core lifecycle orchestration and basic cyclic bid-turn advancement. Detailed turn/starting-player/disconnection policy, timeout scheduling, category availability, submission orchestration using F006 validation, and scoring/win conditions remain later work. The Domain assembly contains no engine orchestration, networking, or provider implementation.
+F013's Application [GameEngine](game-engine.md) supplies core lifecycle orchestration; F014's [turn policy](turn-management.md) supplies eligible-player progression, rotating starters, disconnect/leave handling, and replay guards. Each round retains its original StartingPlayerId separately from its changing Turn. Category/bidding timeout scheduling, category availability, submission orchestration using F006 validation, and scoring/win conditions remain later work. The Domain assembly contains no engine orchestration, networking, or provider implementation.
 
 The domain does not read a clock, retrieve datasets, or calculate a points formula. Its category snapshot provides pure answer lookup; Application's F006 validator combines lookup with authoritative accepted history. Callers must be trusted backend code; these objects are not request DTOs. The F008 [session store](session-management.md) serializes updates against isolated drafts and uses `Game.Copy` for deep copies of mutable round/challenge/history/score containers. Bare Domain aggregates remain non-thread-safe and must not bypass that store when shared by multiplayer requests.
 

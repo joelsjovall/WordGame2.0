@@ -15,7 +15,7 @@ public sealed class GameEngineTests
     public GameEngineTests()
     {
         store = new EngineTestStore(clock);
-        engine = new GameEngine(store, clock);
+        engine = new GameEngine(store, clock, new SessionRetention(TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(5)));
     }
 
     [Theory]
@@ -32,7 +32,7 @@ public sealed class GameEngineTests
         Assert.All(created.Game.Scores.Values, score => Assert.Equal(0, score.Points));
         Assert.Equal(SessionStatus.Starting, State(await engine.InitializeAsync(created.Id)).Status);
 
-        var started = State(await engine.StartAsync(created.Id, players[0].Id));
+        var started = State(await engine.StartAsync(created.Id));
         Assert.Equal(SessionStatus.Active, started.Status);
         Assert.Equal(GameStatus.InProgress, started.Game.Status);
         Assert.Equal(RoundStatus.CategorySelection, started.Game.CurrentRound!.Status);
@@ -40,7 +40,7 @@ public sealed class GameEngineTests
         Assert.Equal(players[0].Id, started.Game.CurrentRound.Turn.PlayerId);
 
         var first = await FinishRound(created.Id, players[0].Id, players[1].Id);
-        var next = State(await engine.NextRoundAsync(created.Id, players[1].Id));
+        var next = State(await engine.NextRoundAsync(created.Id));
         Assert.Equal(2, next.Game.CurrentRound!.Number);
         Assert.NotEqual(first.Game.CurrentRound!.Id, next.Game.CurrentRound.Id);
         Assert.Equal(players[1].Id, next.Game.CurrentRound.Turn.PlayerId);
@@ -50,7 +50,7 @@ public sealed class GameEngineTests
         Assert.Equal(GameStatus.Completed, completed.Game.Status);
         Assert.Equal(clock.GetUtcNow(), completed.EndedAt);
         Assert.Equal(2, completed.Game.Rounds.Count);
-        await Reject(created.Id, () => engine.NextRoundAsync(created.Id, players[0].Id), GameEngineErrorCode.InvalidState);
+        await Reject(created.Id, () => engine.NextRoundAsync(created.Id), GameEngineErrorCode.InvalidState);
         await Reject(created.Id, () => engine.InitializeAsync(created.Id), GameEngineErrorCode.InvalidState);
         await Reject(created.Id, () => engine.CancelAsync(created.Id), GameEngineErrorCode.InvalidState);
     }
@@ -60,35 +60,33 @@ public sealed class GameEngineTests
     {
         var players = Players();
         var id = State(await engine.CreateAsync(players)).Id;
-        await Reject(id, () => engine.StartAsync(id, players[0].Id), GameEngineErrorCode.InvalidState);
+        await Reject(id, () => engine.StartAsync(id), GameEngineErrorCode.InvalidState);
         await Reject(id, () => engine.CompleteAsync(id), GameEngineErrorCode.InvalidState);
         State(await engine.InitializeAsync(id));
         await Reject(id, () => engine.InitializeAsync(id), GameEngineErrorCode.InvalidState);
-        await Reject(id, () => engine.StartAsync(id, Guid.NewGuid()), GameEngineErrorCode.InvalidState);
-        State(await engine.StartAsync(id, players[0].Id));
-        await Reject(id, () => engine.StartAsync(id, players[0].Id), GameEngineErrorCode.InvalidState);
-        await Reject(id, () => engine.NextRoundAsync(id, players[0].Id), GameEngineErrorCode.InvalidState);
+        State(await engine.StartAsync(id));
+        await Reject(id, () => engine.StartAsync(id), GameEngineErrorCode.InvalidState);
+        await Reject(id, () => engine.NextRoundAsync(id), GameEngineErrorCode.InvalidState);
         await Reject(id, () => engine.ResolveChallengeAsync(id), GameEngineErrorCode.InvalidState);
-        await Reject(id, () => engine.PlaceBidAsync(id, players[0].Id, 1), GameEngineErrorCode.InvalidState);
-        await Reject(id, () => engine.SelectCategoryAsync(id, Guid.NewGuid(), Category), GameEngineErrorCode.PlayerNotInGame);
-        await Reject(id, () => engine.SelectCategoryAsync(id, players[1].Id, Category), GameEngineErrorCode.NotYourTurn);
-        await Reject(id, () => engine.SelectCategoryAsync(id, players[0].Id, null!), GameEngineErrorCode.InvalidAction);
-        State(await engine.SelectCategoryAsync(id, players[0].Id, Category));
-        await Reject(id, () => engine.SelectCategoryAsync(id, players[0].Id, Category), GameEngineErrorCode.InvalidState);
-        await Reject(id, () => engine.CallBluffAsync(id, players[0].Id, Duration), GameEngineErrorCode.InvalidState);
-        await Reject(id, () => engine.PlaceBidAsync(id, players[0].Id, 0), GameEngineErrorCode.InvalidAction);
-        State(await engine.PlaceBidAsync(id, players[0].Id, 2));
-        await Reject(id, () => engine.PlaceBidAsync(id, players[0].Id, 3), GameEngineErrorCode.NotYourTurn);
-        await Reject(id, () => engine.PlaceBidAsync(id, players[1].Id, 2), GameEngineErrorCode.InvalidState);
-        await Reject(id, () => engine.CallBluffAsync(id, players[1].Id, TimeSpan.Zero), GameEngineErrorCode.InvalidAction);
-        State(await engine.CallBluffAsync(id, players[1].Id, Duration));
+        await Reject(id, () => PlaceBidAsync(id, players[0].Id, 1), GameEngineErrorCode.InvalidState);
+        await Reject(id, () => SelectCategoryAsync(id, Guid.NewGuid(), Category), GameEngineErrorCode.PlayerNotInGame);
+        await Reject(id, () => SelectCategoryAsync(id, players[1].Id, Category), GameEngineErrorCode.NotYourTurn);
+        await Reject(id, () => SelectCategoryAsync(id, players[0].Id, null!), GameEngineErrorCode.InvalidAction);
+        State(await SelectCategoryAsync(id, players[0].Id, Category));
+        await Reject(id, () => SelectCategoryAsync(id, players[0].Id, Category), GameEngineErrorCode.InvalidState);
+        await Reject(id, () => CallBluffAsync(id, players[0].Id, Duration), GameEngineErrorCode.InvalidState);
+        await Reject(id, () => PlaceBidAsync(id, players[0].Id, 0), GameEngineErrorCode.InvalidAction);
+        State(await PlaceBidAsync(id, players[0].Id, 2));
+        await Reject(id, () => PlaceBidAsync(id, players[0].Id, 3), GameEngineErrorCode.NotYourTurn);
+        await Reject(id, () => PlaceBidAsync(id, players[1].Id, 2), GameEngineErrorCode.InvalidState);
+        await Reject(id, () => CallBluffAsync(id, players[1].Id, TimeSpan.Zero), GameEngineErrorCode.InvalidAction);
+        State(await CallBluffAsync(id, players[1].Id, Duration));
         await Reject(id, () => engine.ResolveChallengeAsync(id), GameEngineErrorCode.InvalidState);
         await Reject(id, () => engine.CompleteAsync(id), GameEngineErrorCode.InvalidState);
         clock.Advance(Duration);
         State(await engine.ResolveChallengeAsync(id));
         await Reject(id, () => engine.ResolveChallengeAsync(id), GameEngineErrorCode.InvalidState);
-        await Reject(id, () => engine.NextRoundAsync(id, Guid.NewGuid()), GameEngineErrorCode.InvalidState);
-        State(await engine.NextRoundAsync(id, players[1].Id));
+        State(await engine.NextRoundAsync(id));
     }
 
     [Fact]
@@ -96,9 +94,9 @@ public sealed class GameEngineTests
     {
         var players = Players();
         var id = await Start(players);
-        State(await engine.SelectCategoryAsync(id, players[0].Id, Category));
-        State(await engine.PlaceBidAsync(id, players[0].Id, 1));
-        var challenge = State(await engine.CallBluffAsync(id, players[1].Id, Duration)).Game.CurrentRound!.Challenge!;
+        State(await SelectCategoryAsync(id, players[0].Id, Category));
+        State(await PlaceBidAsync(id, players[0].Id, 1));
+        var challenge = State(await CallBluffAsync(id, players[1].Id, Duration)).Game.CurrentRound!.Challenge!;
         Assert.Equal(clock.GetUtcNow(), challenge.StartedAt);
         Assert.Equal(clock.GetUtcNow() + Duration, challenge.Deadline);
 
@@ -118,7 +116,7 @@ public sealed class GameEngineTests
         var first = await Start(players);
         var second = State(await engine.CreateAsync(players));
         Assert.NotEqual(first, second.Id);
-        State(await engine.SelectCategoryAsync(first, players[0].Id, Category));
+        State(await SelectCategoryAsync(first, players[0].Id, Category));
         var snapshot = State(await engine.GetStateAsync(first));
         snapshot.Game.Cancel();
         Assert.Equal(GameStatus.InProgress, State(await engine.GetStateAsync(first)).Game.Status);
@@ -137,9 +135,9 @@ public sealed class GameEngineTests
         var id = active ? await Start(players) : State(await engine.CreateAsync(players)).Id;
         if (active)
         {
-            State(await engine.SelectCategoryAsync(id, players[0].Id, Category));
-            State(await engine.PlaceBidAsync(id, players[0].Id, 1));
-            State(await engine.CallBluffAsync(id, players[1].Id, Duration));
+            State(await SelectCategoryAsync(id, players[0].Id, Category));
+            State(await PlaceBidAsync(id, players[0].Id, 1));
+            State(await CallBluffAsync(id, players[1].Id, Duration));
         }
         var result = State(await engine.CancelAsync(id));
         Assert.Equal(SessionStatus.Abandoned, result.Status);
@@ -190,20 +188,31 @@ public sealed class GameEngineTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => engine.InitializeAsync(Guid.NewGuid(), cancellation.Token));
     }
 
+    private async Task<GameEngineResult> SelectCategoryAsync(Guid id, Guid actor, Category category) =>
+        await engine.SelectCategoryAsync(id, actor, category, await Context(id));
+
+    private async Task<GameEngineResult> PlaceBidAsync(Guid id, Guid actor, int count) =>
+        await engine.PlaceBidAsync(id, actor, count, await Context(id));
+
+    private async Task<GameEngineResult> CallBluffAsync(Guid id, Guid actor, TimeSpan duration) =>
+        await engine.CallBluffAsync(id, actor, duration, await Context(id));
+
+    private async Task<PlayerActionContext> Context(Guid id) => new(Guid.NewGuid(), State(await engine.GetStateAsync(id)).Version);
+
     private async Task<Guid> Start(Player[] players)
     {
         var id = State(await engine.CreateAsync(players)).Id;
         State(await engine.InitializeAsync(id));
-        State(await engine.StartAsync(id, players[0].Id));
+        State(await engine.StartAsync(id));
         return id;
     }
 
     private async Task<SessionSnapshot> FinishRound(Guid id, Guid bidder, Guid caller)
     {
-        Assert.Equal(RoundStatus.Bidding, State(await engine.SelectCategoryAsync(id, bidder, Category)).Game.CurrentRound!.Status);
-        var bidding = State(await engine.PlaceBidAsync(id, bidder, 1));
+        Assert.Equal(RoundStatus.Bidding, State(await SelectCategoryAsync(id, bidder, Category)).Game.CurrentRound!.Status);
+        var bidding = State(await PlaceBidAsync(id, bidder, 1));
         Assert.Equal(caller, bidding.Game.CurrentRound!.Turn.PlayerId);
-        var challenging = State(await engine.CallBluffAsync(id, caller, Duration));
+        var challenging = State(await CallBluffAsync(id, caller, Duration));
         Assert.Equal(RoundStatus.Challenge, challenging.Game.CurrentRound!.Status);
         Assert.Equal(bidder, challenging.Game.CurrentRound.Turn.PlayerId);
         clock.Advance(Duration);

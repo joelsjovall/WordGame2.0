@@ -11,18 +11,20 @@ public sealed class GameRound
         Number = number;
         this.playerIds = playerIds.ToHashSet();
         RequirePlayer(startingPlayerId);
+        StartingPlayerId = startingPlayerId;
         Turn = new PlayerTurn(startingPlayerId, 1);
     }
 
     public Guid Id { get; }
     public int Number { get; }
+    public Guid StartingPlayerId { get; }
     public RoundStatus Status { get; private set; } = RoundStatus.CategorySelection;
     public PlayerTurn Turn { get; private set; }
     public Category? Category { get; private set; }
     public Bid? HighestBid { get; private set; }
     public Challenge? Challenge { get; private set; }
 
-    internal GameRound Copy() => new(Id, Number, playerIds, Turn.PlayerId)
+    internal GameRound Copy() => new(Id, Number, playerIds, StartingPlayerId)
     {
         Status = Status,
         Turn = Turn,
@@ -50,7 +52,7 @@ public sealed class GameRound
         HighestBid = bid;
     }
 
-    // Selection of the next player belongs to the future turn-management policy.
+    // Selection of the next eligible player belongs to the Application turn policy.
     public void AssignTurn(Guid playerId)
     {
         RequirePlayer(playerId);
