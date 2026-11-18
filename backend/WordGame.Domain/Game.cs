@@ -79,7 +79,7 @@ public sealed class Game
         return round;
     }
 
-    // Award calculation and win conditions belong to later scoring/engine work.
+    // ScoringRules calculates awards; this aggregate enforces atomic, once-per-round totals.
     public void RecordRoundScores(Guid roundId, IEnumerable<PlayerScore> awards)
     {
         ArgumentNullException.ThrowIfNull(awards);

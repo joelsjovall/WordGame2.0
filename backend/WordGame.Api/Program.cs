@@ -42,11 +42,12 @@ builder.Services.AddSingleton(_ => new CategorySelectionRules(
         ? builder.Configuration.GetValue("Gameplay:CategorySelectionTimeout", TimeSpan.FromSeconds(45)) : null,
     builder.Configuration.GetSection("Gameplay:AllowedDifficulties").Get<CategoryDifficulty[]>(),
     Enum.GetValues<CategoryDifficulty>().ToDictionary(difficulty => difficulty,
-        difficulty => builder.Configuration.GetValue($"Gameplay:DifficultyMultipliers:{difficulty}", 1)),
+        difficulty => builder.Configuration.GetValue($"Gameplay:DifficultyMultipliers:{difficulty}", (int)difficulty + 1)),
     builder.Configuration.GetValue("Gameplay:CategorySelectionTimeoutBehavior", CategoryTimeoutBehavior.AutoSelect)));
 builder.Services.AddSingleton<CategorySelectionService>();
 builder.Services.AddSingleton(_ => new ChallengeRules(builder.Configuration.GetValue("Gameplay:ChallengeDuration", TimeSpan.FromSeconds(30))));
 builder.Services.AddSingleton<ChallengeService>();
+builder.Services.AddSingleton(_ => new ScoringRules(builder.Configuration.GetValue("Gameplay:Scoring:OutcomeBonus", 50)));
 builder.Services.AddSingleton<GameEngine>();
 builder.Services.AddHostedService<SessionCleanupWorker>();
 builder.Services.AddHostedService<GameplayTimeoutWorker>();

@@ -58,6 +58,10 @@ internal sealed class GameCommandExecutor(IGameSessionStore sessions, SessionRet
                 {
                     throw new GameActionRejectedException(GameEngineErrorCode.InvalidState, exception.Message);
                 }
+                catch (OverflowException)
+                {
+                    throw new GameActionRejectedException(GameEngineErrorCode.InvalidState, "The action exceeds the supported numeric range.");
+                }
             }
             var state = expectedVersion is { } version
                 ? await sessions.UpdateAsync(gameId, version, Apply, cancellationToken)

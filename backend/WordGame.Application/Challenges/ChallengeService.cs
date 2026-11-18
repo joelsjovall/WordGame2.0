@@ -6,9 +6,10 @@ using WordGame.Domain;
 namespace WordGame.Application.Challenges;
 
 public sealed class ChallengeService(IGameSessionStore sessions, SessionRetention retention,
-    IWordValidationService validator, ChallengeRules rules)
+    IWordValidationService validator, ChallengeRules rules, ScoringRules? scoring = null)
 {
     private readonly GameCommandExecutor commands = new(sessions, retention);
+    private readonly ScoringRules scoringRules = scoring ?? new ScoringRules();
 
     public Task<GameEngineResult> BeginAsync(Guid gameId, Guid playerId, PlayerActionContext context, CancellationToken cancellationToken = default) =>
         commands.PlayerUpdateAsync(gameId, playerId, context, session =>
@@ -49,7 +50,7 @@ public sealed class ChallengeService(IGameSessionStore sessions, SessionRetentio
             status = validation.Status;
             if (challenge.AcceptedWordCount >= challenge.Bid.WordCount)
             {
-                Complete(round);
+                Complete(session, round);
             }
         }, cancellationToken);
         return result.Succeeded ? GameEngineResult.Accepted(result.State!, status) : result;
@@ -65,14 +66,16 @@ public sealed class ChallengeService(IGameSessionStore sessions, SessionRetentio
             session.ReconcileTurns(retention.DisconnectedGrace);
             if (session.Status == SessionStatus.Active)
             {
-                Complete(round);
+                Complete(session, round);
             }
         }, cancellationToken, expectedVersion);
 
-    private static void Complete(GameRound round)
+    private void Complete(GameSession session, GameRound round)
     {
+        GamePhaseGuard.Require(session.SelectedCategory?.RoundId == round.Id, "Scoring requires the retained category snapshot.");
         var challenge = round.Challenge!;
         challenge.Resolve(challenge.AcceptedWordCount >= challenge.Bid.WordCount ? ChallengeOutcome.Succeeded : ChallengeOutcome.Failed);
         round.Complete();
+        session.Game.RecordRoundScores(round.Id, scoringRules.Calculate(round, session.SelectedCategory!.ScoreMultiplier));
     }
 }

@@ -4,18 +4,18 @@ F004 defines the model foundation in `backend/WordGame.Domain`. The assembly ref
 
 ## Ownership and relationships
 
-| Model | Responsibility and relationships |
-| --- | --- |
-| `Game` | Owns a fixed, ordered roster of 2-4 players, sequential rounds, and per-player scores. |
-| `Player` | Immutable match participant ID and display name; not an authentication credential or connection. |
-| `GameRound` | Owns category selection, highest bid, current turn, challenge, and round status. Created only through its game. |
-| `Category` | Immutable stable string ID, display name, and Easy/Medium/Hard difficulty. |
-| `AcceptedAnswer` / `CategoryDefinition` | Canonical answers and aliases in an immutable indexed category snapshot; see [category validation](category-validation.md). |
-| `Bid` | Immutable bidder ID and positive required word count. |
-| `Challenge` | Owns the challenged bid, caller, start/deadline, submissions, and outcome. A mutable challenge instance can belong to only one round. |
-| `SubmittedWord` | Immutable bidder ID, display/normalized text, server-supplied timestamp, validation status, and canonical accepted-answer identity. |
-| `PlayerTurn` | Immutable participant ID and positive sequence number within a round. |
-| `PlayerScore` | Immutable participant ID and nonnegative points; used for totals and externally calculated round awards. |
+| Model                                   | Responsibility and relationships                                                                                                      |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `Game`                                  | Owns a fixed, ordered roster of 2-4 players, sequential rounds, and per-player scores.                                                |
+| `Player`                                | Immutable match participant ID and display name; not an authentication credential or connection.                                      |
+| `GameRound`                             | Owns category selection, highest bid, current turn, challenge, and round status. Created only through its game.                       |
+| `Category`                              | Immutable stable string ID, display name, and Easy/Medium/Hard difficulty.                                                            |
+| `AcceptedAnswer` / `CategoryDefinition` | Canonical answers and aliases in an immutable indexed category snapshot; see [category validation](category-validation.md).           |
+| `Bid`                                   | Immutable bidder ID and positive required word count.                                                                                 |
+| `Challenge`                             | Owns the challenged bid, caller, start/deadline, submissions, and outcome. A mutable challenge instance can belong to only one round. |
+| `SubmittedWord`                         | Immutable bidder ID, display/normalized text, server-supplied timestamp, validation status, and canonical accepted-answer identity.   |
+| `PlayerTurn`                            | Immutable participant ID and positive sequence number within a round.                                                                 |
+| `PlayerScore`                           | Immutable participant ID and nonnegative points; used for totals and externally calculated round awards.                              |
 
 IDs cannot be empty; required text cannot be blank. Display text is trimmed. Category IDs are provider-neutral strings; participant, game, round, and challenge IDs are GUIDs. Collections are read-only views, the input roster is copied, and value properties have no public setters.
 
@@ -23,18 +23,18 @@ F005 introduced normalization and cyclic roster lookup; see the [V1 migration re
 
 ## States and allowed transitions
 
-| Object | Transition | Required condition |
-| --- | --- | --- |
-| Game | WaitingToStart -> InProgress | Start the first round with a roster member as starting player. |
-| Game | InProgress -> InProgress | Start another round only after the current round is completed. |
-| Game | InProgress -> Completed | At least one round exists and the final round is completed. |
-| Game | WaitingToStart / InProgress -> Cancelled | Explicit cancellation; any unfinished round and pending challenge are cancelled too. |
-| Round | CategorySelection -> Bidding | Current player selects a category. |
-| Round | Bidding -> Challenge | Current caller challenges the highest bid; the bidder and caller differ. |
-| Round | Challenge -> Completed | Its challenge has succeeded or failed. |
-| Round | Any unfinished state -> Cancelled | The owning game is cancelled. |
-| Challenge | Pending -> Succeeded / Failed | Accepted count agrees with the requested outcome. |
-| Challenge | Pending -> Cancelled | Its owning round is cancelled. |
+| Object    | Transition                               | Required condition                                                                   |
+| --------- | ---------------------------------------- | ------------------------------------------------------------------------------------ |
+| Game      | WaitingToStart -> InProgress             | Start the first round with a roster member as starting player.                       |
+| Game      | InProgress -> InProgress                 | Start another round only after the current round is completed.                       |
+| Game      | InProgress -> Completed                  | At least one round exists and the final round is completed.                          |
+| Game      | WaitingToStart / InProgress -> Cancelled | Explicit cancellation; any unfinished round and pending challenge are cancelled too. |
+| Round     | CategorySelection -> Bidding             | Current player selects a category.                                                   |
+| Round     | Bidding -> Challenge                     | Current caller challenges the highest bid; the bidder and caller differ.             |
+| Round     | Challenge -> Completed                   | Its challenge has succeeded or failed.                                               |
+| Round     | Any unfinished state -> Cancelled        | The owning game is cancelled.                                                        |
+| Challenge | Pending -> Succeeded / Failed            | Accepted count agrees with the requested outcome.                                    |
+| Challenge | Pending -> Cancelled                     | Its owning round is cancelled.                                                       |
 
 Terminal states cannot restart. State changes use guarded methods, not public status setters or a generic unrestricted transition method. Invalid inputs throw argument exceptions; invalid actions throw `InvalidOperationException`. The future application engine will translate failures into structured action results.
 
@@ -52,11 +52,11 @@ Terminal states cannot restart. State changes use guarded methods, not public st
 
 ## Deliberately deferred
 
-F013's Application [GameEngine](game-engine.md) supplies core lifecycle orchestration; F014's [turn policy](turn-management.md) supplies eligible-player progression, rotating starters, disconnect/leave handling, and replay guards. Each round retains its original StartingPlayerId separately from its changing Turn. F015's [category service](category-selection.md) supplies provider-backed selection, retained snapshots, difficulty settings, and selection timeouts. F017's [challenge service](word-challenges.md) handles timed submissions and automatic resolution using F006 validation. Bidding timeout scheduling and scoring/win conditions remain later work. The Domain assembly contains no engine orchestration, networking, or provider implementation.
+F013's Application [GameEngine](game-engine.md) supplies core lifecycle orchestration; F014's [turn policy](turn-management.md) supplies eligible-player progression, rotating starters, disconnect/leave handling, and replay guards. Each round retains its original StartingPlayerId separately from its changing Turn. F015's [category service](category-selection.md) supplies provider-backed selection, retained snapshots, difficulty settings, and selection timeouts. F017's [challenge service](word-challenges.md) handles timed submissions and automatic resolution using F006 validation. F018 adds Domain ScoringRules and atomic challenge awards; see [scoring](scoring.md). Bidding timeout scheduling and win conditions remain later work. The Domain assembly contains no engine orchestration, networking, or provider implementation.
 
-The domain does not read a clock, retrieve datasets, or calculate a points formula. Its category snapshot provides pure answer lookup; Application's F006 validator combines lookup with authoritative accepted history. Callers must be trusted backend code; these objects are not request DTOs. The F008 [session store](session-management.md) serializes updates against isolated drafts and uses `Game.Copy` for deep copies of mutable round/challenge/history/score containers. Bare Domain aggregates remain non-thread-safe and must not bypass that store when shared by multiplayer requests.
+The domain calculates awards through ScoringRules without reading a clock or retrieving datasets. Its category snapshot provides pure answer lookup; Application's F006 validator combines lookup with authoritative accepted history. Callers must be trusted backend code; these objects are not request DTOs. The F008 [session store](session-management.md) serializes updates against isolated drafts and uses `Game.Copy` for deep copies of mutable round/challenge/history/score containers. Bare Domain aggregates remain non-thread-safe and must not bypass that store when shared by multiplayer requests.
 
-F018 explicitly leaves the scoring formula unfinalized. The nonnegative integer score representation makes no choice about difficulty multipliers, winning targets, or actual award amounts. Confirm those rules in F018; penalties or negative totals would require revisiting this representation.
+F018 finalizes nonnegative word points and an outcome bonus in [scoring](scoring.md). Winning targets remain separate work; penalties or negative totals would require revisiting the score representation.
 
 ## Verification
 

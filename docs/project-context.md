@@ -31,13 +31,13 @@ See [architecture](architecture.md) for the detailed layer boundaries, reconnect
 
 The planned backlog contains 57 issues across six milestones. Work proceeds one issue at a time, using Backlog -> In Progress -> Done in GitHub Projects.
 
-| Milestone | Issues |
-| --- | --- |
-| 0. Project Foundation | F001-F012 |
-| 1. Core Gameplay | F013-F022 |
-| 2. Party Mode | F023-F032 |
-| 3. Online Multiplayer | F033-F042 |
-| 4. UI, UX & Game Polish | F043-F052 |
+| Milestone                   | Issues    |
+| --------------------------- | --------- |
+| 0. Project Foundation       | F001-F012 |
+| 1. Core Gameplay            | F013-F022 |
+| 2. Party Mode               | F023-F032 |
+| 3. Online Multiplayer       | F033-F042 |
+| 4. UI, UX & Game Polish     | F043-F052 |
 | 5. Testing & Public Release | F053-F057 |
 
 ## Current handoff
@@ -58,8 +58,9 @@ The planned backlog contains 57 issues across six milestones. Work proceeds one 
 - **Completed:** [F014, Implement player turn management (#16)](https://github.com/joelsjovall/WordGame2.0/issues/16), merged through PR #73 (merge commit `faff5b5`). See [turn management](turn-management.md) for eligibility, rotating starters, replay guards, and disconnect/leave policy.
 - **Completed:** [F015, Implement category selection and difficulty system (#17)](https://github.com/joelsjovall/WordGame2.0/issues/17), merged through PR #74 (merge commit `42696ae`). See [category selection](category-selection.md) for provider-backed snapshots, difficulty configuration, and timeouts.
 - **Completed:** [F016, Implement bidding and bluff-calling system (#18)](https://github.com/joelsjovall/WordGame2.0/issues/18), merged through PR #75 (merge commit `ac46ef7`). See [bidding](bidding.md) for the shared rules and concurrency guarantees.
-- **Active:** [F017, Implement timed word challenge and answer submission (#19)](https://github.com/joelsjovall/WordGame2.0/issues/19). Submission orchestration, configured duration, automatic success/timeout completion, and structured results are implemented locally. See [word challenges](word-challenges.md) for cutoffs, result semantics, and scoring boundaries.
-- **Current local state (2026-11-18):** The user authorized preparing `feature/F017-word-challenges` from updated `main` and continuing implementation. Committing, pushing, and merging require user authorization.
+- **Completed:** [F017, Implement timed word challenge and answer submission (#19)](https://github.com/joelsjovall/WordGame2.0/issues/19), merged through PR #76 (merge commit `2e0f6b8`). See [word challenges](word-challenges.md) for cutoffs and result semantics.
+- **Active:** [F018, Implement scoring and points system (#20)](https://github.com/joelsjovall/WordGame2.0/issues/20). The owner delegated scoring rule selection; see [scoring](scoring.md) for finalized rules, configuration, and atomic awards.
+- **Current local state (2026-11-18):** Working on `feature/F018-scoring` from updated `main`. Commit and push require user authorization.
 - **Outstanding security follow-up:** A database credential was previously exposed in the public V1 repository. Never reuse or reproduce it. Rotation must be verified; this handoff provides no evidence that rotation has occurred.
 
 Update this section as issues are completed or the handoff state changes.
