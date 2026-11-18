@@ -14,6 +14,8 @@ F008 provides one server-owned session model and `IGameSessionStore` contract fo
 
 F014 adds an expected-revision `UpdateAsync` overload: the store compares under the session gate before invoking the callback and throws `SessionVersionConflictException` on mismatch. Failed comparisons publish nothing. The engine uses it with session-owned processed action IDs; see [turn management](turn-management.md).
 
+F015 adds `GetActiveAsync` for detached active-session snapshots used by the [category timeout worker](category-selection.md). Each round's selection deadline and retained immutable answer snapshot are copied with the session; only new selections consult the provider. Cross-game enumeration is not atomic, so timeout commands always recheck each snapshot's revision.
+
 Update callbacks must be short, synchronous, and free of external side effects. Do provider/network I/O before the transaction and revalidate relevant state inside it. Do not start background mutation of the draft or synchronously reenter the store from its callback. These are trusted backend interfaces, not a mechanism for executing client-supplied delegates.
 
 `Game.Copy` supplies detached state without persistence attributes or storage dependencies. Immutable values can be shared; mutable aggregate containers cannot. This correctness-first approach copies round history, so cost grows with match length. Serialization/storage adapters can later optimize state handling while preserving these isolation guarantees.

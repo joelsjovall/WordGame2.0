@@ -33,7 +33,7 @@ The Domain remains independent of ASP.NET Core and infrastructure; see [domain m
 
 The API also registers the shared in-memory session store and automatic cleanup worker. See [session management](../docs/session-management.md) for isolation, lifecycle, reconnection, change notifications, and `Sessions` retention settings. Active sessions are lost on restart; this store supports one backend instance.
 
-The shared Application [GameEngine](../docs/game-engine.md) orchestrates creation, initialization, round phases, resolution, completion, and cancellation through that store. It returns structured internal results without exposing new HTTP routes. [Turn management](../docs/turn-management.md) adds rotating starters, versioned player actions, replay guards, and disconnect/leave handling. Category availability, word submission, scoring, and win-condition policies remain later work.
+The shared Application [GameEngine](../docs/game-engine.md) orchestrates creation, initialization, round phases, resolution, completion, and cancellation through that store. It returns structured internal results without exposing new HTTP routes. [Turn management](../docs/turn-management.md) adds rotating starters, versioned player actions, replay guards, and disconnect/leave handling. [Category selection](../docs/category-selection.md) adds provider-backed availability, retained answer snapshots, configurable difficulty modifiers, and a timeout worker. Word submission, scoring, and win-condition policies remain later work.
 
 ## Configuration and conventions
 

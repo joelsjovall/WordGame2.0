@@ -10,7 +10,7 @@ The engine derives phases from existing session/game/round states rather than ma
 | --------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | Waiting for initialization  | Session Waiting, Game WaitingToStart, no round           | `CreateAsync` accepts a fixed roster of 2–4 distinct players with zero scores.                            |
 | Initialized, ready to start | Session Starting, Game WaitingToStart                    | `InitializeAsync` begins trusted backend initialization.                                                  |
-| Category selection          | Session Active, Game InProgress, Round CategorySelection | `StartAsync` creates round 1 with the first eligible roster member as starting player.                    |
+| Category selection          | Session Active, Game InProgress, Round CategorySelection | `StartAsync` creates round 1 with the first eligible roster member and a configured selection deadline.   |
 | Bidding                     | Active / InProgress / Bidding                            | `SelectCategoryAsync` records category metadata and locks category selection.                             |
 | Bluff challenge             | Active / InProgress / Challenge                          | `CallBluffAsync` challenges the current highest bid and makes its bidder the active player.               |
 | Round results               | Active / InProgress / Completed round                    | `ResolveChallengeAsync` derives the outcome from accepted submissions and completes the round atomically. |
@@ -26,7 +26,7 @@ Completed and abandoned sessions cannot restart; rematches create new sessions. 
 
 F014's [turn policy](turn-management.md) now selects/rotates starters, skips unavailable players, handles disconnect/leave reconciliation, and requires action IDs with atomic expected-revision checks for player commands. Duplicate progression is prevented; replaying an original success response remains future transport-receipt work. Category/bidding timeout scheduling remains later work.
 
-Category metadata and challenge duration are **trusted backend inputs**, not client-supplied settings or arbitrary DTOs. Category-provider availability/selection policy is F015 work. Match settings must supply the allowed duration; `CallBluffAsync` creates the challenge ID/start/deadline on the server inside the transaction. Nonpositive or unrepresentable durations are rejected.
+F015's [selection service](category-selection.md) resolves player-selected IDs through the provider, enforces difficulty availability and deadlines, and pins immutable answer data. Challenge duration remains a **trusted backend input**: match settings must supply it, and `CallBluffAsync` creates the challenge ID/start/deadline on the server inside the transaction. Nonpositive or unrepresentable durations are rejected.
 
 Word submission/validation orchestration remains a separate use case. It must record server-validated words in the authoritative challenge using the existing validator and atomic store boundary. `ResolveChallengeAsync` accepts no client-selected result: it succeeds as soon as the stored accepted count reaches the bid, otherwise rejects premature completion and marks failure at or after the deadline. The domain still guards counts and terminal resolution. Resolution is explicit; no timer or background challenge worker is introduced here.
 

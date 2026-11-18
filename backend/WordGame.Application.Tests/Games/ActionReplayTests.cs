@@ -9,7 +9,7 @@ public sealed class ActionReplayTests
     {
         var game = await TurnTestGame.Create();
         var context = await game.Context();
-        TurnTestGame.Accepted(await game.Engine.SelectCategoryAsync(game.Id, game.Players[0].Id, TurnTestGame.Category, context));
+        TurnTestGame.Accepted(await game.Engine.SelectCategoryAsync(game.Id, game.Players[0].Id, TurnTestGame.Category.Id, context));
         var version = (await game.State()).Version;
         Assert.Equal(GameEngineErrorCode.StaleState,
             (await game.Engine.PlaceBidAsync(game.Id, game.Players[0].Id, 1, context)).Error!.Code);
@@ -23,7 +23,7 @@ public sealed class ActionReplayTests
         TurnTestGame.Accepted(await game.Engine.NextRoundAsync(game.Id));
         var before = await game.State();
         Assert.Equal(GameEngineErrorCode.DuplicateAction,
-            (await game.Engine.SelectCategoryAsync(game.Id, game.Players[1].Id, TurnTestGame.Category, await game.Context(context.ActionId))).Error!.Code);
+            (await game.Engine.SelectCategoryAsync(game.Id, game.Players[1].Id, TurnTestGame.Category.Id, await game.Context(context.ActionId))).Error!.Code);
         Assert.Equal(before.Version, (await game.State()).Version);
         Assert.Equal(before.Game.CurrentRound!.Turn, (await game.State()).Game.CurrentRound!.Turn);
     }
@@ -33,9 +33,9 @@ public sealed class ActionReplayTests
     {
         var game = await TurnTestGame.Create();
         var context = await game.Context();
-        var wrongTurn = await game.Engine.SelectCategoryAsync(game.Id, game.Players[1].Id, TurnTestGame.Category, context);
+        var wrongTurn = await game.Engine.SelectCategoryAsync(game.Id, game.Players[1].Id, TurnTestGame.Category.Id, context);
         Assert.Equal(GameEngineErrorCode.NotYourTurn, wrongTurn.Error!.Code);
-        TurnTestGame.Accepted(await game.Engine.SelectCategoryAsync(game.Id, game.Players[0].Id, TurnTestGame.Category, context));
+        TurnTestGame.Accepted(await game.Engine.SelectCategoryAsync(game.Id, game.Players[0].Id, TurnTestGame.Category.Id, context));
         var bid = await game.Context();
         TurnTestGame.Accepted(await game.Engine.ConnectAsync(game.Id, game.Players[0].Id, Guid.NewGuid()));
         Assert.Equal(GameEngineErrorCode.StaleState,
@@ -51,7 +51,7 @@ public sealed class ActionReplayTests
         foreach (var context in new PlayerActionContext[] { new(Guid.Empty, before.Version), new(Guid.NewGuid(), -1), null! })
         {
             Assert.Equal(GameEngineErrorCode.InvalidAction,
-                (await game.Engine.SelectCategoryAsync(game.Id, game.Players[0].Id, TurnTestGame.Category, context)).Error!.Code);
+                (await game.Engine.SelectCategoryAsync(game.Id, game.Players[0].Id, TurnTestGame.Category.Id, context)).Error!.Code);
         }
 
         Assert.Equal(before.Version, (await game.State()).Version);

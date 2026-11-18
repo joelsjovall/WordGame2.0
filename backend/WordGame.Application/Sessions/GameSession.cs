@@ -1,3 +1,4 @@
+using WordGame.Application.Categories;
 using WordGame.Application.Games;
 using WordGame.Domain;
 
@@ -31,6 +32,8 @@ public sealed class GameSession
         disconnectedAt = new Dictionary<Guid, DateTimeOffset?>(original.disconnectedAt);
         departed.UnionWith(original.departed);
         processedActions.UnionWith(original.processedActions);
+        CategorySelectionDeadline = original.CategorySelectionDeadline;
+        SelectedCategory = original.SelectedCategory;
     }
 
     public Guid Id => Game.Id;
@@ -40,13 +43,30 @@ public sealed class GameSession
     public DateTimeOffset UpdatedAt { get; }
     public DateTimeOffset? EndedAt { get; private set; }
     public DateTimeOffset? AllDisconnectedSince { get; private set; }
+    public DateTimeOffset? CategorySelectionDeadline { get; private set; }
+    public RoundCategorySelection? SelectedCategory { get; private set; }
 
     public GameSession Copy(DateTimeOffset now) => new(this, now);
 
     public SessionSnapshot Snapshot(long version) => new(Id, Status, version, CreatedAt, UpdatedAt, EndedAt,
         Array.AsReadOnly(Game.Players.Select(player =>
             new PlayerPresence(player.Id, connections[player.Id].Count, disconnectedAt[player.Id], departed.Contains(player.Id))).ToArray()),
-        Game.Copy());
+        Game.Copy(), CategorySelectionDeadline, SelectedCategory);
+
+    internal void BeginCategorySelection(TimeSpan? timeout)
+    {
+        Require(Game.CurrentRound?.Status == RoundStatus.CategorySelection, "A new category-selection round is required.");
+        CategorySelectionDeadline = timeout is { } duration ? UpdatedAt.Add(duration) : null;
+        SelectedCategory = null;
+    }
+
+    internal void SelectCategory(Guid playerId, CategoryDefinition definition, int multiplier)
+    {
+        var round = Game.CurrentRound ?? throw new InvalidOperationException("A round is required.");
+        round.SelectCategory(playerId, definition.Category);
+        SelectedCategory = new RoundCategorySelection(round.Id, definition, multiplier);
+        CategorySelectionDeadline = null;
+    }
 
     public void BeginStarting()
     {
@@ -66,6 +86,7 @@ public sealed class GameSession
         Require(Status == SessionStatus.Active && Game.Status == GameStatus.Completed,
             "Completion requires an active session and a completed game.");
         Status = SessionStatus.Completed;
+        CategorySelectionDeadline = null;
         EndedAt = UpdatedAt;
     }
 
@@ -78,6 +99,7 @@ public sealed class GameSession
         }
 
         Status = SessionStatus.Abandoned;
+        CategorySelectionDeadline = null;
         EndedAt = UpdatedAt;
     }
 
@@ -124,6 +146,11 @@ public sealed class GameSession
             _ => throw new InvalidOperationException("Unknown session status.")
         };
         Require(Game.Status == expected, "Session and game lifecycle states must agree before commit.");
+        if (SelectedCategory is { } selected)
+        {
+            Require(Game.CurrentRound?.Id == selected.RoundId && Game.CurrentRound.Category == selected.Definition.Category,
+                "The selected answer snapshot must match the current round.");
+        }
     }
 
     internal bool HasProcessedAction(Guid actionId) => processedActions.Contains(actionId);

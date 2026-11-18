@@ -11,7 +11,8 @@ public enum GameEngineErrorCode
     NotYourTurn,
     PlayerUnavailable,
     DuplicateAction,
-    StaleState
+    StaleState,
+    CategoryUnavailable
 }
 
 public sealed record GameEngineError(GameEngineErrorCode Code, string Message);
@@ -30,5 +31,6 @@ public sealed class GameEngineResult
     public GameEngineError? Error { get; }
 
     internal static GameEngineResult Accepted(SessionSnapshot state) => new(state, null);
+    internal static GameEngineResult Missing() => Rejected(GameEngineErrorCode.NotFound, "The game was not found.");
     internal static GameEngineResult Rejected(GameEngineErrorCode code, string message) => new(null, new(code, message));
 }

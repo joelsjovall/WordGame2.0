@@ -41,7 +41,7 @@ Expiry is evaluated on actions/reconciliation/sweeps rather than an exact wall-c
 
 `LeaveAsync` permanently marks a participant as departed, clears their connections, and reconciles without waiting for grace. `PlayerPresence.HasLeft` records this internal session state. A departed player cannot reconnect or act in that match. Explicitly leaving a waiting session with fewer than two remaining participants cancels it too. Transport heartbeat/stale-connection detection remains necessary: an unreported disconnect still appears connected.
 
-This is a shared safety policy, not Online forfeit scoring: abandonment awards no points and declares no winner. Party/Online-specific forfeit results, challenge submission, category/bidding timeouts, and broader scoring remain their own issues. The API still exposes no game/action/SSE routes; public player-departure presentation and HTTP error/receipt mapping remain adapter work.
+This is a shared safety policy, not Online forfeit scoring: abandonment awards no points and declares no winner. F015 adds [category-selection timeouts](category-selection.md). Party/Online-specific forfeit results, challenge submission, bidding timeouts, and broader scoring remain their own issues. The API still exposes no game/action/SSE routes; public player-departure presentation and HTTP error/receipt mapping remain adapter work.
 
 ## Tests
 

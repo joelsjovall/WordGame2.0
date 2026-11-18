@@ -15,7 +15,7 @@ public sealed class GameEngineTests
     public GameEngineTests()
     {
         store = new EngineTestStore(clock);
-        engine = new GameEngine(store, clock, new SessionRetention(TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(5)));
+        engine = TestCategoryProvider.Engine(store, clock, new SessionRetention(TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(5)));
     }
 
     [Theory]
@@ -189,7 +189,7 @@ public sealed class GameEngineTests
     }
 
     private async Task<GameEngineResult> SelectCategoryAsync(Guid id, Guid actor, Category category) =>
-        await engine.SelectCategoryAsync(id, actor, category, await Context(id));
+        await engine.SelectCategoryAsync(id, actor, category?.Id!, await Context(id));
 
     private async Task<GameEngineResult> PlaceBidAsync(Guid id, Guid actor, int count) =>
         await engine.PlaceBidAsync(id, actor, count, await Context(id));

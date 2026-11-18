@@ -11,7 +11,7 @@ public sealed class TurnMaintenanceTests
     {
         var clock = new ManualSessionClock();
         var store = SessionTestData.Store(clock);
-        var engine = new GameEngine(store, clock, Retention());
+        var engine = SessionTestData.Engine(store, clock);
         var players = SessionTestData.Players(3);
         var id = (await engine.CreateAsync(players)).State!.Id;
         var connections = players.Select(_ => Guid.NewGuid()).ToArray();
@@ -61,14 +61,14 @@ public sealed class TurnMaintenanceTests
     {
         var clock = new ManualSessionClock();
         var store = SessionTestData.Store(clock);
-        var engine = new GameEngine(store, clock, Retention());
+        var engine = SessionTestData.Engine(store, clock);
         var players = SessionTestData.Players(2);
         var id = (await engine.CreateAsync(players)).State!.Id;
         Assert.True((await engine.InitializeAsync(id)).Succeeded);
         Assert.True((await engine.StartAsync(id)).Succeeded);
         var context = new PlayerActionContext(Guid.NewGuid(), (await store.GetAsync(id))!.Version);
         var results = await Task.WhenAll(Enumerable.Range(0, 20).Select(_ => Task.Run(() =>
-            engine.SelectCategoryAsync(id, players[0].Id, new Category("cars", "Cars", CategoryDifficulty.Easy), context))));
+            engine.SelectCategoryAsync(id, players[0].Id, "cars", context))));
         Assert.Single(results, result => result.Succeeded);
         var version = (await store.GetAsync(id))!.Version;
         var replay = await engine.PlaceBidAsync(id, players[0].Id, 1, context with { ExpectedVersion = version });
@@ -81,7 +81,7 @@ public sealed class TurnMaintenanceTests
     {
         var clock = new ManualSessionClock();
         var store = SessionTestData.Store(clock);
-        var engine = new GameEngine(store, clock, Retention());
+        var engine = SessionTestData.Engine(store, clock);
         var players = SessionTestData.Players(2);
         var id = (await engine.CreateAsync(players)).State!.Id;
         Assert.True((await engine.ConnectAsync(id, players[0].Id, Guid.NewGuid())).Succeeded);
@@ -95,5 +95,5 @@ public sealed class TurnMaintenanceTests
         Assert.All(state.Game.Scores.Values, score => Assert.Equal(0, score.Points));
     }
 
-    private static SessionRetention Retention() => new(TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(5));
+
 }
