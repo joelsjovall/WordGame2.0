@@ -13,17 +13,24 @@ npm run dev
 
 On Windows PowerShell with script execution disabled, use `npm.cmd` instead of `npm`.
 
-Copy `.env.example` to `.env.local` when configuring a backend. Set `VITE_API_BASE_URL` to its origin, for example `https://localhost:7001`, using the actual backend port. Leave it empty for same-origin requests. Restart Vite after changing environment values. `src/services/api/config.ts` exposes the normalized base URL for future API clients; no backend requests are made yet. Vite embeds `VITE_` values in browser assets: they must never contain secrets. Local environment files are ignored by Git.
+Copy `.env.example` to `.env.local` when configuring a backend. Set `VITE_API_BASE_URL` to its origin, for example `http://localhost:5000`, using the actual backend port. Leave it empty for same-origin requests. Restart Vite after changing environment values. `src/services/api/config.ts` supplies the normalized base URL to the centralized API client. The placeholder homepage still makes no backend requests. Vite embeds `VITE_` values in browser assets: they must never contain secrets. Local environment files are ignored by Git.
 
 ```sh
 npm run typecheck
+npm test
 npm run lint
 npm run format:check
 npm run build
 npm run preview
 ```
 
-`build` includes TypeScript checks. `format` applies Prettier; ESLint handles code quality with React Hooks and Fast Refresh rules. Both application and Vite configuration use explicit strict TypeScript settings. TypeScript 6 is used for compatibility with typescript-eslint's supported peer range. `package-lock.json` pins dependency resolutions for `npm ci`.
+`build` includes TypeScript checks. `format` applies Prettier; ESLint handles code quality with React Hooks and Fast Refresh rules. Both application and Vite configuration use explicit strict TypeScript settings. TypeScript 5.9 satisfies both typescript-eslint and openapi-typescript peer ranges. `package-lock.json` pins dependency resolutions for `npm ci`. API client tests use Node's built-in test runner and TypeScript stripping, without adding a test framework.
+
+## Shared API contracts
+
+See [API contracts](../docs/api-contracts.md) for implemented endpoints, future specifications, versioning, and errors. All JSON requests go through `src/services/api/client.ts`; typed category operations are in `categories.ts`. Import shared generated types from `generated.ts` instead of declaring response interfaces in components.
+
+With the Development backend running on port 5000, run `npm run api:generate` to refresh types and `npm run api:check` to detect drift. A trailing OpenAPI document URL overrides the default. Commit generated changes with backend DTO changes. No game/matchmaking client wrappers are added until their routes exist.
 
 ## Structure and boundaries
 
