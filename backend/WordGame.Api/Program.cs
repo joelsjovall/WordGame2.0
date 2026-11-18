@@ -1,4 +1,5 @@
 using WordGame.Api.Errors;
+using WordGame.Application.Words;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +10,7 @@ builder.Logging.AddDebug();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddHealthChecks();
+builder.Services.AddSingleton<IWordValidationService, WordValidationService>();
 
 if (builder.Environment.IsDevelopment())
 {

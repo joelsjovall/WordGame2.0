@@ -9,7 +9,8 @@ F004 defines the model foundation in `backend/WordGame.Domain`. The assembly ref
 | `Game` | Owns a fixed, ordered roster of 2-4 players, sequential rounds, and per-player scores. |
 | `Player` | Immutable match participant ID and display name; not an authentication credential or connection. |
 | `GameRound` | Owns category selection, highest bid, current turn, challenge, and round status. Created only through its game. |
-| `Category` | Immutable stable string ID, display name, and Easy/Medium/Hard difficulty. Answers, aliases, and provider data belong to F006/F007. |
+| `Category` | Immutable stable string ID, display name, and Easy/Medium/Hard difficulty. |
+| `AcceptedAnswer` / `CategoryDefinition` | Canonical answers and aliases in an immutable indexed category snapshot; see [category validation](category-validation.md). |
 | `Bid` | Immutable bidder ID and positive required word count. |
 | `Challenge` | Owns the challenged bid, caller, start/deadline, submissions, and outcome. A mutable challenge instance can belong to only one round. |
 | `SubmittedWord` | Immutable bidder ID, display/normalized text, server-supplied timestamp, validation status, and canonical accepted-answer identity. |
@@ -18,7 +19,7 @@ F004 defines the model foundation in `backend/WordGame.Domain`. The assembly ref
 
 IDs cannot be empty; required text cannot be blank. Display text is trimmed. Category IDs are provider-neutral strings; participant, game, round, and challenge IDs are GUIDs. Collections are read-only views, the input roster is copied, and value properties have no public setters.
 
-F005 adds the reviewed V1 normalization baseline through `WordNormalizer` and `SubmittedWord.NormalizedText`: trim and invariant lowercase, without alias matching or word validation. `Game.GetNextPlayerId` performs a side-effect-free cyclic roster lookup; it does not automatically advance a turn or pick a starting-player policy. See the [V1 migration review](v1-migration-review.md).
+F005 introduced normalization and cyclic roster lookup; see the [V1 migration review](v1-migration-review.md). F006 extends `WordNormalizer` to collapse internal whitespace as well as lowercase invariantly. `SubmittedWord.NormalizedText` uses that shared rule. `Game.GetNextPlayerId` remains a side-effect-free lookup rather than automatic turn progression.
 
 ## States and allowed transitions
 
@@ -51,9 +52,9 @@ Terminal states cannot restart. State changes use guarded methods, not public st
 
 ## Deliberately deferred
 
-F013-F019 will supply engine orchestration, automatic turn progression and starting-player policy, timeout scheduling, category availability, word validation, automatic challenge resolution, and match win conditions. There is no `GameEngine`, networking, or provider implementation here.
+F013-F019 will supply engine orchestration, automatic turn progression and starting-player policy, timeout scheduling, category availability, submission orchestration using F006 validation, automatic challenge resolution, and match win conditions. There is no `GameEngine`, networking, or provider implementation here.
 
-The domain does not read a clock, decide whether an answer is valid, or calculate a points formula. Callers must be trusted backend code; these objects are not request DTOs. A future engine must serialize actions within a session; these mutable aggregates are not thread-safe.
+The domain does not read a clock, retrieve datasets, or calculate a points formula. Its category snapshot provides pure answer lookup; Application's F006 validator combines lookup with authoritative accepted history. Callers must be trusted backend code; these objects are not request DTOs. A future engine must serialize actions within a session; these mutable aggregates are not thread-safe.
 
 F018 explicitly leaves the scoring formula unfinalized. The nonnegative integer score representation makes no choice about difficulty multipliers, winning targets, or actual award amounts. Confirm those rules in F018; penalties or negative totals would require revisiting this representation.
 

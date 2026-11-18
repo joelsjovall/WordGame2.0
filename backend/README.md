@@ -19,13 +19,14 @@ Set the frontend's `VITE_API_BASE_URL=http://localhost:5000` in `frontend/.env.l
 | Project | References | Responsibility |
 | --- | --- | --- |
 | `WordGame.Domain` | None | Shared entities, lifecycle guards, turns, scores, and challenge models |
-| `WordGame.Application` | Domain | Future use cases, orchestration, session workflows, provider contracts |
+| `WordGame.Application` | Domain | Word validation and category-provider contracts; future session orchestration |
 | `WordGame.Infrastructure` | Application | Future provider implementations and storage |
 | `WordGame.Api` | Application, Infrastructure | HTTP endpoints, middleware, configuration, composition root |
 | `WordGame.Api.Tests` | API | xUnit HTTP integration tests using WebApplicationFactory |
 | `WordGame.Domain.Tests` | Domain | xUnit model and invariant tests without an API host |
+| `WordGame.Application.Tests` | Application | xUnit word validation and provider-boundary tests |
 
-Application and Infrastructure intentionally contain only project definitions until real behavior is needed. No marker classes, database packages, placeholder services, or V1 code are included. The Domain remains independent of ASP.NET Core and infrastructure; see [domain models](../docs/domain-models.md) for relationships, states, invariants, and deferred policies. Future services should be registered in the API composition root or meaningful layer registration extensions; current health, error, and CORS services use built-in dependency injection.
+Infrastructure intentionally contains only its project definition until F007 introduces the JSON provider. The Domain remains independent of ASP.NET Core and infrastructure; see [domain models](../docs/domain-models.md) for relationships and [category validation](../docs/category-validation.md) for answer definitions, normalization, provider/cache contracts, and validation results. The stateless word validator is registered through built-in dependency injection in the API composition root. No database packages or placeholder provider are included.
 
 ## Configuration and conventions
 

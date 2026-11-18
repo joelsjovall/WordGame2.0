@@ -2,6 +2,8 @@
 
 Reviewed for F005 on 2026-11-18 against V1 commit [dd9c2399a3f852cd7a49fce309286bea9e78e3f0](https://github.com/joelsjovall/wordgame/tree/dd9c2399a3f852cd7a49fce309286bea9e78e3f0). Findings describe that revision, not future V1 changes. V2 architecture and the F004 domain models take precedence over incidental V1 behavior.
 
+This document records the F005 migration scope. F006 subsequently extends whitespace normalization and implements provider-independent validation with aliases; see [category validation](category-validation.md) for current behavior.
+
 ## Component decisions
 
 | V1 source | Review finding | V2 decision |

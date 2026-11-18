@@ -4,11 +4,24 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using WordGame.Application.Words;
+using WordGame.Domain;
 
 namespace WordGame.Api.Tests;
 
 public sealed class ApiFoundationTests
 {
+    [Fact]
+    public void ValidationServiceIsRegisteredWithoutDatabaseOrProviderDependencies()
+    {
+        using var factory = CreateFactory("Production");
+        var service = factory.Services.GetRequiredService<IWordValidationService>();
+        var category = new CategoryDefinition(
+            new Category("cars", "Cars", CategoryDifficulty.Easy), [new AcceptedAnswer("Volvo")]);
+
+        Assert.Equal(WordSubmissionStatus.Accepted, service.Validate(category, " VOLVO ", []).Status);
+    }
+
     [Theory]
     [InlineData("Development")]
     [InlineData("Production")]
