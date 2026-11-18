@@ -12,7 +12,7 @@ public sealed class BiddingConcurrencyTests
         var (engine, store, id, players) = await Game();
         var before = (await store.GetAsync(id))!;
         var raise = Task.Run(() => engine.PlaceBidAsync(id, players[1].Id, 5, new(Guid.NewGuid(), before.Version)));
-        var bluff = Task.Run(() => engine.CallBluffAsync(id, players[1].Id, TimeSpan.FromSeconds(30), new(Guid.NewGuid(), before.Version)));
+        var bluff = Task.Run(() => engine.CallBluffAsync(id, players[1].Id, new(Guid.NewGuid(), before.Version)));
         var results = await Task.WhenAll(raise, bluff);
         Assert.Single(results, result => result.Succeeded);
         Assert.Equal(GameEngineErrorCode.StaleState, Assert.Single(results, result => !result.Succeeded).Error!.Code);
@@ -42,12 +42,12 @@ public sealed class BiddingConcurrencyTests
         var before = (await store.GetAsync(id))!;
         var context = new PlayerActionContext(Guid.NewGuid(), before.Version);
         var results = await Task.WhenAll(Enumerable.Range(0, 20).Select(_ => Task.Run(() =>
-            engine.CallBluffAsync(id, players[1].Id, TimeSpan.FromSeconds(30), context))));
+            engine.CallBluffAsync(id, players[1].Id, context))));
         var accepted = Assert.Single(results, result => result.Succeeded).State!;
         Assert.Equal(before.Version + 1, accepted.Version);
         Assert.All(results.Where(result => !result.Succeeded), result => Assert.Equal(GameEngineErrorCode.StaleState, result.Error!.Code));
         var challenge = accepted.Game.CurrentRound!.Challenge!;
-        var retry = await engine.CallBluffAsync(id, players[1].Id, TimeSpan.FromSeconds(30), context with { ExpectedVersion = accepted.Version });
+        var retry = await engine.CallBluffAsync(id, players[1].Id, context with { ExpectedVersion = accepted.Version });
         Assert.Equal(GameEngineErrorCode.DuplicateAction, retry.Error!.Code);
         var after = (await store.GetAsync(id))!;
         Assert.Equal(accepted.Version, after.Version);
@@ -67,8 +67,8 @@ public sealed class BiddingConcurrencyTests
         var firstVersion = (await store.GetAsync(firstId))!.Version;
         var secondVersion = (await store.GetAsync(secondId))!.Version;
         var results = await Task.WhenAll(
-            engine.CallBluffAsync(firstId, players[1].Id, TimeSpan.FromSeconds(30), new(Guid.NewGuid(), firstVersion)),
-            engine.CallBluffAsync(secondId, players[1].Id, TimeSpan.FromSeconds(30), new(Guid.NewGuid(), secondVersion)));
+            engine.CallBluffAsync(firstId, players[1].Id, new(Guid.NewGuid(), firstVersion)),
+            engine.CallBluffAsync(secondId, players[1].Id, new(Guid.NewGuid(), secondVersion)));
         Assert.All(results, result => Assert.True(result.Succeeded));
         var first = (await store.GetAsync(firstId))!.Game.CurrentRound!.Challenge!;
         var second = (await store.GetAsync(secondId))!.Game.CurrentRound!.Challenge!;
@@ -81,7 +81,7 @@ public sealed class BiddingConcurrencyTests
     {
         var clock = new ManualSessionClock();
         var store = SessionTestData.Store(clock);
-        var engine = SessionTestData.Engine(store, clock);
+        var engine = SessionTestData.Engine(store);
         var players = SessionTestData.Players();
         var id = (await engine.CreateAsync(players)).State!.Id;
         Assert.True((await engine.InitializeAsync(id)).Succeeded);

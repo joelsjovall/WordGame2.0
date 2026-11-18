@@ -17,7 +17,7 @@ public sealed class CategorySelectionSessionTests
         var store = SessionTestData.Store(clock);
         var retention = Retention();
         var categories = new CategorySelectionService(provider, new CategorySelectionRules(null), store, retention);
-        var engine = new GameEngine(store, clock, retention, categories);
+        var engine = new GameEngine(store, retention, categories, SessionTestData.Challenges(store, retention));
         var players = SessionTestData.Players();
         var id = (await engine.CreateAsync(players)).State!.Id;
         Assert.Empty(await store.GetActiveAsync());
@@ -44,7 +44,7 @@ public sealed class CategorySelectionSessionTests
         var retention = Retention();
         var categories = new CategorySelectionService(new JsonCategoryProvider(directory.Root),
             new CategorySelectionRules(TimeSpan.FromSeconds(45)), store, retention);
-        var engine = new GameEngine(store, clock, retention, categories);
+        var engine = new GameEngine(store, retention, categories, SessionTestData.Challenges(store, retention));
         var id = (await engine.CreateAsync(SessionTestData.Players())).State!.Id;
         Assert.True((await engine.InitializeAsync(id)).Succeeded);
         Assert.True((await engine.StartAsync(id)).Succeeded);
@@ -68,7 +68,7 @@ public sealed class CategorySelectionSessionTests
         var store = SessionTestData.Store(clock);
         var retention = Retention();
         var categories = new CategorySelectionService(provider, new CategorySelectionRules(null), store, retention);
-        var engine = new GameEngine(store, clock, retention, categories);
+        var engine = new GameEngine(store, retention, categories, SessionTestData.Challenges(store, retention));
         var players = SessionTestData.Players(3);
         var id = (await engine.CreateAsync(players)).State!.Id;
         Assert.True((await engine.InitializeAsync(id)).Succeeded);

@@ -1,6 +1,8 @@
 using WordGame.Application.Categories;
+using WordGame.Application.Challenges;
 using WordGame.Application.Games;
 using WordGame.Application.Sessions;
+using WordGame.Application.Words;
 using WordGame.Domain;
 
 namespace WordGame.Application.Tests.Games;
@@ -14,23 +16,26 @@ internal sealed class TurnTestGame
     internal EngineTestStore Store { get; }
     internal GameEngine Engine { get; }
     internal CategorySelectionService Categories { get; }
+    internal ChallengeService Challenges { get; }
     internal Player[] Players { get; }
     internal Guid[] Connections { get; }
     internal Guid Id { get; private set; }
 
-    private TurnTestGame(int count, TestCategoryProvider? provider, CategorySelectionRules? rules)
+    private TurnTestGame(int count, TestCategoryProvider? provider, CategorySelectionRules? rules, ChallengeRules? challengeRules)
     {
         Store = new EngineTestStore(Clock);
         var retention = new SessionRetention(Grace, Grace, Grace);
         Categories = new CategorySelectionService(provider ?? new TestCategoryProvider(), rules ?? new CategorySelectionRules(null), Store, retention);
-        Engine = new GameEngine(Store, Clock, retention, Categories);
+        Challenges = new ChallengeService(Store, retention, new WordValidationService(), challengeRules ?? new ChallengeRules(Duration));
+        Engine = new GameEngine(Store, retention, Categories, Challenges);
         Players = Enumerable.Range(0, count).Select(index => new Player(Guid.NewGuid(), $"Player {index}")).ToArray();
         Connections = Players.Select(_ => Guid.NewGuid()).ToArray();
     }
 
-    internal static async Task<TurnTestGame> Create(int count = 3, TestCategoryProvider? provider = null, CategorySelectionRules? rules = null)
+    internal static async Task<TurnTestGame> Create(int count = 3, TestCategoryProvider? provider = null,
+        CategorySelectionRules? rules = null, ChallengeRules? challengeRules = null)
     {
-        var game = new TurnTestGame(count, provider, rules);
+        var game = new TurnTestGame(count, provider, rules, challengeRules);
         game.Id = Accepted(await game.Engine.CreateAsync(game.Players)).Id;
         for (var index = 0; index < count; index++)
         {
@@ -46,7 +51,9 @@ internal sealed class TurnTestGame
     internal async Task<PlayerActionContext> Context(Guid? actionId = null) => new(actionId ?? Guid.NewGuid(), (await State()).Version);
     internal async Task<SessionSnapshot> Select(int actor = 0) => Accepted(await Engine.SelectCategoryAsync(Id, Players[actor].Id, Category.Id, await Context()));
     internal async Task<SessionSnapshot> Bid(int actor, int count) => Accepted(await Engine.PlaceBidAsync(Id, Players[actor].Id, count, await Context()));
-    internal async Task<SessionSnapshot> Bluff(int actor) => Accepted(await Engine.CallBluffAsync(Id, Players[actor].Id, Duration, await Context()));
+    internal async Task<SessionSnapshot> Bluff(int actor) => Accepted(await Engine.CallBluffAsync(Id, Players[actor].Id, await Context()));
+    internal async Task<GameEngineResult> Submit(int actor, string word, PlayerActionContext? context = null) =>
+        await Engine.SubmitWordAsync(Id, Players[actor].Id, word, context ?? await Context());
     internal async Task Disconnect(int player) => Accepted(await Engine.DisconnectAsync(Id, Players[player].Id, Connections[player]));
     internal Task<SessionSnapshot> Reconcile() => Store.UpdateAsync(Id, session => session.ReconcileTurns(Grace));
 

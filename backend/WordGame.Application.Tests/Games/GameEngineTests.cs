@@ -15,7 +15,7 @@ public sealed class GameEngineTests
     public GameEngineTests()
     {
         store = new EngineTestStore(clock);
-        engine = TestCategoryProvider.Engine(store, clock, new SessionRetention(TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(5)));
+        engine = TestCategoryProvider.Engine(store, new SessionRetention(TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(5)));
     }
 
     [Theory]
@@ -74,13 +74,12 @@ public sealed class GameEngineTests
         await Reject(id, () => SelectCategoryAsync(id, players[0].Id, null!), GameEngineErrorCode.InvalidAction);
         State(await SelectCategoryAsync(id, players[0].Id, Category));
         await Reject(id, () => SelectCategoryAsync(id, players[0].Id, Category), GameEngineErrorCode.InvalidState);
-        await Reject(id, () => CallBluffAsync(id, players[0].Id, Duration), GameEngineErrorCode.InvalidState);
+        await Reject(id, () => CallBluffAsync(id, players[0].Id), GameEngineErrorCode.InvalidState);
         await Reject(id, () => PlaceBidAsync(id, players[0].Id, 0), GameEngineErrorCode.InvalidAction);
         State(await PlaceBidAsync(id, players[0].Id, 2));
         await Reject(id, () => PlaceBidAsync(id, players[0].Id, 3), GameEngineErrorCode.NotYourTurn);
         await Reject(id, () => PlaceBidAsync(id, players[1].Id, 2), GameEngineErrorCode.InvalidState);
-        await Reject(id, () => CallBluffAsync(id, players[1].Id, TimeSpan.Zero), GameEngineErrorCode.InvalidAction);
-        State(await CallBluffAsync(id, players[1].Id, Duration));
+        State(await CallBluffAsync(id, players[1].Id));
         await Reject(id, () => engine.ResolveChallengeAsync(id), GameEngineErrorCode.InvalidState);
         await Reject(id, () => engine.CompleteAsync(id), GameEngineErrorCode.InvalidState);
         clock.Advance(Duration);
@@ -96,14 +95,13 @@ public sealed class GameEngineTests
         var id = await Start(players);
         State(await SelectCategoryAsync(id, players[0].Id, Category));
         State(await PlaceBidAsync(id, players[0].Id, 1));
-        var challenge = State(await CallBluffAsync(id, players[1].Id, Duration)).Game.CurrentRound!.Challenge!;
+        var challenge = State(await CallBluffAsync(id, players[1].Id)).Game.CurrentRound!.Challenge!;
         Assert.Equal(clock.GetUtcNow(), challenge.StartedAt);
         Assert.Equal(clock.GetUtcNow() + Duration, challenge.Deadline);
 
-        // Simulates the trusted word-submission use case, not a client-supplied validation result.
-        await store.UpdateAsync(id, session => session.Game.CurrentRound!.Challenge!.RecordSubmission(
-            new SubmittedWord(players[0].Id, "Volvo", clock.GetUtcNow(), WordSubmissionStatus.Accepted, "volvo")));
-        var resolved = State(await engine.ResolveChallengeAsync(id));
+        var submission = await engine.SubmitWordAsync(id, players[0].Id, "Volvo", await Context(id));
+        Assert.Equal(WordSubmissionStatus.Accepted, submission.SubmissionStatus);
+        var resolved = State(submission);
         Assert.Equal(ChallengeOutcome.Succeeded, resolved.Game.CurrentRound!.Challenge!.Outcome);
         Assert.Equal(RoundStatus.Completed, resolved.Game.CurrentRound.Status);
         Assert.Equal(SessionStatus.Active, resolved.Status);
@@ -137,7 +135,7 @@ public sealed class GameEngineTests
         {
             State(await SelectCategoryAsync(id, players[0].Id, Category));
             State(await PlaceBidAsync(id, players[0].Id, 1));
-            State(await CallBluffAsync(id, players[1].Id, Duration));
+            State(await CallBluffAsync(id, players[1].Id));
         }
         var result = State(await engine.CancelAsync(id));
         Assert.Equal(SessionStatus.Abandoned, result.Status);
@@ -194,8 +192,8 @@ public sealed class GameEngineTests
     private async Task<GameEngineResult> PlaceBidAsync(Guid id, Guid actor, int count) =>
         await engine.PlaceBidAsync(id, actor, count, await Context(id));
 
-    private async Task<GameEngineResult> CallBluffAsync(Guid id, Guid actor, TimeSpan duration) =>
-        await engine.CallBluffAsync(id, actor, duration, await Context(id));
+    private async Task<GameEngineResult> CallBluffAsync(Guid id, Guid actor) =>
+        await engine.CallBluffAsync(id, actor, await Context(id));
 
     private async Task<PlayerActionContext> Context(Guid id) => new(Guid.NewGuid(), State(await engine.GetStateAsync(id)).Version);
 
@@ -212,7 +210,7 @@ public sealed class GameEngineTests
         Assert.Equal(RoundStatus.Bidding, State(await SelectCategoryAsync(id, bidder, Category)).Game.CurrentRound!.Status);
         var bidding = State(await PlaceBidAsync(id, bidder, 1));
         Assert.Equal(caller, bidding.Game.CurrentRound!.Turn.PlayerId);
-        var challenging = State(await CallBluffAsync(id, caller, Duration));
+        var challenging = State(await CallBluffAsync(id, caller));
         Assert.Equal(RoundStatus.Challenge, challenging.Game.CurrentRound!.Status);
         Assert.Equal(bidder, challenging.Game.CurrentRound.Turn.PlayerId);
         clock.Advance(Duration);

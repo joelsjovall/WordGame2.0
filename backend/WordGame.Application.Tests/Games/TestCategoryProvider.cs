@@ -1,6 +1,8 @@
 using WordGame.Application.Categories;
+using WordGame.Application.Challenges;
 using WordGame.Application.Games;
 using WordGame.Application.Sessions;
+using WordGame.Application.Words;
 using WordGame.Domain;
 
 namespace WordGame.Application.Tests.Games;
@@ -27,6 +29,7 @@ internal sealed class TestCategoryProvider(params CategoryDefinition[] definitio
         return LoadOverride is { } load ? load(categoryId, cancellationToken) : Task.FromResult(Definitions.GetValueOrDefault(categoryId));
     }
 
-    internal static GameEngine Engine(IGameSessionStore store, TimeProvider clock, SessionRetention retention) =>
-        new(store, clock, retention, new CategorySelectionService(new TestCategoryProvider(), new CategorySelectionRules(null), store, retention));
+    internal static GameEngine Engine(IGameSessionStore store, SessionRetention retention) =>
+        new(store, retention, new CategorySelectionService(new TestCategoryProvider(), new CategorySelectionRules(null), store, retention),
+            new ChallengeService(store, retention, new WordValidationService(), new ChallengeRules(TimeSpan.FromSeconds(30))));
 }

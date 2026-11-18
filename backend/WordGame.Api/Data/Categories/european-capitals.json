@@ -8,6 +8,8 @@
     { "value": "Helsinki", "aliases": ["Helsingfors"] },
     { "value": "Oslo", "aliases": [] },
     { "value": "Paris", "aliases": [] },
-    { "value": "Berlin", "aliases": [] }
+    { "value": "Berlin", "aliases": [] },
+    { "value": "Madrid", "aliases": [] },
+    { "value": "Rome", "aliases": [] }
   ]
 }

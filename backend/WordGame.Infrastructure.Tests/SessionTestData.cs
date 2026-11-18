@@ -1,6 +1,8 @@
 using WordGame.Application.Categories;
+using WordGame.Application.Challenges;
 using WordGame.Application.Games;
 using WordGame.Application.Sessions;
+using WordGame.Application.Words;
 using WordGame.Domain;
 using WordGame.Infrastructure.Sessions;
 
@@ -8,11 +10,16 @@ namespace WordGame.Infrastructure.Tests;
 
 internal static class SessionTestData
 {
-    internal static GameEngine Engine(IGameSessionStore store, TimeProvider clock)
+    internal static GameEngine Engine(IGameSessionStore store, IWordValidationService? validator = null)
     {
         var retention = new SessionRetention(TimeSpan.FromMinutes(2), TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(5));
-        return new GameEngine(store, clock, retention, new CategorySelectionService(new EngineCategoryProvider(), new CategorySelectionRules(null), store, retention));
+        return new GameEngine(store, retention, new CategorySelectionService(new EngineCategoryProvider(), new CategorySelectionRules(null), store, retention),
+            Challenges(store, retention, validator: validator));
     }
+
+    internal static ChallengeService Challenges(IGameSessionStore store, SessionRetention retention, ChallengeRules? rules = null,
+        IWordValidationService? validator = null) =>
+        new(store, retention, validator ?? new WordValidationService(), rules ?? new ChallengeRules(TimeSpan.FromSeconds(30)));
 
     private sealed class EngineCategoryProvider : ICategoryProvider
     {

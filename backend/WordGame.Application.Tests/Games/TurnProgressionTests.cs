@@ -39,7 +39,7 @@ public sealed class TurnProgressionTests
     {
         var clock = new EngineTestClock();
         var store = new EngineTestStore(clock);
-        var engine = TestCategoryProvider.Engine(store, clock, new SessionRetention(TurnTestGame.Grace, TurnTestGame.Grace, TurnTestGame.Grace));
+        var engine = TestCategoryProvider.Engine(store, new SessionRetention(TurnTestGame.Grace, TurnTestGame.Grace, TurnTestGame.Grace));
         var players = Enumerable.Range(0, 4).Select(index => new Player(Guid.NewGuid(), $"Player {index}")).ToArray();
         var created = TurnTestGame.Accepted(await engine.CreateAsync(players));
         TurnTestGame.Accepted(await engine.LeaveAsync(created.Id, players[0].Id, new(Guid.NewGuid(), created.Version)));
