@@ -180,6 +180,45 @@ export interface components {
             status: 'accepted' | 'rejected' | 'duplicate'
           }[]
         }
+        result?: null | {
+          /** Format: uuid */
+          roundId: string
+          /** Format: int32 */
+          roundNumber: number
+          category: {
+            id: string
+            name: string
+            /** @enum {unknown} */
+            difficulty: 'easy' | 'medium' | 'hard'
+          }
+          /** Format: uuid */
+          challengeId: string
+          /** Format: uuid */
+          bidderId: string
+          /** Format: uuid */
+          callerId: string
+          /** Format: uuid */
+          winnerId: string
+          /** Format: int32 */
+          requiredWordCount: number
+          /** Format: int32 */
+          acceptedWordCount: number
+          /** @enum {unknown} */
+          outcome: 'pending' | 'succeeded' | 'failed' | 'cancelled'
+          submissions: {
+            text: string
+            /** @enum {unknown} */
+            status: 'accepted' | 'rejected' | 'duplicate'
+          }[]
+          scores: {
+            /** Format: uuid */
+            playerId: string
+            /** Format: int32 */
+            pointsAwarded: number
+            /** Format: int32 */
+            totalPoints: number
+          }[]
+        }
       }
     }
     JoinGameRequest: {

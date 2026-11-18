@@ -27,6 +27,15 @@ public sealed class GameEngine(IGameSessionStore sessions, SessionRetention rete
         return state is null ? GameEngineResult.Missing() : GameEngineResult.Accepted(state);
     }
 
+    // Internal query; transport adapters must verify membership before returning results.
+    public async Task<GameEngineResult> GetRoundResultAsync(Guid gameId, Guid roundId, CancellationToken cancellationToken = default)
+    {
+        var state = await sessions.GetAsync(gameId, cancellationToken);
+        return state is not null && state.Game.RoundResults.TryGetValue(roundId, out var result)
+            ? GameEngineResult.Accepted(state, roundResult: result)
+            : GameEngineResult.Rejected(GameEngineErrorCode.NotFound, "The completed round result was not found.");
+    }
+
     // Initialization/starting/completion/cancellation are trusted backend operations, not arbitrary player commands.
     public Task<GameEngineResult> InitializeAsync(Guid gameId, CancellationToken cancellationToken = default) =>
         commands.UpdateAsync(gameId, session => session.BeginStarting(), cancellationToken);
@@ -64,13 +73,23 @@ public sealed class GameEngine(IGameSessionStore sessions, SessionRetention rete
         challenges.ResolveAsync(gameId, cancellationToken: cancellationToken);
 
     public Task<GameEngineResult> NextRoundAsync(Guid gameId, CancellationToken cancellationToken = default) =>
-        commands.UpdateAsync(gameId, session =>
-        {
-            GamePhaseGuard.Require(GamePhaseGuard.ActiveRound(session).Status == RoundStatus.Completed, "The current round must finish first.");
-            var previousStarter = session.Game.CurrentRound!.StartingPlayerId;
-            session.Game.StartRound(Guid.NewGuid(), TurnPolicy.NextPlayer(session, previousStarter, retention.DisconnectedGrace));
-            session.BeginCategorySelection(categories.Rules.Timeout);
-        }, cancellationToken);
+        commands.UpdateAsync(gameId, session => AdvanceRound(session), cancellationToken);
+
+    // Delayed workflows must name the result and revision they intend to advance.
+    public Task<GameEngineResult> NextRoundAsync(Guid gameId, Guid completedRoundId, long expectedVersion, CancellationToken cancellationToken = default) =>
+        completedRoundId == Guid.Empty || expectedVersion < 0
+            ? Task.FromResult(GameEngineResult.Rejected(GameEngineErrorCode.InvalidAction, "A completed round ID and nonnegative revision are required."))
+            : commands.UpdateAsync(gameId, session => AdvanceRound(session, completedRoundId), cancellationToken, expectedVersion);
+
+    private void AdvanceRound(GameSession session, Guid? completedRoundId = null)
+    {
+        var round = GamePhaseGuard.ActiveRound(session);
+        GamePhaseGuard.Require(round.Status == RoundStatus.Completed && session.Game.RoundResults.ContainsKey(round.Id),
+            "The current round must have a scored result before progression.");
+        GamePhaseGuard.Require(completedRoundId is null || completedRoundId == round.Id, "The completed round is no longer current.");
+        session.Game.StartRound(Guid.NewGuid(), TurnPolicy.NextPlayer(session, round.StartingPlayerId, retention.DisconnectedGrace));
+        session.BeginCategorySelection(categories.Rules.Timeout);
+    }
 
     // Match/scoring policy decides whether to continue or finish; F013 does not invent win conditions.
     public Task<GameEngineResult> CompleteAsync(Guid gameId, CancellationToken cancellationToken = default) =>

@@ -19,7 +19,12 @@ public sealed record GameStateResponse(
 public sealed record GamePlayerResponse(Guid Id, string DisplayName, int Score, bool IsConnected);
 public sealed record GameRoundResponse(
     Guid Id, int Number, ApiRoundStatus Status, Guid ActivePlayerId, CategoryResponse? Category,
-    BidResponse? HighestBid, ChallengeResponse? Challenge);
+    BidResponse? HighestBid, ChallengeResponse? Challenge, RoundResultResponse? Result = null);
+public sealed record RoundResultResponse(
+    Guid RoundId, int RoundNumber, CategoryResponse Category, Guid ChallengeId,
+    Guid BidderId, Guid CallerId, Guid WinnerId, int RequiredWordCount, int AcceptedWordCount,
+    ApiChallengeOutcome Outcome, IReadOnlyList<SubmittedWordResponse> Submissions, IReadOnlyList<RoundPlayerScoreResponse> Scores);
+public sealed record RoundPlayerScoreResponse(Guid PlayerId, int PointsAwarded, int TotalPoints);
 public sealed record BidResponse(Guid PlayerId, int WordCount);
 public sealed record ChallengeResponse(
     Guid Id, Guid PlayerId, Guid CallerId, int RequiredWordCount,

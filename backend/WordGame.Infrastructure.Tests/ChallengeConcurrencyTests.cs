@@ -8,6 +8,28 @@ namespace WordGame.Infrastructure.Tests;
 public sealed class ChallengeConcurrencyTests
 {
     [Fact]
+    public async Task ConcurrentProgressionStartsOneRoundAndPreservesTheCommittedResult()
+    {
+        var (engine, store, _, id, players) = await Game(required: 1);
+        var version = (await store.GetAsync(id))!.Version;
+        var completion = await engine.SubmitWordAsync(id, players[0].Id, "Volvo", new(Guid.NewGuid(), version));
+        var roundId = completion.RoundResult!.RoundId;
+        var completedVersion = completion.State!.Version;
+        var results = await Task.WhenAll(Enumerable.Range(0, 20).Select(_ => Task.Run(() =>
+            engine.NextRoundAsync(id, roundId, completedVersion))));
+        var accepted = Assert.Single(results, result => result.Succeeded);
+        Assert.Equal(completedVersion + 1, accepted.State!.Version);
+        Assert.Equal(2, accepted.State.Game.Rounds.Count);
+        Assert.Null(accepted.RoundResult);
+        Assert.All(results.Where(result => !result.Succeeded), result => Assert.Equal(GameEngineErrorCode.StaleState, result.Error!.Code));
+        var otherEngine = SessionTestData.Engine(store);
+        var read = await otherEngine.GetRoundResultAsync(id, roundId);
+        Assert.Same(completion.RoundResult, read.RoundResult);
+        Assert.Equal(51, Assert.Single(read.RoundResult!.Scores, score => score.PlayerId == players[0].Id).TotalPoints);
+        Assert.Equal(51, read.State!.Game.Scores[players[0].Id].Points);
+    }
+
+    [Fact]
     public async Task ConcurrentDuplicateWordsCannotBothCountAndAliasRetryRemainsDuplicate()
     {
         var (engine, store, _, id, players) = await Game(required: 2);

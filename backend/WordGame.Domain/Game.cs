@@ -6,7 +6,7 @@ public sealed class Game
 {
     private readonly List<GameRound> rounds = [];
     private readonly Dictionary<Guid, PlayerScore> scores;
-    private readonly HashSet<Guid> scoredRounds = [];
+    private readonly Dictionary<Guid, RoundResult> roundResults = [];
 
     public Game(Guid id, IEnumerable<Player> players)
     {
@@ -27,6 +27,7 @@ public sealed class Game
         Rounds = rounds.AsReadOnly();
         scores = roster.ToDictionary(player => player.Id, player => new PlayerScore(player.Id, 0));
         Scores = new ReadOnlyDictionary<Guid, PlayerScore>(scores);
+        RoundResults = new ReadOnlyDictionary<Guid, RoundResult>(roundResults);
     }
 
     public Guid Id { get; }
@@ -34,6 +35,7 @@ public sealed class Game
     public IReadOnlyList<Player> Players { get; }
     public IReadOnlyList<GameRound> Rounds { get; }
     public IReadOnlyDictionary<Guid, PlayerScore> Scores { get; }
+    public IReadOnlyDictionary<Guid, RoundResult> RoundResults { get; }
     public GameStatus Status { get; private set; } = GameStatus.WaitingToStart;
     public GameRound? CurrentRound => rounds.LastOrDefault();
 
@@ -47,7 +49,10 @@ public sealed class Game
             copy.scores[score.Key] = score.Value;
         }
 
-        copy.scoredRounds.UnionWith(scoredRounds);
+        foreach (var result in roundResults)
+        {
+            copy.roundResults.Add(result.Key, result.Value);
+        }
         return copy;
     }
 
@@ -86,7 +91,7 @@ public sealed class Game
         DomainGuard.State(Status == GameStatus.InProgress, "Scoring requires an active game.");
         DomainGuard.State(rounds.Any(round => round.Id == roundId && round.Status == RoundStatus.Completed),
             "Only completed rounds can award points.");
-        DomainGuard.State(!scoredRounds.Contains(roundId), "This round has already awarded points.");
+        DomainGuard.State(!roundResults.ContainsKey(roundId), "This round has already awarded points.");
         var changes = awards.ToArray();
         DomainGuard.State(changes.All(award => award is not null && scores.ContainsKey(award.PlayerId)),
             "All awards must refer to players in this game.");
@@ -96,12 +101,17 @@ public sealed class Game
         // Compute everything first so an invalid award or overflow cannot partially update scores.
         var updated = changes.Select(award =>
             new PlayerScore(award.PlayerId, checked(scores[award.PlayerId].Points + award.Points))).ToArray();
+        var awardsByPlayer = changes.ToDictionary(award => award.PlayerId, award => award.Points);
+        var totalsByPlayer = updated.ToDictionary(score => score.PlayerId, score => score.Points);
+        var result = new RoundResult(rounds.Single(round => round.Id == roundId), Players.Select(player =>
+            new RoundPlayerScore(player.Id, awardsByPlayer.GetValueOrDefault(player.Id),
+                totalsByPlayer.GetValueOrDefault(player.Id, scores[player.Id].Points))).ToArray());
         foreach (var score in updated)
         {
             scores[score.PlayerId] = score;
         }
 
-        scoredRounds.Add(roundId);
+        roundResults.Add(roundId, result);
     }
 
     public void Complete()

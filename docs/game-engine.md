@@ -14,7 +14,7 @@ The engine derives phases from existing session/game/round states rather than ma
 | Bidding                     | Active / InProgress / Bidding                            | `SelectCategoryAsync` records category metadata and locks category selection.                             |
 | Bluff challenge             | Active / InProgress / Challenge                          | `CallBluffAsync` challenges the current highest bid and makes its bidder the active player.               |
 | Round results               | Active / InProgress / Completed round                    | `ResolveChallengeAsync` derives the outcome from accepted submissions and completes the round atomically. |
-| Next round                  | Active / InProgress / CategorySelection                  | `NextRoundAsync` creates the next numbered round after completed results.                                 |
+| Next round                  | Active / InProgress / CategorySelection                  | `NextRoundAsync` requires scored results and creates the next numbered round.                             |
 | Game over                   | Session Completed, Game Completed                        | `CompleteAsync` ends an active match with a completed final round.                                        |
 | Cancelled                   | Session Abandoned, Game Cancelled                        | `CancelAsync` cancels a nonterminal session and its unfinished round/challenge.                           |
 
@@ -32,7 +32,7 @@ F015's [selection service](category-selection.md) resolves player-selected IDs t
 
 `SubmitWordAsync` validates against retained answers and records attempts atomically. Reaching the required count completes the round immediately; the gameplay timeout worker resolves expired challenges. `ResolveChallengeAsync` remains a trusted backend operation, never accepts a client-selected outcome, and rejects early/repeated resolution. See [word challenges](word-challenges.md) for timestamp semantics and structured results.
 
-The backend match/scoring policy chooses `NextRoundAsync` or `CompleteAsync` after results. F013 does not invent a points formula, difficulty modifier, round limit, winner, or forfeit rule. All lifecycle paths can be exercised without those policies.
+The backend workflow explicitly chooses `NextRoundAsync` or `CompleteAsync` after results; there is no between-round ready-up requirement. F018 supplies [scoring](scoring.md); F019 supplies immutable [round results and guarded progression](round-results.md), including a round-ID/revision overload for delayed workflows. Match limits, match winners, and forfeits remain later work.
 
 ## Transactions and results
 
