@@ -18,13 +18,14 @@ Set the frontend's `VITE_API_BASE_URL=http://localhost:5000` in `frontend/.env.l
 
 | Project | References | Responsibility |
 | --- | --- | --- |
-| `WordGame.Domain` | None | Future entities, gameplay rules, scoring, state transitions |
+| `WordGame.Domain` | None | Shared entities, lifecycle guards, turns, scores, and challenge models |
 | `WordGame.Application` | Domain | Future use cases, orchestration, session workflows, provider contracts |
 | `WordGame.Infrastructure` | Application | Future provider implementations and storage |
 | `WordGame.Api` | Application, Infrastructure | HTTP endpoints, middleware, configuration, composition root |
 | `WordGame.Api.Tests` | API | xUnit HTTP integration tests using WebApplicationFactory |
+| `WordGame.Domain.Tests` | Domain | xUnit model and invariant tests without an API host |
 
-Application and Infrastructure intentionally contain only project definitions until real behavior is needed. No marker classes, database packages, placeholder services, or V1 code are included. The Domain remains independent of ASP.NET Core and infrastructure. Future services should be registered in the API composition root or meaningful layer registration extensions; current health, error, and CORS services use built-in dependency injection.
+Application and Infrastructure intentionally contain only project definitions until real behavior is needed. No marker classes, database packages, placeholder services, or V1 code are included. The Domain remains independent of ASP.NET Core and infrastructure; see [domain models](../docs/domain-models.md) for relationships, states, invariants, and deferred policies. Future services should be registered in the API composition root or meaningful layer registration extensions; current health, error, and CORS services use built-in dependency injection.
 
 ## Configuration and conventions
 
