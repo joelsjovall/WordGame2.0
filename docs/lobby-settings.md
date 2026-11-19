@@ -32,9 +32,9 @@ The in-memory store registers subscriptions and the initial snapshot under the s
 
 The host must have at least two players within the configured capacity. A matching revision reserves `waiting -> starting` under the store gate; new joins and setting changes are blocked during startup. Existing members may safely retry joining without allocating slots. Category validation and shared GameEngine create/initialize/start run outside the lobby gate using the reserved immutable roster/settings. Success publishes `started` with one game ID; host retries return that committed game without creating another. Simultaneous startup requests conflict while the reservation is active.
 
-Once reserved, startup finishes even if the HTTP request disconnects. Cleanup temporarily preserves a starting lobby so it cannot disappear midway through the operation. Engine startup failure abandons any partially created game and restores the waiting lobby. Normal lobby expiry resumes afterward; it does not extend the match settings or mutate the separate game session. All state remains single-instance/in-memory and is lost on restart.
+Once reserved, startup finishes even if the HTTP request disconnects. Cleanup temporarily preserves a starting lobby so it cannot disappear midway through the operation. Engine startup failure abandons any partially created game and restores the waiting lobby. F027 retains active lobbies and opens a new retention window at match completion; it does not mutate the separate game session or its settings. All state remains single-instance/in-memory and is lost on restart.
 
-F026 adds [readiness, leave/kick, host migration and disconnect presence](lobby-players.md), including all-member ready/connected startup checks and compensation for a disconnect during startup. The browser shows that the server started a match, but playable gameplay controls and action routes remain later work.
+F026 adds [readiness, leave/kick, host migration and disconnect presence](lobby-players.md), including all-member ready/connected startup checks and compensation for a disconnect during startup. F027 adds [countdown, playable gameplay controls, final results and rematches](party-lifecycle.md).
 
 ## Acceptance review
 

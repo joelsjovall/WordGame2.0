@@ -10,7 +10,7 @@ public sealed class LobbyPlayerStoreTests
     public async Task GraceCleanupMigratesHostAndOriginalCreationReceiptCannotLeakTheLobby()
     {
         var clock = new ManualSessionClock();
-        var store = new InMemoryLobbySessionStore(clock, new LobbyRules(TimeSpan.FromMinutes(30)));
+        var store = new InMemoryLobbySessionStore(clock, new LobbyRules(TimeSpan.FromMinutes(30), startCountdown: TimeSpan.Zero));
         var host = new Player(Guid.NewGuid(), "Host");
         var requestId = Guid.NewGuid();
         var created = (await store.CreateAsync(host, requestId)).Lobby;
@@ -38,7 +38,7 @@ public sealed class LobbyPlayerStoreTests
     public async Task DisconnectDuringStartupPreservesCurrentPresenceAndRollsBackWithoutCommittingTheGame()
     {
         var clock = new ManualSessionClock();
-        var store = new InMemoryLobbySessionStore(clock, new LobbyRules(TimeSpan.FromMinutes(30)));
+        var store = new InMemoryLobbySessionStore(clock, new LobbyRules(TimeSpan.FromMinutes(30), startCountdown: TimeSpan.Zero));
         var host = new Player(Guid.NewGuid(), "Host");
         var lobby = (await store.CreateAsync(host, Guid.NewGuid())).Lobby;
         lobby = (await store.JoinAsync(lobby.Code, new Player(Guid.NewGuid(), "Bob")))!;

@@ -1,0 +1,79 @@
+import { useRef, useState } from 'react'
+import { useGameState } from './useGameState.ts'
+import { GameControls, type GameCommand } from './GameControls.tsx'
+import { gamesApi } from '../../services/api/games.ts'
+import { ApiError } from '../../services/api/client.ts'
+import { gameSynchronization } from '../../services/gameSynchronization.ts'
+
+export function PartyGame({ id, playerId }: { id: string; playerId: string }) {
+  const { state, connection, error: syncError } = useGameState(id)
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const pending = useRef(false)
+  async function send(command: GameCommand) {
+    if (!state || pending.current) return
+    pending.current = true
+    setBusy(true)
+    setError('')
+    try {
+      await gamesApi.act(id, {
+        ...command,
+        actionId: crypto.randomUUID(),
+        expectedVersion: state.version,
+      })
+      await gameSynchronization.refresh(id)
+    } catch (failure) {
+      setError(
+        failure instanceof ApiError
+          ? failure.message
+          : 'Unable to submit the action. Please try again.',
+      )
+      await gameSynchronization.refresh(id)
+    } finally {
+      pending.current = false
+      setBusy(false)
+    }
+  }
+  return (
+    <>
+      <h1>Match started</h1>
+      <p role="status">Game connection: {connection}</p>
+      {(error || syncError) && (
+        <p role="alert">{error || syncError?.message}</p>
+      )}
+      {!state && <p>Loading game…</p>}
+      {state && (
+        <>
+          <p>
+            Round {state.round?.number ?? 0} of {state.match.roundCount}
+          </p>
+          {state.round?.category && (
+            <p>Category: {state.round.category.name}</p>
+          )}
+          <ul aria-label="Match scores">
+            {state.players.map((player) => (
+              <li key={player.id}>
+                {player.displayName}: {player.score} points
+              </li>
+            ))}
+          </ul>
+          {state.status === 'abandoned' && (
+            <p>
+              The match ended before completion. Returning to the lobby results…
+            </p>
+          )}
+          {state.status === 'completed' && (
+            <p>The match is complete. Preparing final results…</p>
+          )}
+          <GameControls
+            key={`${state.round?.id ?? ''}/${state.round?.status ?? ''}/${state.round?.highestBid?.wordCount ?? ''}`}
+            state={state}
+            playerId={playerId}
+            busy={busy || connection !== 'connected'}
+            send={(command) => void send(command)}
+          />
+        </>
+      )}
+    </>
+  )
+}

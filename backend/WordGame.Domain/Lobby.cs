@@ -1,6 +1,6 @@
 namespace WordGame.Domain;
 
-public enum LobbyStatus { Waiting, Starting, Started, Closed }
+public enum LobbyStatus { Waiting, Starting, Started, Closed, Completed }
 
 // A pregame lobby can have one host; the gameplay engine still requires a fixed roster of 2–4.
 public sealed class Lobby
@@ -33,9 +33,11 @@ public sealed class Lobby
     public LobbySettings Settings { get; private init; } = new();
     public long Version { get; private init; }
     public Guid? GameId { get; private init; }
+    public DateTimeOffset? StartsAt { get; private init; }
+    public MatchResult? LastResult { get; private init; }
     public IReadOnlyList<Player> Players => Roster.Players;
     public DateTimeOffset CreatedAt { get; }
-    public DateTimeOffset ExpiresAt { get; }
+    public DateTimeOffset ExpiresAt { get; private init; }
 
     private Lobby(Lobby original)
     {
@@ -47,6 +49,8 @@ public sealed class Lobby
         Status = original.Status;
         Settings = original.Settings;
         GameId = original.GameId;
+        StartsAt = original.StartsAt;
+        LastResult = original.LastResult;
         Version = checked(original.Version + 1);
     }
 
@@ -72,7 +76,7 @@ public sealed class Lobby
         return new Lobby(this) { Settings = settings, Roster = Roster.ResetReadiness() };
     }
 
-    public Lobby BeginStart(Guid actor)
+    public Lobby BeginStart(Guid actor, DateTimeOffset? startsAt = null)
     {
         RequireHost(actor);
         RequireWaiting();
@@ -85,15 +89,63 @@ public sealed class Lobby
             throw new LobbyActionException("Every player must be connected and ready before starting.");
         }
 
-        return new Lobby(this) { Status = LobbyStatus.Starting };
+        return new Lobby(this) { Status = LobbyStatus.Starting, StartsAt = startsAt, LastResult = null };
     }
 
-    public Lobby CompleteStart(Guid gameId) => Status == LobbyStatus.Starting && Roster.AllReady
-        ? new Lobby(this) { Status = LobbyStatus.Started, GameId = DomainGuard.Id(gameId, nameof(gameId)) }
-        : throw new LobbyActionException("Startup was cancelled because a player disconnected. Everyone must ready up again.");
+    public Lobby CompleteStart(Guid gameId, DateTimeOffset? now = null)
+    {
+        if (Status != LobbyStatus.Starting || !Roster.AllReady)
+        {
+            throw new LobbyActionException("Startup was cancelled because a player disconnected. Everyone must ready up again.");
+        }
+
+        if (StartsAt is not null && (now is null || now < StartsAt))
+        {
+            throw new LobbyActionException("The start countdown has not finished.");
+        }
+
+        return new Lobby(this) { Status = LobbyStatus.Started, GameId = DomainGuard.Id(gameId, nameof(gameId)) };
+    }
 
     public Lobby AbortStart() => Status == LobbyStatus.Starting
-        ? new Lobby(this) { Status = LobbyStatus.Waiting, Roster = Roster.ResetReadiness() } : this;
+        ? new Lobby(this) { Status = LobbyStatus.Waiting, StartsAt = null, Roster = Roster.ResetReadiness() } : this;
+
+    public Lobby FinishMatch(Guid gameId, MatchResult? result, DateTimeOffset now, TimeSpan lifetime)
+    {
+        if (Status != LobbyStatus.Started || GameId != gameId)
+        {
+            return this;
+        }
+
+        if (result is not null && result.GameId != gameId)
+        {
+            throw new ArgumentException("The result belongs to another match.");
+        }
+
+        if (lifetime <= TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(lifetime));
+        }
+
+        return new Lobby(this)
+        {
+            Status = LobbyStatus.Completed,
+            LastResult = result,
+            ExpiresAt = now.Add(lifetime),
+            Roster = Roster.ResetReadiness()
+        };
+    }
+
+    public Lobby PrepareRematch(Guid actor)
+    {
+        RequireHost(actor);
+        if (Status != LobbyStatus.Completed)
+        {
+            throw new LobbyActionException("A rematch requires an ended match.");
+        }
+
+        return new Lobby(this) { Status = LobbyStatus.Waiting, GameId = null, StartsAt = null, Roster = Roster.ResetReadiness() };
+    }
 
     public Lobby SetReady(Guid actor, bool ready)
     {
@@ -108,7 +160,11 @@ public sealed class Lobby
     public Lobby Leave(Guid actor)
     {
         Roster.RequireMember(actor);
-        RequireWaiting();
+        if (Status is not (LobbyStatus.Waiting or LobbyStatus.Completed))
+        {
+            throw new LobbyActionException("Wait for the match to end before leaving the lobby.");
+        }
+
         return WithRoster(Roster.Remove(actor, ban: false));
     }
 
@@ -131,7 +187,7 @@ public sealed class Lobby
 
     public Lobby PruneDisconnected(DateTimeOffset now, TimeSpan grace)
     {
-        if (Status != LobbyStatus.Waiting)
+        if (Status is not (LobbyStatus.Waiting or LobbyStatus.Completed))
         {
             return this;
         }

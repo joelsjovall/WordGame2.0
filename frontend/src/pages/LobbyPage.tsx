@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { ApiError } from '../services/api/client.ts'
 import {
@@ -10,6 +10,7 @@ import { useLobby } from '../features/lobby/useLobby.ts'
 import { InvitationPanel } from '../features/lobby/InvitationPanel.tsx'
 import { LobbySettingsForm } from '../features/lobby/LobbySettingsForm.tsx'
 import { LobbyMembers } from '../features/lobby/LobbyMembers.tsx'
+import { ServerCountdown } from '../features/game/ServerCountdown.tsx'
 import '../features/lobby/lobby.css'
 
 export function LobbyPage() {
@@ -29,6 +30,13 @@ function LobbyRoom({ id }: { id: string }) {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const pending = useRef(false)
+  useEffect(() => {
+    if (
+      !unavailable &&
+      (lobby?.status === 'started' || lobby?.status === 'completed')
+    )
+      void navigate(`/lobbies/${id}/game`, { replace: true })
+  }, [lobby?.status, unavailable, navigate, id])
   async function act(operation: () => Promise<Lobby>, after?: () => void) {
     if (pending.current) return
     pending.current = true
@@ -155,15 +163,20 @@ function LobbyRoom({ id }: { id: string }) {
           <p>Save any edited settings before starting.</p>
         </>
       )}
-      {lobby.status === 'starting' && <p role="status">Starting match…</p>}
-      {lobby.gameId && (
-        <section>
-          <h2>Match started</h2>
-          <p>
-            The server has started the match with these settings. Gameplay
-            controls will arrive in a later issue.
-          </p>
-        </section>
+      {lobby.status === 'starting' && (
+        <p role="status">
+          Match starts in{' '}
+          {lobby.startsAt ? (
+            <ServerCountdown
+              key={lobby.startsAt}
+              deadline={lobby.startsAt}
+              serverTime={lobby.serverTime}
+            />
+          ) : (
+            '…'
+          )}{' '}
+          seconds
+        </p>
       )}
       {waiting && <InvitationPanel lobby={lobby} />}
       <p>

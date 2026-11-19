@@ -32,7 +32,7 @@ internal static class LobbyEndpoints
         try
         {
             var lobby = await lobbies.JoinAsync(playerId, request.LobbyCode, request.DisplayName, request.LobbyId, cancellationToken);
-            return lobby is null ? Problem(context, 404, "This lobby code or invitation is invalid or expired.") : TypedResults.Ok(LobbyMapper.Map(lobby));
+            return lobby is null ? Problem(context, 404, "This lobby code or invitation is invalid or expired.") : TypedResults.Ok(LobbyMapper.Map(lobby, context.RequestServices.GetRequiredService<TimeProvider>().GetUtcNow()));
         }
         catch (LobbyJoinException exception)
         {
@@ -73,7 +73,7 @@ internal static class LobbyEndpoints
         try
         {
             var creation = await lobbies.CreateAsync(playerId, request.RequestId, request.DisplayName, cancellationToken);
-            return TypedResults.Json(LobbyMapper.Map(creation.Lobby), statusCode: creation.WasCreated ? 201 : 200);
+            return TypedResults.Json(LobbyMapper.Map(creation.Lobby, context.RequestServices.GetRequiredService<TimeProvider>().GetUtcNow()), statusCode: creation.WasCreated ? 201 : 200);
         }
         catch (LobbyCreationConflictException)
         {

@@ -32,7 +32,7 @@ The lobby starts with a read-only one-host roster and uses Game.MinimumPlayers/M
 
 `Sessions:LobbyLifetime` defaults to **00:30:00**, must be positive, and is captured as expiresAt when the lobby is created. Environment overrides use `Sessions__LobbyLifetime`. Creation/replays do not extend the expiry. There is no activity-renewal policy yet.
 
-A lobby is unavailable at `now >= expiresAt`, including between sweeps. Reads remove that expired entry; creation opportunistically removes expired entries; the existing SessionCleanupWorker also cleans lobbies on `Sessions:CleanupInterval` (default one minute). Expiration releases its ID entry, join code, and host/request receipt together.
+A waiting/results lobby is unavailable at `now >= expiresAt`, including between sweeps. F027 retains active lobbies beyond the waiting deadline and resets the retention window when the match ends; see [Party lifecycle](party-lifecycle.md). Reads remove that expired entry; creation opportunistically removes expired entries; the existing SessionCleanupWorker also cleans lobbies on `Sessions:CleanupInterval` (default one minute). Expiration releases its ID entry, join code, and host/request receipt together.
 
 Idempotency is bounded by the active lobby's lifetime. After expiry/cleanup, an old request ID is no longer reserved and can create a new lobby; clients should start a new creation intent rather than replay an expired room. This keeps receipts bounded without adding persistent storage. Backend restart loses lobbies and receipts, as it already loses game sessions. Codes are unique among active lobbies and can be reused after expiry.
 
