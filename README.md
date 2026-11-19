@@ -7,7 +7,7 @@ A multiplayer word-bidding and bluffing game for mobile and desktop browsers. Pl
 - **Party Mode:** planned private lobbies for 2–4 players, lobby codes/invitation links, host settings, readiness, reconnection, and rematches.
 - **Online Multiplayer:** planned random 1v1 matchmaking with guest identities, automatic matches, disconnect/forfeit handling, and rematches. Persistent statistics will follow when storage is introduced; ranked play is optional.
 
-Both modes will use the same server-authoritative gameplay engine. This repository currently provides domain models, the shared [game-engine lifecycle](docs/game-engine.md), word validation, local category datasets, an in-memory session store, category metadata API contracts, a placeholder frontend, automated tests, and CI. Playable matches, lobbies, matchmaking, guest authentication, and SSE endpoints are not implemented yet. See [project progress](docs/project-context.md) for the issue handoff.
+Both modes will use the same server-authoritative gameplay engine. This repository currently provides domain models, the shared [game-engine lifecycle](docs/game-engine.md), word validation, local category datasets, an in-memory session store, category metadata API contracts, guest identity, private lobby creation/joining APIs, protected game state/SSE endpoints, a lobby join/invitation screen, automated tests, and CI. Playable matches, the full waiting-room UI, and matchmaking remain planned. See [project progress](docs/project-context.md) for the issue handoff.
 
 ## Stack and structure
 
@@ -22,7 +22,7 @@ Both modes will use the same server-authoritative gameplay engine. This reposito
 | `.github/workflows/`                 | GitHub Actions builds, tests, and dependency/secret scanning                         |
 | `docs/`                              | Architecture, setup, conventions, contracts, and feature decisions                   |
 
-SSE is the planned real-time transport. Active sessions currently support one backend instance and are lost on restart. There is no database requirement; persistence will be added for statistics and match history when needed. See [architecture](docs/architecture.md) for boundaries and decisions.
+SSE is the implemented game-state notification transport. Active sessions currently support one backend instance and are lost on restart. There is no database requirement; persistence will be added for statistics and match history when needed. See [architecture](docs/architecture.md) for boundaries and decisions.
 
 ## Local development
 

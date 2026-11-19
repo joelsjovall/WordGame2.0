@@ -20,7 +20,7 @@ internal sealed class SameOriginWriteFilter(IHostEnvironment environment, IConfi
         if (origins.Count != 1 || origins[0] is not { } origin ||
             (!StringComparer.OrdinalIgnoreCase.Equals(origin, sameOrigin) && !allowed.Contains(origin, StringComparer.OrdinalIgnoreCase)))
         {
-            return Results.Json(ApiProblems.Create(context.HttpContext, 403, "This origin cannot create guest identities or lobbies."),
+            return Results.Json(ApiProblems.Create(context.HttpContext, 403, "Requests from this origin are not allowed."),
                 statusCode: 403, contentType: "application/problem+json");
         }
         return await next(context);

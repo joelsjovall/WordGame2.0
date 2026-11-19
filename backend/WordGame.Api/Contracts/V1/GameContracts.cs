@@ -2,9 +2,7 @@ namespace WordGame.Api.Contracts.V1;
 
 // Specifications for future authenticated handlers, not mapped endpoints.
 public sealed record CreateGameRequest(Guid LobbyId);
-public sealed record JoinGameRequest(string LobbyCode);
 public sealed record GameCreatedResponse(Guid GameId);
-public sealed record JoinGameResponse(Guid LobbyId, string LobbyCode, Guid? GameId);
 
 public enum ApiSessionStatus { Waiting, Starting, Active, Completed, Abandoned }
 public enum ApiRoundStatus { CategorySelection, Bidding, Challenge, Completed, Cancelled }

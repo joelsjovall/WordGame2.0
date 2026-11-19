@@ -32,14 +32,14 @@ Vitest runs API client and React component tests with `npm test`. Playwright run
 
 See [API contracts](../docs/api-contracts.md) for implemented endpoints, future specifications, versioning, and errors. All JSON requests go through `src/services/api/client.ts`; typed category operations are in `categories.ts`. Import shared generated types from `generated.ts` instead of declaring response interfaces in components.
 
-With the Development backend running on port 5000, run `npm run api:generate` to refresh types and `npm run api:check` to detect drift. A trailing OpenAPI document URL overrides the default. Commit generated changes with backend DTO changes. F021 adds gamesApi state retrieval and a shared SSE synchronization service with useGameState; see [synchronization](../docs/game-synchronization.md). F023 adds guestsApi/lobbiesApi for [account-free private lobby creation](../docs/private-lobbies.md). Gameplay/lobby screens and matchmaking remain later work.
+With the Development backend running on port 5000, run `npm run api:generate` to refresh types and `npm run api:check` to detect drift. A trailing OpenAPI document URL overrides the default. Commit generated changes with backend DTO changes. F021 adds gamesApi state retrieval and a shared SSE synchronization service with useGameState; see [synchronization](../docs/game-synchronization.md). F023 adds guestsApi/lobbiesApi for [account-free private lobby creation](../docs/private-lobbies.md). F024 adds [code/invitation joining](../docs/lobby-joining.md) and copy/native sharing. The full waiting room, gameplay screens, and matchmaking remain later work.
 
 ## Structure and boundaries
 
 | Location            | Responsibility                                                        |
 | ------------------- | --------------------------------------------------------------------- |
 | `src/main.tsx`      | Browser entry point and router provider                               |
-| `src/App.tsx`       | Route definitions: `/` and a not-found fallback                       |
+| `src/App.tsx`       | Routes: `/`, `/join`, `/join/:lobbyId/:lobbyCode`, and fallback       |
 | `src/pages/`        | Route-level presentation                                              |
 | `src/services/api/` | Centralized HTTP client, category operations, and generated contracts |
 | `src/styles/`       | Shared styles                                                         |
@@ -55,6 +55,6 @@ Add the following directories only when their first real implementation is neede
 
 Pages compose features and reusable UI. Components delegate networking to services, and client state reflects authoritative backend state. Avoid empty folders, speculative abstractions, or duplicate gameplay rules.
 
-The homepage is intentionally a placeholder. Party lobby screens, matchmaking, gameplay, and persistent state are later issues; private lobby creation currently has API/service support. No V1 frontend code is copied. Production static hosting must serve `index.html` for client routes so refreshes and direct links work with BrowserRouter.
+The homepage links to the join screen. Code and invitation joins show a membership confirmation with copy/native sharing. Full waiting-room screens, matchmaking, gameplay, and persistent state are later issues; lobby creation currently has API/service support. No V1 frontend code is copied. Production static hosting must serve `index.html` for client routes so refreshes and direct links work with BrowserRouter.
 
 See [coding standards](../docs/coding-standards.md#react-and-typescript) for component/service conventions and [CI](../docs/ci.md#dependency-policy) for the current development dependency limitation and its temporary exception.

@@ -200,6 +200,8 @@ public sealed class LobbyCreationTests
         public Task<LobbyCreation> CreateAsync(WordGame.Domain.Player host, Guid requestId, CancellationToken cancellationToken = default) =>
             inner.CreateAsync(host, requestId, cancellationToken);
         public Task<WordGame.Domain.Lobby?> GetAsync(Guid lobbyId, CancellationToken cancellationToken = default) => inner.GetAsync(lobbyId, cancellationToken);
+        public Task<WordGame.Domain.Lobby?> JoinAsync(WordGame.Domain.LobbyCode code, WordGame.Domain.Player player, Guid? expectedLobbyId = null,
+            CancellationToken cancellationToken = default) => inner.JoinAsync(code, player, expectedLobbyId, cancellationToken);
         public async Task<int> CleanupAsync(CancellationToken cancellationToken = default)
         {
             var count = await inner.CleanupAsync(cancellationToken);

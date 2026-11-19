@@ -83,6 +83,32 @@ public sealed class InMemoryLobbySessionStore(TimeProvider clock, LobbyRules rul
         }
     }
 
+    public Task<Lobby?> JoinAsync(LobbyCode code, Player player, Guid? expectedLobbyId = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(code);
+        ArgumentNullException.ThrowIfNull(player);
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (gate)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!codes.TryGetValue(code, out var id) || expectedLobbyId is { } expected && expected != id)
+            {
+                return Task.FromResult<Lobby?>(null);
+            }
+
+            var entry = lobbies[id];
+            if (clock.GetUtcNow() >= entry.Lobby.ExpiresAt)
+            {
+                Remove(entry);
+                return Task.FromResult<Lobby?>(null);
+            }
+            var joined = entry.Lobby.Join(player);
+            cancellationToken.ThrowIfCancellationRequested();
+            lobbies[id] = entry with { Lobby = joined };
+            return Task.FromResult<Lobby?>(joined);
+        }
+    }
+
     public Task<int> CleanupAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

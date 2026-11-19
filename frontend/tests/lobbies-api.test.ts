@@ -9,6 +9,31 @@ const request = {
 }
 const guest = { playerId: '7ede379e-1770-450e-b5e6-a6042156bb2c' }
 
+test('joining bootstraps identity and sends code, name, and expected invitation ID', async () => {
+  const join = {
+    lobbyCode: 'ABC234',
+    displayName: 'Bob',
+    lobbyId: 'eea0b4cf-a3c7-4334-9af6-26dd94833d91',
+  }
+  const controller = new AbortController()
+  const calls: string[] = []
+  const api = createLobbiesApi(
+    createApiClient('', async (input, options) => {
+      calls.push(String(input))
+      expect(options?.credentials).toBe('include')
+      if (String(input).endsWith('/join')) {
+        expect(JSON.parse(String(options?.body))).toEqual(join)
+        expect(options?.signal).toBe(controller.signal)
+      }
+      return Response.json(
+        String(input).endsWith('/guests') ? guest : { id: 'lobby-id' },
+      )
+    }),
+  )
+  expect((await api.join(join, controller.signal)).id).toBe('lobby-id')
+  expect(calls).toEqual(['/api/v1/guests', '/api/v1/lobbies/join'])
+})
+
 test('creation bootstraps a guest and sends the stable request ID with credentials', async () => {
   const calls: { url: string; options: RequestInit | undefined }[] = []
   const controller = new AbortController()

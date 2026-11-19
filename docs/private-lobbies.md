@@ -1,6 +1,6 @@
 # Private lobby creation
 
-F023 adds private waiting-lobby creation without account registration. A lobby starts with one securely identified host and advertises the shared gameplay limits of 2–4 players. It is a pregame resource, separate from the fixed-roster GameSession: no fake second player, game, or alternate gameplay engine is created. Joining, readiness, match settings/start, invitations, and lobby UI remain later issues.
+F023 adds private waiting-lobby creation without account registration. A lobby starts with one securely identified host and advertises the shared gameplay limits of 2–4 players. It is a pregame resource, separate from the fixed-roster GameSession: no fake second player, game, or alternate gameplay engine is created. F024 adds [joining and invitations](lobby-joining.md). Readiness, match settings/start, and the full waiting-room UI remain later issues.
 
 ## Guest identity and creation API
 
@@ -26,7 +26,7 @@ Lobby codes use six uppercase characters from `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`
 
 Application LobbyService creates the verified host Player and calls ILobbySessionStore. InMemoryLobbySessionStore is part of the existing in-memory session infrastructure and uses one short gate for lobby IDs, code reservations, creation receipts, and cleanup. A collision retries allocation; allocation failure/cancellation does not reserve a request or publish a partial lobby. Concurrent matching requests create exactly one lobby and replay the same immutable state. Independent lobbies do not share members or mutate each other.
 
-The lobby exposes a read-only one-host roster and uses Game.MinimumPlayers/MaximumPlayers as its capacity source. Future join/ready workflows must enforce that capacity and create a fixed-roster game through the shared GameEngine only when enough verified players are ready.
+The lobby starts with a read-only one-host roster and uses Game.MinimumPlayers/MaximumPlayers as its capacity source. F024 joins enforce capacity and replace immutable snapshots. Future readiness/start workflows must create a fixed-roster game through the shared GameEngine only when enough verified players are ready.
 
 ## Expiry and cleanup
 

@@ -32,6 +32,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/lobbies/join': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post: operations['JoinPrivateLobby']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/categories': {
     parameters: {
       query?: never
@@ -262,15 +278,11 @@ export interface components {
       /** Format: uuid */
       playerId: string
     }
-    JoinGameRequest: {
+    JoinLobbyRequest: {
       lobbyCode: string
-    }
-    JoinGameResponse: {
+      displayName: string
       /** Format: uuid */
-      lobbyId: string
-      lobbyCode: string
-      /** Format: uuid */
-      gameId: null | string
+      lobbyId?: null | string
     }
     LobbyPlayerResponse: {
       /** Format: uuid */
@@ -446,6 +458,65 @@ export interface operations {
       }
       /** @description Forbidden */
       403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  JoinPrivateLobby: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['JoinLobbyRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['LobbyResponse']
+        }
+      }
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Not Found */
+      404: {
         headers: {
           [name: string]: unknown
         }

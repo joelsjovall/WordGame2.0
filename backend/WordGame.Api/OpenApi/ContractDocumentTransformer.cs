@@ -8,7 +8,7 @@ internal sealed class ContractDocumentTransformer : IOpenApiDocumentTransformer
 {
     private static readonly Type[] ContractTypes =
     [
-        typeof(CreateGameRequest), typeof(JoinGameRequest), typeof(GameCreatedResponse), typeof(JoinGameResponse),
+        typeof(CreateGameRequest), typeof(GameCreatedResponse),
         typeof(GameStateResponse), typeof(GameActionRequest), typeof(GameActionResponse), typeof(GameEventResponse),
         typeof(ApiProblemDetails)
     ];
