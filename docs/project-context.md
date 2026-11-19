@@ -72,8 +72,9 @@ The planned backlog contains 57 issues across six milestones. Work proceeds one 
 - **Completed:** [F028, Implement player reconnection and disconnect handling (#30)](https://github.com/joelsjovall/WordGame2.0/issues/30), merged through PR #87 (merge commit `5e6e199`). See [Party reconnection](party-reconnection.md).
 - **Completed:** [F029, Build responsive Party Mode lobby UI (#31)](https://github.com/joelsjovall/WordGame2.0/issues/31), merged through PR #88 (merge commit `56a7151`). See [responsive Party lobby](party-lobby-ui.md).
 - **Completed:** [F030, Implement real-time lobby synchronization (#32)](https://github.com/joelsjovall/WordGame2.0/issues/32), merged through PR #89 (merge commit `85ac49a`). See [lobby synchronization](lobby-synchronization.md).
-- **Active:** [F031, Secure private lobbies and host permissions (#33)](https://github.com/joelsjovall/WordGame2.0/issues/33). See [lobby security](lobby-security.md) for rate limits, authorization review, invitation policy, verification, and limitations.
-- **Current local state (2026-11-19):** Working on `feature/F031-lobby-security` from updated `main`. Commit and push require user authorization.
+- **Completed:** [F031, Secure private lobbies and host permissions (#33)](https://github.com/joelsjovall/WordGame2.0/issues/33), merged through PR #90 (merge commit `c83149b`). See [lobby security](lobby-security.md).
+- **Active:** [F032, Refactor and test complete Party Mode flow (#34)](https://github.com/joelsjovall/WordGame2.0/issues/34). See [Party Mode review and beta handoff](party-mode-review.md) for cleanup, acceptance coverage, checks, and beta limitations. Online Multiplayer begins after this issue is merged.
+- **Current local state (2026-11-19):** Working on `feature/F032-party-flow-review` from updated `main`. Commit and push require user authorization.
 - **Outstanding security follow-up:** A database credential was previously exposed in the public V1 repository. Never reuse or reproduce it. Rotation must be verified; this handoff provides no evidence that rotation has occurred.
 
 Update this section as issues are completed or the handoff state changes.

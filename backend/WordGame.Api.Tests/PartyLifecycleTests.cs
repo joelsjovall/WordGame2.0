@@ -180,6 +180,97 @@ public sealed class PartyLifecycleTests
         Assert.Null(await factory.Services.GetRequiredService<IGameSessionStore>().GetAsync(active.GameId.Value));
     }
 
+    [Fact]
+    public async Task FourPlayersEachTakeATurnAndCompletedResultsKeepHostPermissionsForRematches()
+    {
+        var clock = new ControlledGameplayClock();
+        using var root = new WordGameApiFactory();
+        using var factory = root.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services => services.AddSingleton<TimeProvider>(clock));
+            builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string?>
+            { ["Sessions:LobbyStartCountdown"] = "00:00:00", ["Gameplay:TimeoutSweepInterval"] = "01:00:00", ["Sessions:CleanupInterval"] = "01:00:00" }));
+        });
+        using var host = await Guest(factory);
+        using var bob = await Guest(factory);
+        using var carol = await Guest(factory);
+        using var dan = await Guest(factory);
+        var clients = new[] { host, bob, carol, dan };
+        var room = await Create(host);
+        for (var index = 1; index < clients.Length; index++)
+        {
+            using var join = await clients[index].PostAsJsonAsync("/api/v1/lobbies/join", new JoinLobbyRequest(room.LobbyCode, $"Player {index}"));
+            join.EnsureSuccessStatusCode();
+        }
+        var streams = new List<HttpResponseMessage>();
+        try
+        {
+            foreach (var client in clients)
+            {
+                streams.Add(await Events(client, $"/api/v1/lobbies/{room.Id}/events"));
+            }
+            var current = await Room(host, room.Id);
+            using var settings = await host.PostAsJsonAsync($"/api/v1/lobbies/{room.Id}/settings", new
+            {
+                expectedVersion = current.Version,
+                settings = new { maximumPlayers = 4, roundCount = 4, challengeSeconds = 5, allowedDifficulties = new[] { "easy" } }
+            });
+            settings.EnsureSuccessStatusCode();
+            foreach (var client in clients)
+            {
+                await Ready(client, room.Id);
+            }
+            current = await Room(host, room.Id);
+            using var start = await host.PostAsJsonAsync($"/api/v1/lobbies/{room.Id}/start", new StartLobbyRequest(current.Version));
+            start.EnsureSuccessStatusCode();
+            var gameId = (await Room(host, room.Id)).GameId!.Value;
+            foreach (var client in clients)
+            {
+                streams.Add(await Events(client, $"/api/v1/games/{gameId}/events"));
+            }
+            var playerIds = current.Players.Select(player => player.Id).ToArray();
+            var starters = new HashSet<Guid>();
+            var lifecycle = factory.Services.GetRequiredService<PartyLifecycleService>();
+            for (var round = 1; round <= 4; round++)
+            {
+                var state = await State(host, gameId);
+                Assert.Equal(round, state.Round!.Number);
+                var active = state.Round.ActivePlayerId;
+                Assert.True(starters.Add(active));
+                var bidderIndex = Array.IndexOf(playerIds, active);
+                var bidder = clients[bidderIndex];
+                var caller = clients[(bidderIndex + 1) % clients.Length];
+                await Action(bidder, gameId, "selectCategory");
+                await Action(bidder, gameId, "placeBid");
+                await Action(caller, gameId, "callBluff");
+                await Action(bidder, gameId, "submitWord");
+                clock.Advance(TimeSpan.FromSeconds(3));
+                await lifecycle.RefreshAsync((await factory.Services.GetRequiredService<ILobbySessionStore>().GetAsync(room.Id))!);
+            }
+            var completed = await Room(host, room.Id);
+            Assert.Equal(ApiLobbyStatus.Completed, completed.Status);
+            Assert.Equal(4, completed.LastResult!.CompletedRoundCount);
+            Assert.Equal(4, completed.LastResult.Standings.Count);
+            Assert.All(completed.LastResult.Standings, standing => Assert.True(standing.Score > 0));
+            using var forbidden = await dan.PostAsJsonAsync($"/api/v1/lobbies/{room.Id}/rematch", new StartLobbyRequest(completed.Version));
+            Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
+            using var rematch = await host.PostAsJsonAsync($"/api/v1/lobbies/{room.Id}/rematch", new StartLobbyRequest(completed.Version));
+            rematch.EnsureSuccessStatusCode();
+            var waiting = await Room(host, room.Id);
+            Assert.Equal(room.LobbyCode, waiting.LobbyCode);
+            Assert.Equal(ApiLobbyStatus.Waiting, waiting.Status);
+            Assert.Equal(4, waiting.Players.Count);
+            Assert.All(waiting.Players, player => Assert.False(player.IsReady));
+        }
+        finally
+        {
+            foreach (var stream in streams)
+            {
+                stream.Dispose();
+            }
+        }
+    }
+
     private static async Task<LobbyResponse> EventState(HttpResponseMessage response, ApiLobbyStatus status, CancellationToken cancellationToken)
     {
         using var reader = new StreamReader(await response.Content.ReadAsStreamAsync(cancellationToken), leaveOpen: true);

@@ -4,7 +4,7 @@ A multiplayer word-bidding and bluffing game for mobile and desktop browsers. Pl
 
 ## Game modes and current status
 
-- **Party Mode:** planned private lobbies for 2–4 players, lobby codes/invitation links, host settings, readiness, reconnection, and rematches.
+- **Party Mode:** private lobbies for 2–4 players, lobby codes/invitation links, host settings, readiness, reconnection, and rematches.
 - **Online Multiplayer:** planned random 1v1 matchmaking with guest identities, automatic matches, disconnect/forfeit handling, and rematches. Persistent statistics will follow when storage is introduced; ranked play is optional.
 
 Both modes will use the same server-authoritative gameplay engine. This repository currently provides domain models, the shared [game-engine lifecycle](docs/game-engine.md), word validation, local category datasets, an in-memory session store, category metadata API contracts, guest identity, private lobby creation/joining APIs, protected game state/SSE endpoints, lobby creation/joining screens with live host settings and match startup, automated tests, and CI. [Lobby readiness, removal and reconnection](docs/lobby-players.md) are implemented; [Playable Party matches, countdowns, results and rematches](docs/party-lifecycle.md) are available. [Party reconnection and disconnect handling](docs/party-reconnection.md) preserve current state through refreshes and temporary interruptions. Online matchmaking remains planned. See [project progress](docs/project-context.md) for the issue handoff.

@@ -58,7 +58,7 @@ Use `npm run test:e2e:ui` for interactive debugging or `npm exec playwright show
 
 ## Extending the suites
 
-Add gameplay rules to Domain tests, orchestration to Application tests, and HTTP identity/session behavior to API tests. Group new files by feature when suites grow. Use isolated stores, test data, and controllable clocks rather than production resources or timing sleeps. Future multiplayer browser journeys can create separate browser contexts for distinct players against the same local API; no multiplayer workflows are asserted before they exist.
+Add gameplay rules to Domain tests, orchestration to Application tests, and HTTP identity/session behavior to API tests. Group new files by feature when suites grow. Use isolated stores, test data, and controllable clocks rather than production resources or timing sleeps. Multiplayer browser journeys use separate browser contexts for distinct players against the same local API. The Party lifecycle suite completes matches and rematches with 2, 3, and 4 players; see the [Party review](party-mode-review.md) for the milestone coverage and beta checklist.
 
 Before submitting changes, run the relevant suites plus `npm run lint`, `npm run format:check`, `npm run build`, and backend formatting/build checks. Keep accessibility-based browser/component selectors where possible.
 
