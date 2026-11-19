@@ -19,7 +19,7 @@ Invitation URLs contain public resource identifiers, never credentials. They use
 
 The form prevents duplicate pending submissions, cancels work when leaving the page, and displays server errors with a retry path. Copy uses the Clipboard API; failures leave a selectable URL for manual copying. Native sharing appears only when `navigator.share` exists, with cancellation handled neutrally and copy available after failure. Clipboard/native share availability depends on the browser, secure context, and device.
 
-The join confirmation is a response snapshot; its Open lobby settings link opens the [live host/settings view](lobby-settings.md). Lobby creation now also has a homepage entry. Readiness and player management remain F026. Gameplay continues to use the shared server-authoritative engine.
+The join confirmation is a response snapshot; its Open lobby settings link opens the [live host/settings view](lobby-settings.md). Lobby creation now also has a homepage entry. F026 adds [readiness and player management](lobby-players.md). Gameplay continues to use the shared server-authoritative engine.
 
 ## Acceptance review
 

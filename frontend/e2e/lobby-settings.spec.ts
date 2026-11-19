@@ -49,6 +49,14 @@ test('host controls synchronize across players and freeze into a valid match', a
       { data: { expectedVersion: current.version } },
     )
     expect(denied.status()).toBe(403)
+    await page.getByRole('button', { name: 'Ready', exact: true }).click()
+    await expect(
+      guest
+        .getByLabel('Lobby players')
+        .getByRole('listitem')
+        .filter({ hasText: 'Host (host)' }),
+    ).toContainText('Connected; Ready')
+    await guest.getByRole('button', { name: 'Ready', exact: true }).click()
     await page.getByRole('button', { name: 'Start match' }).click()
     await expect(
       page.getByRole('heading', { name: 'Match started' }),

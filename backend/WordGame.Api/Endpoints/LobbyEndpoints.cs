@@ -45,7 +45,7 @@ internal static class LobbyEndpoints
         }
         catch (LobbyActionException exception)
         {
-            return Problem(context, 409, exception.Message);
+            return Problem(context, exception.Forbidden ? 403 : 409, exception.Message);
         }
         catch (ArgumentException exception)
         {

@@ -66,8 +66,9 @@ The planned backlog contains 57 issues across six milestones. Work proceeds one 
 - **Completed:** [F022, Refactor and test core gameplay engine (#24)](https://github.com/joelsjovall/WordGame2.0/issues/24), merged through PR #81 (merge commit `b26edef`). The Core Gameplay milestone F013–F022 is merged; see [core gameplay review](core-gameplay-review.md).
 - **Completed:** [F023, Implement private game lobby creation (#25)](https://github.com/joelsjovall/WordGame2.0/issues/25), merged through PR #82 (merge commit `17ce1f8`). See [private lobbies](private-lobbies.md) for guest identity and creation.
 - **Completed:** [F024, Implement lobby join and invitation system (#26)](https://github.com/joelsjovall/WordGame2.0/issues/26), merged through PR #83 (merge commit `5063128`). See [lobby joining](lobby-joining.md).
-- **Active:** [F025, Implement lobby settings and host controls (#27)](https://github.com/joelsjovall/WordGame2.0/issues/27). See [lobby settings](lobby-settings.md) for host permissions, synchronized settings, and engine-backed startup. Readiness/player management is F026.
-- **Current local state (2026-11-19):** Working on `feature/F025-lobby-settings` from updated `main`. Commit and push require user authorization.
+- **Completed:** [F025, Implement lobby settings and host controls (#27)](https://github.com/joelsjovall/WordGame2.0/issues/27), merged through PR #84 (merge commit `591389c`). See [lobby settings](lobby-settings.md).
+- **Active:** [F026, Implement lobby player management and ready system (#28)](https://github.com/joelsjovall/WordGame2.0/issues/28). See [lobby players](lobby-players.md) for readiness, connection leases, departures/removal, host migration, and startup race policy.
+- **Current local state (2026-11-19):** Working on `feature/F026-lobby-player-management` from updated `main`. Commit and push require user authorization.
 - **Outstanding security follow-up:** A database credential was previously exposed in the public V1 repository. Never reuse or reproduce it. Rotation must be verified; this handoff provides no evidence that rotation has occurred.
 
 Update this section as issues are completed or the handoff state changes.

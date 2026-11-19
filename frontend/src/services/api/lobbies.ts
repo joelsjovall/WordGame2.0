@@ -12,6 +12,30 @@ export function createLobbiesApi(
   identity = createGuestsApi(client),
 ) {
   return {
+    setReady(
+      id: string,
+      expectedVersion: string,
+      isReady: boolean,
+    ): Promise<Lobby> {
+      return client.request(`/api/v1/lobbies/${encodeURIComponent(id)}/ready`, {
+        method: 'POST',
+        credentials: 'include',
+        body: { expectedVersion, isReady },
+      })
+    },
+    leave(id: string): Promise<Lobby> {
+      return client.request(`/api/v1/lobbies/${encodeURIComponent(id)}/leave`, {
+        method: 'POST',
+        credentials: 'include',
+        body: {},
+      })
+    },
+    remove(id: string, playerId: string): Promise<Lobby> {
+      return client.request(
+        `/api/v1/lobbies/${encodeURIComponent(id)}/remove`,
+        { method: 'POST', credentials: 'include', body: { playerId } },
+      )
+    },
     get(id: string, signal?: AbortSignal): Promise<Lobby> {
       return client.request(`/api/v1/lobbies/${encodeURIComponent(id)}`, {
         credentials: 'include',

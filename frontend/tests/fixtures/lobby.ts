@@ -7,8 +7,8 @@ export const lobbyFixture: Lobby = {
   hostPlayerId: 'host',
   status: 'waiting',
   players: [
-    { id: 'host', displayName: 'Host' },
-    { id: 'bob', displayName: 'Bob' },
+    { id: 'host', displayName: 'Host', isReady: false, isConnected: true },
+    { id: 'bob', displayName: 'Bob', isReady: false, isConnected: true },
   ],
   minimumPlayers: 2,
   maximumPlayers: 4,
@@ -16,6 +16,7 @@ export const lobbyFixture: Lobby = {
   expiresAt: '2026-11-19T12:30:00Z',
   version: '1',
   gameId: null,
+  canStart: false,
   settings: {
     maximumPlayers: 4,
     roundCount: null,

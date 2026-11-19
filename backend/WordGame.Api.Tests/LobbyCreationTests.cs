@@ -196,6 +196,7 @@ public sealed class LobbyCreationTests
 
     private sealed class ObservedLobbyStore(ILobbySessionStore inner) : ILobbySessionStore
     {
+        public Task<WordGame.Domain.Lobby?> UpdateAsync(Guid id, Func<WordGame.Domain.Lobby, WordGame.Domain.Lobby> update, CancellationToken cancellationToken = default) => inner.UpdateAsync(id, update, cancellationToken);
         public Task<WordGame.Domain.Lobby?> ConfigureAsync(Guid id, Guid actor, long version, WordGame.Domain.LobbySettings settings, CancellationToken cancellationToken = default) => inner.ConfigureAsync(id, actor, version, settings, cancellationToken);
         public Task<WordGame.Domain.Lobby?> StartAsync(Guid id, Guid actor, long version, Func<WordGame.Domain.Lobby, Task<Guid>> createGame, CancellationToken cancellationToken = default) => inner.StartAsync(id, actor, version, createGame, cancellationToken);
         public IAsyncEnumerable<WordGame.Domain.Lobby?> WatchAsync(Guid id, CancellationToken cancellationToken = default) => inner.WatchAsync(id, cancellationToken);

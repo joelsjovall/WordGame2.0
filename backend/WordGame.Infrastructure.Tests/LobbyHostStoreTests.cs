@@ -37,12 +37,13 @@ public sealed class LobbyHostStoreTests
         var host = new Player(Guid.NewGuid(), "Host");
         var lobby = (await store.CreateAsync(host, Guid.NewGuid())).Lobby;
         lobby = (await store.JoinAsync(lobby.Code, new Player(Guid.NewGuid(), "Bob")))!;
+        lobby = await Ready(store, lobby);
         var reservation = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var game = new TaskCompletionSource<Guid>(TaskCreationOptions.RunContinuationsAsynchronously);
         var calls = 0;
         async Task<Guid> Create(Lobby frozen) { calls++; Assert.Equal(2, frozen.Players.Count); reservation.SetResult(); return await game.Task; }
         var starting = store.StartAsync(lobby.Id, host.Id, lobby.Version, Create);
-        await reservation.Task;
+        await reservation.Task.WaitAsync(TimeSpan.FromSeconds(5));
         await Assert.ThrowsAsync<LobbyActionException>(() => store.StartAsync(lobby.Id, host.Id, lobby.Version, Create));
         var reserved = (await store.GetAsync(lobby.Id))!;
         await Assert.ThrowsAsync<LobbyActionException>(() => store.ConfigureAsync(lobby.Id, host.Id, reserved.Version, new()));
@@ -63,6 +64,7 @@ public sealed class LobbyHostStoreTests
         var host = new Player(Guid.NewGuid(), "Host");
         var lobby = (await store.CreateAsync(host, Guid.NewGuid())).Lobby;
         lobby = (await store.JoinAsync(lobby.Code, new Player(Guid.NewGuid(), "Bob")))!;
+        lobby = await Ready(store, lobby);
         await Assert.ThrowsAsync<InvalidOperationException>(() => store.StartAsync(lobby.Id, host.Id, lobby.Version,
             _ => Task.FromException<Guid>(new InvalidOperationException("Test failure"))));
         var restored = (await store.GetAsync(lobby.Id))!;
@@ -70,5 +72,14 @@ public sealed class LobbyHostStoreTests
         Assert.Null(restored.GameId);
         Assert.Same(lobby.Settings, restored.Settings);
         Assert.Equal(lobby.Version + 2, restored.Version);
+    }
+    private static async Task<Lobby> Ready(InMemoryLobbySessionStore store, Lobby lobby)
+    {
+        foreach (var player in lobby.Players)
+        {
+            lobby = (await store.UpdateAsync(lobby.Id, current => current.Connect(player.Id, Guid.NewGuid()).SetReady(player.Id, true)))!;
+        }
+
+        return lobby;
     }
 }

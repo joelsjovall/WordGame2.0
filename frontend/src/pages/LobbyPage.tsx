@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { ApiError } from '../services/api/client.ts'
 import {
   lobbiesApi,
@@ -9,6 +9,7 @@ import {
 import { useLobby } from '../features/lobby/useLobby.ts'
 import { InvitationPanel } from '../features/lobby/InvitationPanel.tsx'
 import { LobbySettingsForm } from '../features/lobby/LobbySettingsForm.tsx'
+import { LobbyMembers } from '../features/lobby/LobbyMembers.tsx'
 import '../features/lobby/lobby.css'
 
 export function LobbyPage() {
@@ -16,23 +17,26 @@ export function LobbyPage() {
   return <LobbyRoom key={lobbyId} id={lobbyId} />
 }
 function LobbyRoom({ id }: { id: string }) {
+  const navigate = useNavigate()
   const {
     lobby,
     playerId,
     connection,
     error: loadingError,
     accept,
+    unavailable,
   } = useLobby(id)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const pending = useRef(false)
-  async function act(operation: () => Promise<Lobby>) {
+  async function act(operation: () => Promise<Lobby>, after?: () => void) {
     if (pending.current) return
     pending.current = true
     setBusy(true)
     setError('')
     try {
       accept(await operation())
+      after?.()
     } catch (failure) {
       setError(
         failure instanceof ApiError
@@ -50,7 +54,7 @@ function LobbyRoom({ id }: { id: string }) {
       setBusy(false)
     }
   }
-  if (!lobby)
+  if (!lobby || unavailable)
     return (
       <main className="page">
         <h1>Private lobby</h1>
@@ -63,6 +67,7 @@ function LobbyRoom({ id }: { id: string }) {
   const host = playerId === lobby.hostPlayerId
   const waiting = lobby.status === 'waiting'
   const settings = lobby.settings
+  const self = lobby.players.find((player) => player.id === playerId)
   const save = (value: LobbySettings) =>
     act(() => lobbiesApi.configure(id, lobby.version, value))
   return (
@@ -75,18 +80,45 @@ function LobbyRoom({ id }: { id: string }) {
       <p>
         {lobby.players.length} of {lobby.maximumPlayers} players
       </p>
-      <ul className="lobby-players" aria-label="Lobby players">
-        {lobby.players.map((player) => (
-          <li key={player.id}>
-            {player.displayName}
-            {player.id === lobby.hostPlayerId ? ' (host)' : ''}
-          </li>
-        ))}
-      </ul>
+      <LobbyMembers
+        lobby={lobby}
+        playerId={playerId}
+        busy={busy || Boolean(loadingError)}
+        remove={(target) => void act(() => lobbiesApi.remove(id, target))}
+      />
+      {waiting && self && (
+        <div className="lobby-actions">
+          <button
+            type="button"
+            disabled={busy || Boolean(loadingError) || !self.isConnected}
+            onClick={() =>
+              void act(() =>
+                lobbiesApi.setReady(id, lobby.version, !self.isReady),
+              )
+            }
+          >
+            {self.isReady ? 'Not Ready' : 'Ready'}
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() =>
+              void act(
+                () => lobbiesApi.leave(id),
+                () => {
+                  void navigate('/')
+                },
+              )
+            }
+          >
+            Leave lobby
+          </button>
+        </div>
+      )}
       {(error || loadingError) && <p role="alert">{error || loadingError}</p>}
       {host && waiting ? (
         <LobbySettingsForm
-          key={lobby.version}
+          key={JSON.stringify(lobby.settings)}
           lobby={lobby}
           busy={busy || Boolean(loadingError)}
           save={save}
@@ -109,17 +141,16 @@ function LobbyRoom({ id }: { id: string }) {
         <>
           <button
             className="lobby-start"
-            disabled={
-              busy ||
-              lobby.players.length < lobby.minimumPlayers ||
-              Boolean(loadingError)
-            }
+            disabled={busy || !lobby.canStart || Boolean(loadingError)}
             onClick={() => void act(() => lobbiesApi.start(id, lobby.version))}
           >
             Start match
           </button>
           {lobby.players.length < lobby.minimumPlayers && (
             <p>At least two players must join before starting.</p>
+          )}
+          {lobby.players.length >= lobby.minimumPlayers && !lobby.canStart && (
+            <p>Every player must be connected and ready before starting.</p>
           )}
           <p>Save any edited settings before starting.</p>
         </>
