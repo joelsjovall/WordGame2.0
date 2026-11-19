@@ -663,6 +663,13 @@ export interface operations {
         }
         content?: never
       }
+      /** @description Too Many Requests */
+      429: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
     }
   }
   CreatePrivateLobby: {
@@ -724,6 +731,13 @@ export interface operations {
         }
         content?: never
       }
+      /** @description Too Many Requests */
+      429: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
     }
   }
   JoinPrivateLobby: {
@@ -778,6 +792,13 @@ export interface operations {
       }
       /** @description Conflict */
       409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Too Many Requests */
+      429: {
         headers: {
           [name: string]: unknown
         }

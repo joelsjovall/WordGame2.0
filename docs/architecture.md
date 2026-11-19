@@ -66,6 +66,7 @@ Storage implementations must remain separate from gameplay rules.
 - Lobby codes are not authentication credentials.
 - Sensitive configuration is kept outside version control.
 - Gameplay results cannot be modified directly by clients.
+- Lobby creation, joining, and guest identity endpoints have per-connection-IP rate limits. See [lobby security](lobby-security.md) for configuration, invitation handling, authorization verification, and deployment limits.
 
 ## Frontend
 

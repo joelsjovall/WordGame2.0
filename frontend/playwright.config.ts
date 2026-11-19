@@ -35,6 +35,10 @@ export default defineConfig({
       url: backendUrl + '/health',
       env: {
         ASPNETCORE_ENVIRONMENT: 'Development',
+        // Parallel browser identities share one loopback IP; security tests exercise low limits separately.
+        LobbyRateLimits__CreatePermitsPerMinute: '1000',
+        LobbyRateLimits__JoinPermitsPerMinute: '1000',
+        LobbyRateLimits__GuestPermitsPerMinute: '1000',
         Cors__AllowedOrigins__0: frontendUrl,
         Cors__AllowedOrigins__1: 'http://localhost:5175',
       },
