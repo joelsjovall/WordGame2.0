@@ -104,6 +104,32 @@ test('live snapshots never regress and navigation releases the event stream', as
   view.unmount()
   expect(Events.latest.close).toHaveBeenCalledOnce()
 })
+
+test('join/leave feedback comes from authoritative membership and ignores stale snapshots', async () => {
+  setup()
+  const view = renderHook(() => useLobby(lobby.id))
+  await waitFor(() => expect(view.result.current.lobby).toEqual(lobby))
+  expect(view.result.current.activity).toBe('')
+  const joined = {
+    ...lobby,
+    version: '2',
+    players: [
+      ...lobby.players,
+      {
+        id: 'taylor',
+        displayName: 'Taylor',
+        isConnected: true,
+        isReady: false,
+      },
+    ],
+  }
+  await act(async () => Events.latest.send(joined))
+  expect(view.result.current.activity).toBe('Taylor joined the lobby.')
+  await act(async () => Events.latest.send(lobby))
+  expect(view.result.current.activity).toBe('Taylor joined the lobby.')
+  await act(async () => Events.latest.send({ ...lobby, version: '3' }))
+  expect(view.result.current.activity).toBe('Taylor left the lobby.')
+})
 test('recovery reads authoritative state and stops on lost membership', async () => {
   const get = setup()
   const view = renderHook(() => useLobby(lobby.id))

@@ -1,17 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { ApiError } from '../services/api/client.ts'
-import {
-  lobbiesApi,
-  type Lobby,
-  type LobbySettings,
-} from '../services/api/lobbies.ts'
+import { lobbiesApi } from '../services/api/lobbies.ts'
 import { useLobby } from '../features/lobby/useLobby.ts'
+import { useLobbyActions } from '../features/lobby/useLobbyActions.ts'
 import { InvitationPanel } from '../features/lobby/InvitationPanel.tsx'
-import { LobbySettingsForm } from '../features/lobby/LobbySettingsForm.tsx'
 import { LobbyMembers } from '../features/lobby/LobbyMembers.tsx'
+import { LobbyMatchSettings } from '../features/lobby/LobbyMatchSettings.tsx'
+import { LobbyScreenState } from '../features/lobby/LobbyScreenState.tsx'
 import { ServerCountdown } from '../features/game/ServerCountdown.tsx'
 import '../features/lobby/lobby.css'
+import '../features/lobby/party-lobby.css'
 
 export function LobbyPage() {
   const { lobbyId = '' } = useParams()
@@ -21,15 +19,14 @@ function LobbyRoom({ id }: { id: string }) {
   const navigate = useNavigate()
   const {
     lobby,
+    activity,
     playerId,
     connection,
     error: loadingError,
     accept,
     unavailable,
   } = useLobby(id)
-  const [error, setError] = useState('')
-  const [busy, setBusy] = useState(false)
-  const pending = useRef(false)
+  const { act, error, busy } = useLobbyActions(id, accept)
   useEffect(() => {
     if (
       !unavailable &&
@@ -37,151 +34,138 @@ function LobbyRoom({ id }: { id: string }) {
     )
       void navigate(`/lobbies/${id}/game`, { replace: true })
   }, [lobby?.status, unavailable, navigate, id])
-  async function act(operation: () => Promise<Lobby>, after?: () => void) {
-    if (pending.current) return
-    pending.current = true
-    setBusy(true)
-    setError('')
-    try {
-      accept(await operation())
-      after?.()
-    } catch (failure) {
-      setError(
-        failure instanceof ApiError
-          ? failure.message
-          : 'Unable to reach the server. Please try again.',
-      )
-      // Recover a stale version before allowing another explicit write.
-      try {
-        accept(await lobbiesApi.get(id))
-      } catch {
-        /* Keep the original action error. */
-      }
-    } finally {
-      pending.current = false
-      setBusy(false)
-    }
-  }
-  if (!lobby || unavailable)
-    return (
-      <main className="page">
-        <h1>Private lobby</h1>
-        <p role={loadingError ? 'alert' : 'status'}>
-          {loadingError || 'Loading lobby…'}
-        </p>
-        <Link to="/join">Join a lobby</Link>
-      </main>
-    )
+  if (!lobby || unavailable) return <LobbyScreenState error={loadingError} />
   const host = playerId === lobby.hostPlayerId
   const waiting = lobby.status === 'waiting'
-  const settings = lobby.settings
   const self = lobby.players.find((player) => player.id === playerId)
-  const save = (value: LobbySettings) =>
-    act(() => lobbiesApi.configure(id, lobby.version, value))
+  const blocked = busy || Boolean(loadingError)
   return (
-    <main className="page">
-      <h1>Private lobby</h1>
-      <p>
-        Lobby code: <strong>{lobby.lobbyCode}</strong>
-      </p>
-      <p role="status">{connection}</p>
-      <p>
-        {lobby.players.length} of {lobby.maximumPlayers} players
-      </p>
-      <LobbyMembers
-        lobby={lobby}
-        playerId={playerId}
-        busy={busy || Boolean(loadingError)}
-        remove={(target) => void act(() => lobbiesApi.remove(id, target))}
-      />
-      {waiting && self && (
-        <div className="lobby-actions">
-          <button
-            type="button"
-            disabled={busy || Boolean(loadingError) || !self.isConnected}
-            onClick={() =>
-              void act(() =>
-                lobbiesApi.setReady(id, lobby.version, !self.isReady),
-              )
-            }
+    <main className="page party-lobby">
+      <header className="party-heading">
+        <Link to="/" className="party-back">
+          ← WordGame
+        </Link>
+        <div className="party-title-row">
+          <div>
+            <p className="party-eyebrow">Party Mode · Private room</p>
+            <h1>Private lobby</h1>
+            <p className="party-subtitle">
+              Good company. A little bluffing. Let’s play.
+            </p>
+          </div>
+          <p
+            className={`party-connection ${connection === 'Live' ? 'is-live' : ''}`}
+            role="status"
           >
-            {self.isReady ? 'Not Ready' : 'Ready'}
-          </button>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() =>
-              void act(
-                () => lobbiesApi.leave(id),
-                () => {
-                  void navigate('/')
-                },
-              )
-            }
-          >
-            Leave lobby
-          </button>
-        </div>
-      )}
-      {(error || loadingError) && <p role="alert">{error || loadingError}</p>}
-      {host && waiting ? (
-        <LobbySettingsForm
-          key={JSON.stringify(lobby.settings)}
-          lobby={lobby}
-          busy={busy || Boolean(loadingError)}
-          save={save}
-        />
-      ) : (
-        <section className="lobby-card" aria-label="Match settings">
-          <h2>Match settings</h2>
-          <p>Maximum players: {settings.maximumPlayers}</p>
-          <p>
-            Total rounds: {settings.roundCount ?? 'Automatic (two per player)'}
+            <span aria-hidden="true" />
+            {connection}
           </p>
-          <p>Challenge time: {settings.challengeSeconds} seconds</p>
-          <p>Difficulties: {settings.allowedDifficulties.join(', ')}</p>
-          {!host && waiting && (
-            <p>Only the host can change settings or start the match.</p>
-          )}
-        </section>
-      )}
-      {host && waiting && (
-        <>
-          <button
-            className="lobby-start"
-            disabled={busy || !lobby.canStart || Boolean(loadingError)}
-            onClick={() => void act(() => lobbiesApi.start(id, lobby.version))}
-          >
-            Start match
-          </button>
-          {lobby.players.length < lobby.minimumPlayers && (
-            <p>At least two players must join before starting.</p>
-          )}
-          {lobby.players.length >= lobby.minimumPlayers && !lobby.canStart && (
-            <p>Every player must be connected and ready before starting.</p>
-          )}
-          <p>Save any edited settings before starting.</p>
-        </>
-      )}
-      {lobby.status === 'starting' && (
-        <p role="status">
-          Match starts in{' '}
-          {lobby.startsAt ? (
-            <ServerCountdown
-              key={lobby.startsAt}
-              deadline={lobby.startsAt}
-              serverTime={lobby.serverTime}
-            />
-          ) : (
-            '…'
-          )}{' '}
-          seconds
+        </div>
+      </header>
+      {(error || loadingError) && (
+        <p className="party-error" role="alert">
+          {error || loadingError}
         </p>
       )}
-      {waiting && <InvitationPanel lobby={lobby} />}
-      <p>
-        <Link to="/">Back to homepage</Link>
-      </p>
+      <div className="party-grid">
+        <div className="party-main">
+          {waiting && <InvitationPanel lobby={lobby} />}
+          {lobby.status === 'starting' && (
+            <section className="party-surface party-countdown">
+              <p className="party-eyebrow">Get ready</p>
+              <h2>Everyone’s in.</h2>
+              <p role="status">
+                Match starts in{' '}
+                {lobby.startsAt ? (
+                  <ServerCountdown
+                    key={lobby.startsAt}
+                    deadline={lobby.startsAt}
+                    serverTime={lobby.serverTime}
+                  />
+                ) : (
+                  '…'
+                )}{' '}
+                seconds
+              </p>
+            </section>
+          )}
+          <section
+            className="party-surface"
+            aria-labelledby="party-players-title"
+          >
+            <div className="party-section-heading">
+              <h2 id="party-players-title">Players</h2>
+              <p className="party-count">
+                {lobby.players.length} of {lobby.maximumPlayers} players
+              </p>
+            </div>
+            <LobbyMembers
+              lobby={lobby}
+              playerId={playerId}
+              busy={blocked}
+              remove={(target) => void act(() => lobbiesApi.remove(id, target))}
+            />
+            <p
+              className="party-activity"
+              role="log"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {activity}
+            </p>
+            {waiting && self && (
+              <div className="party-ready-area">
+                <p className="party-note">
+                  {self.isReady
+                    ? 'You’re ready. Waiting for the rest of the room.'
+                    : 'All set? Let the room know you’re ready.'}
+                </p>
+                <div className="lobby-actions">
+                  <button
+                    className={`party-ready ${self.isReady ? 'is-ready' : ''}`}
+                    type="button"
+                    aria-pressed={self.isReady}
+                    disabled={blocked || !self.isConnected}
+                    onClick={() =>
+                      void act(() =>
+                        lobbiesApi.setReady(id, lobby.version, !self.isReady),
+                      )
+                    }
+                  >
+                    {self.isReady ? 'Not Ready' : 'Ready'}
+                  </button>
+                  <button
+                    className="party-leave"
+                    type="button"
+                    disabled={busy}
+                    onClick={() =>
+                      void act(
+                        () => lobbiesApi.leave(id),
+                        () => {
+                          void navigate('/')
+                        },
+                      )
+                    }
+                  >
+                    Leave lobby
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
+        <aside className="party-settings">
+          <LobbyMatchSettings
+            lobby={lobby}
+            host={host}
+            busy={blocked}
+            save={(settings) =>
+              act(() => lobbiesApi.configure(id, lobby.version, settings))
+            }
+            start={() => void act(() => lobbiesApi.start(id, lobby.version))}
+          />
+        </aside>
+      </div>
     </main>
   )
 }

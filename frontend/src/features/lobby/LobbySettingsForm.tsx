@@ -5,12 +5,24 @@ export function LobbySettingsForm({
   lobby,
   save,
   busy,
+  onDirtyChange,
 }: {
   lobby: Lobby
   save: (settings: LobbySettings) => Promise<void>
   busy: boolean
+  onDirtyChange?: (dirty: boolean) => void
 }) {
   const [settings, setSettings] = useState(lobby.settings)
+  function updateSettings(next: LobbySettings) {
+    setSettings(next)
+    onDirtyChange?.(
+      next.maximumPlayers !== lobby.settings.maximumPlayers ||
+        next.roundCount !== lobby.settings.roundCount ||
+        next.challengeSeconds !== lobby.settings.challengeSeconds ||
+        [...next.allowedDifficulties].sort().join('|') !==
+          [...lobby.settings.allowedDifficulties].sort().join('|'),
+    )
+  }
   function submit(event: FormEvent) {
     event.preventDefault()
     void save(settings)
@@ -28,7 +40,7 @@ export function LobbySettingsForm({
           required
           value={settings.maximumPlayers}
           onChange={(event) =>
-            setSettings({
+            updateSettings({
               ...settings,
               maximumPlayers: Number(event.target.value),
             })
@@ -43,7 +55,7 @@ export function LobbySettingsForm({
           placeholder="Automatic"
           value={settings.roundCount ?? ''}
           onChange={(event) =>
-            setSettings({
+            updateSettings({
               ...settings,
               roundCount:
                 event.target.value === '' ? null : Number(event.target.value),
@@ -60,7 +72,7 @@ export function LobbySettingsForm({
           required
           value={settings.challengeSeconds}
           onChange={(event) =>
-            setSettings({
+            updateSettings({
               ...settings,
               challengeSeconds: Number(event.target.value),
             })
@@ -74,7 +86,7 @@ export function LobbySettingsForm({
                 type="checkbox"
                 checked={settings.allowedDifficulties.includes(difficulty)}
                 onChange={(event) =>
-                  setSettings({
+                  updateSettings({
                     ...settings,
                     allowedDifficulties: event.target.checked
                       ? [...settings.allowedDifficulties, difficulty]
