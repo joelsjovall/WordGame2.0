@@ -1,9 +1,13 @@
 import type { Lobby } from '../../services/api/lobbies.ts'
 import { connectLobby } from '../../services/lobbyConnection.ts'
+import { lobbyActivity } from './lobbyActivity.ts'
 import { useCallback, useEffect, useState } from 'react'
 
 export function useLobby(id: string) {
-  const [lobby, setLobby] = useState<Lobby | null>(null)
+  const [snapshot, setSnapshot] = useState<{
+    lobby: Lobby | null
+    activity: string
+  }>({ lobby: null, activity: '' })
   const [playerId, setPlayerId] = useState('')
   const [error, setError] = useState('')
   const [unavailable, setUnavailable] = useState(false)
@@ -11,13 +15,18 @@ export function useLobby(id: string) {
   const accept = useCallback((next: Lobby) => {
     if (!/^(0|[1-9]\d*)$/.test(next.version))
       throw new Error('Invalid lobby revision.')
-    setLobby((previous) =>
-      !previous ||
-      previous.id !== next.id ||
-      BigInt(next.version) >= BigInt(previous.version)
-        ? next
-        : previous,
-    )
+    setSnapshot((previous) => {
+      if (
+        previous.lobby &&
+        previous.lobby.id === next.id &&
+        BigInt(next.version) < BigInt(previous.lobby.version)
+      )
+        return previous
+      return {
+        lobby: next,
+        activity: lobbyActivity(previous.lobby, next) || previous.activity,
+      }
+    })
   }, [])
 
   useEffect(
@@ -31,5 +40,5 @@ export function useLobby(id: string) {
       }),
     [id, accept],
   )
-  return { lobby, playerId, error, connection, unavailable, accept }
+  return { ...snapshot, playerId, error, connection, unavailable, accept }
 }
