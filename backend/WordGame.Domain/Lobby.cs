@@ -7,14 +7,14 @@ public sealed class Lobby
 {
     public const int MinimumPlayers = Game.MinimumPlayers;
     public const int MaximumPlayers = Game.MaximumPlayers;
-    public const int MaximumDisplayNameLength = 32;
+    public const int MaximumDisplayNameLength = Player.MaximumDisplayNameLength;
 
     public Lobby(Guid id, LobbyCode code, Player host, DateTimeOffset createdAt, DateTimeOffset expiresAt)
     {
         Id = DomainGuard.Id(id, nameof(id));
         ArgumentNullException.ThrowIfNull(code);
         ArgumentNullException.ThrowIfNull(host);
-        ValidateName(host);
+        host.ValidateDisplayName();
         if (expiresAt <= createdAt)
         {
             throw new ArgumentOutOfRangeException(nameof(expiresAt));
@@ -215,7 +215,7 @@ public sealed class Lobby
     public Lobby Join(Player player, DateTimeOffset? now = null)
     {
         ArgumentNullException.ThrowIfNull(player);
-        ValidateName(player);
+        player.ValidateDisplayName();
         if (Roster.WasRemoved(player.Id))
         {
             throw new LobbyActionException("You have been removed from this lobby.", forbidden: true);
@@ -245,11 +245,4 @@ public sealed class Lobby
         return WithRoster(Roster.Join(player, now ?? CreatedAt));
     }
 
-    private static void ValidateName(Player player)
-    {
-        if (player.DisplayName.Length > MaximumDisplayNameLength || player.DisplayName.Any(char.IsControl))
-        {
-            throw new ArgumentException("Display names must contain at most 32 characters and no control characters.", nameof(player));
-        }
-    }
 }

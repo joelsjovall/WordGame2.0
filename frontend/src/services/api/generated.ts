@@ -146,6 +146,54 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/matchmaking/searches': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post: operations['JoinMatchmaking']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/matchmaking/status': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['GetMatchmakingStatus']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/matchmaking/searches/{searchId}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['GetMatchmakingSearch']
+    put?: never
+    post?: never
+    delete: operations['CancelMatchmaking']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/lobbies/{lobbyId}': {
     parameters: {
       query?: never
@@ -288,6 +336,9 @@ export interface components {
     ApiLobbyStatus: 'waiting' | 'starting' | 'started' | 'closed' | 'completed'
     /** @enum {unknown} */
     ApiMatchFormat: 'party' | 'online'
+    /** @enum {unknown} */
+    ApiMatchmakingStatus:
+      'idle' | 'searching' | 'matched' | 'cancelled' | 'expired'
     ApiProblemDetails: {
       type?: null | string
       title?: null | string
@@ -452,6 +503,9 @@ export interface components {
       /** Format: uuid */
       lobbyId?: null | string
     }
+    JoinMatchmakingRequest: {
+      displayName: string
+    }
     LeaveLobbyRequest: Record<string, never>
     LobbyPlayerResponse: {
       /** Format: uuid */
@@ -495,6 +549,19 @@ export interface components {
       /** Format: int32 */
       challengeSeconds: number
       allowedDifficulties: components['schemas']['ApiCategoryDifficulty'][]
+    }
+    MatchmakingResponse: {
+      /** Format: uuid */
+      searchId: null | string
+      status: components['schemas']['ApiMatchmakingStatus']
+      /** Format: date-time */
+      createdAt: null | string
+      /** Format: date-time */
+      expiresAt: null | string
+      /** Format: uuid */
+      matchId: null | string
+      /** Format: uuid */
+      gameId: null | string
     }
     MatchResultResponse: {
       /** Format: uuid */
@@ -1017,6 +1084,176 @@ export interface operations {
       }
       /** @description Not Found */
       404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  JoinMatchmaking: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['JoinMatchmakingRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['MatchmakingResponse']
+        }
+      }
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Too Many Requests */
+      429: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  GetMatchmakingStatus: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['MatchmakingResponse']
+        }
+      }
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  GetMatchmakingSearch: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        searchId: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['MatchmakingResponse']
+        }
+      }
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  CancelMatchmaking: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        searchId: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description No Content */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Conflict */
+      409: {
         headers: {
           [name: string]: unknown
         }

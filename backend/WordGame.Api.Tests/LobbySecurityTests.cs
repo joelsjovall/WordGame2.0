@@ -14,6 +14,7 @@ public sealed class LobbySecurityTests
     [InlineData("/api/v1/lobbies", "CreatePermitsPerMinute")]
     [InlineData("/api/v1/lobbies/join", "JoinPermitsPerMinute")]
     [InlineData("/api/v1/guests", "GuestPermitsPerMinute")]
+    [InlineData("/api/v1/matchmaking/searches", "MatchmakingPermitsPerMinute")]
     public async Task SensitiveEndpointsLimitAttemptsAcrossCookiesCodesAndSpoofedForwardingHeaders(string path, string setting)
     {
         using var root = new WordGameApiFactory();
@@ -27,12 +28,13 @@ public sealed class LobbySecurityTests
             object body = path.EndsWith("/join", StringComparison.Ordinal)
                 ? new JoinLobbyRequest(attempt == 0 ? "AAAAAA" : "BBBBBB", "Guest")
                 : path.EndsWith("/guests", StringComparison.Ordinal) ? new CreateGuestRequest()
+                : path.EndsWith("/searches", StringComparison.Ordinal) ? new JoinMatchmakingRequest("Guest")
                 : new CreateLobbyRequest(Guid.NewGuid(), "Host");
             using var response = await client.PostAsJsonAsync(path, body);
             if (attempt < 2)
             {
                 Assert.Equal(path.EndsWith("/join", StringComparison.Ordinal) ? HttpStatusCode.NotFound
-                    : path.EndsWith("/guests", StringComparison.Ordinal) ? HttpStatusCode.OK : HttpStatusCode.Created, response.StatusCode);
+                    : path.EndsWith("/guests", StringComparison.Ordinal) || path.EndsWith("/searches", StringComparison.Ordinal) ? HttpStatusCode.OK : HttpStatusCode.Created, response.StatusCode);
             }
             else
             {

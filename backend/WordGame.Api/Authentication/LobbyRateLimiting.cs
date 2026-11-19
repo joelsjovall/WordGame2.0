@@ -9,6 +9,7 @@ internal static class LobbyRateLimiting
     internal const string Create = "lobby-create";
     internal const string Join = "lobby-join";
     internal const string Guest = "guest-session";
+    internal const string Matchmaking = "matchmaking-join";
 
     internal static void AddLobbyRateLimiting(this WebApplicationBuilder builder)
     {
@@ -28,6 +29,7 @@ internal static class LobbyRateLimiting
             AddPolicy(Create, "CreatePermitsPerMinute", 20);
             AddPolicy(Join, "JoinPermitsPerMinute", 30);
             AddPolicy(Guest, "GuestPermitsPerMinute", 60);
+            AddPolicy(Matchmaking, "MatchmakingPermitsPerMinute", 30);
 
             void AddPolicy(string policy, string setting, int defaultPermits)
             {
