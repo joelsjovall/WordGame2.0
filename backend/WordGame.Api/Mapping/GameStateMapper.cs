@@ -7,12 +7,14 @@ namespace WordGame.Api.Mapping;
 
 public static class GameStateMapper
 {
-    public static GameStateResponse Map(SessionSnapshot snapshot, DateTimeOffset serverTime)
+    public static GameStateResponse Map(SessionSnapshot snapshot, DateTimeOffset serverTime, TimeSpan? disconnectedGrace = null)
     {
-        var connected = snapshot.Players.ToDictionary(player => player.PlayerId, player => player.ConnectionCount > 0);
+        var presence = snapshot.Players.ToDictionary(player => player.PlayerId);
         return new GameStateResponse(snapshot.Id, MapStatus(snapshot.Status), snapshot.Version.ToString(CultureInfo.InvariantCulture), serverTime,
             snapshot.Game.Players.Select(player => new GamePlayerResponse(
-                player.Id, player.DisplayName, snapshot.Game.Scores[player.Id].Points, connected[player.Id])).ToArray(),
+                player.Id, player.DisplayName, snapshot.Game.Scores[player.Id].Points, presence[player.Id].ConnectionCount > 0,
+                presence[player.Id].HasLeft,
+                snapshot.Status == SessionStatus.Active && presence[player.Id] is { ConnectionCount: 0, HasLeft: false, DisconnectedAt: { } at } && disconnectedGrace is { } grace ? at.Add(grace) : null)).ToArray(),
             snapshot.Game.CurrentRound is { } round ? MapRound(round, snapshot.Game.RoundResults.GetValueOrDefault(round.Id), snapshot.CategorySelectionDeadline) : null,
             new MatchSettingsResponse(MapFormat(snapshot.Game.Settings.Format), snapshot.Game.Settings.RoundCount,
                 snapshot.Game.Settings.ChallengeDuration?.TotalSeconds,

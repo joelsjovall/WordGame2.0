@@ -1,5 +1,6 @@
 import { ApiError } from './api/client.ts'
 import type { GameState, gamesApi } from './api/games.ts'
+import { createRecoveryLoop } from './recoveryLoop.ts'
 
 export type GameSynchronizationSnapshot = {
   state: GameState | null
@@ -29,11 +30,15 @@ export function createGameConnection(
   const listeners = new Set<() => void>()
   const controller = new AbortController()
   let source: EventSource | null = null
-  let timer: ReturnType<typeof setTimeout> | undefined
   let inFlight: Promise<void> | undefined
   let refreshAgain = false
   let closed = false
-  let retryDelay = 2000
+  const recovery = createRecoveryLoop(async () => {
+    if (closed) return true
+    if (!source || source.readyState === 2) open()
+    await refresh()
+    return closed || snapshot.connection === 'connected'
+  })
 
   function publish(changes: Partial<GameSynchronizationSnapshot>) {
     if (closed) return
@@ -41,31 +46,35 @@ export function createGameConnection(
     for (const listener of listeners) listener()
   }
   function clearRecovery() {
-    clearTimeout(timer)
-    timer = undefined
-    retryDelay = 2000
+    recovery.reset()
   }
   function stop(changes?: Partial<GameSynchronizationSnapshot>) {
     if (changes) publish(changes)
     closed = true
-    clearRecovery()
+    recovery.stop()
     source?.close()
     source = null
     controller.abort()
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('online', online)
+      window.removeEventListener('offline', offline)
+    }
+  }
+  function online() {
+    if (closed) return
+    clearRecovery()
+    if (!source || source.readyState !== 1) open()
+    void refresh()
+  }
+  function offline() {
+    if (closed) return
+    source?.close()
+    source = null
+    publish({ connection: 'recovering' })
+    recover()
   }
   function recover() {
-    if (closed || timer !== undefined) return
-    timer = setTimeout(() => {
-      timer = undefined
-      if (closed) return
-      retryDelay = Math.min(retryDelay * 2, 30000)
-      if (!source || source.readyState === 2) open()
-      void refresh().then(() => {
-        if (!closed && snapshot.connection !== 'connected') {
-          recover()
-        }
-      })
-    }, retryDelay)
+    if (!closed) recovery.schedule()
   }
   function refresh(): Promise<void> {
     if (closed) return Promise.resolve()
@@ -167,6 +176,10 @@ export function createGameConnection(
   return {
     listeners,
     start: () => {
+      if (typeof window !== 'undefined') {
+        window.addEventListener('online', online)
+        window.addEventListener('offline', offline)
+      }
       open()
       void refresh()
     },

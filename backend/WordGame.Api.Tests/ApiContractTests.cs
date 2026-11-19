@@ -94,7 +94,7 @@ public sealed class ApiContractTests
             Assert.True(schemas.TryGetProperty(type, out _), type);
         }
         var action = schemas.GetProperty("GameActionRequest");
-        Assert.Equal(4, action.GetProperty("anyOf").GetArrayLength());
+        Assert.Equal(5, action.GetProperty("anyOf").GetArrayLength());
         Assert.All(action.GetProperty("anyOf").EnumerateArray(),
             variant =>
             {

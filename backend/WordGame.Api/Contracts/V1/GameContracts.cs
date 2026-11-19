@@ -18,7 +18,8 @@ public sealed record MatchResultResponse(Guid GameId, ApiMatchFormat Format, int
     bool IsTie, IReadOnlyList<Guid> WinnerIds, IReadOnlyList<MatchStandingResponse> Standings);
 public sealed record MatchStandingResponse(Guid PlayerId, string DisplayName, int Score, int Rank);
 
-public sealed record GamePlayerResponse(Guid Id, string DisplayName, int Score, bool IsConnected);
+public sealed record GamePlayerResponse(Guid Id, string DisplayName, int Score, bool IsConnected, bool HasLeft = false,
+    DateTimeOffset? ReconnectUntil = null);
 public sealed record GameRoundResponse(
     Guid Id, int Number, ApiRoundStatus Status, Guid ActivePlayerId, CategoryResponse? Category,
     BidResponse? HighestBid, ChallengeResponse? Challenge, RoundResultResponse? Result = null,

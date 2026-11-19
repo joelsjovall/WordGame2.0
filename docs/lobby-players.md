@@ -34,7 +34,7 @@ Guest identity is browser-cookie based. Clearing cookies or using another browse
 
 The store checks the host, revision, capacity, connected membership, and readiness under the same gate that reserves startup. If Leave/Remove wins first, the roster/revision changes and the old start request conflicts. If startup wins first, explicit leave/remove/ready/settings requests return 409 until it resolves; the UI hides waiting-room actions during startup.
 
-Presence can still change while the shared engine creates the game. Completion rechecks the latest connection/readiness state, rather than the old reserved snapshot. A last-connection disconnect invalidates startup even if the member quickly reconnects, because readiness was cleared. The application abandons the created game, preserves current presence, returns the lobby to waiting, and resets all readiness. Players can explicitly ready again and retry. Once startup commits, the game roster/settings remain frozen; leaving an active game belongs to the later match lifecycle work.
+Presence can still change while the shared engine creates the game. Completion rechecks the latest connection/readiness state, rather than the old reserved snapshot. A last-connection disconnect invalidates startup even if the member quickly reconnects, because readiness was cleared. The application abandons the created game, preserves current presence, returns the lobby to waiting, and resets all readiness. Players can explicitly ready again and retry. Once startup commits, the game roster/settings remain frozen; F028 adds [intentional active-match departure](party-reconnection.md) through the shared engine.
 
 ## Acceptance review and checks
 

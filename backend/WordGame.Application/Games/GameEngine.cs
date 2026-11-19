@@ -104,6 +104,22 @@ public sealed class GameEngine(IGameSessionStore sessions, SessionRetention rete
     public Task<GameEngineResult> ConnectAsync(Guid gameId, Guid playerId, Guid connectionId, CancellationToken cancellationToken = default) =>
         commands.UpdateAsync(gameId, session =>
         {
+            if (connectionId == Guid.Empty || !session.Game.Players.Any(player => player.Id == playerId))
+            {
+                throw new ArgumentException("A roster member and nonempty connection ID are required.");
+            }
+
+            if (session.HasLeft(playerId) || session.Status == SessionStatus.Abandoned)
+            {
+                throw new InvalidOperationException("A departed player or abandoned match cannot reconnect.");
+            }
+            // Enforce elapsed grace before adding presence, so a late stream cannot revive an ended match.
+            session.ReconcileTurns(retention.DisconnectedGrace);
+            if (session.Status is SessionStatus.Completed or SessionStatus.Abandoned)
+            {
+                return;
+            }
+
             session.Connect(playerId, connectionId);
             session.ReconcileTurns(retention.DisconnectedGrace);
         }, cancellationToken);

@@ -11,7 +11,7 @@ F021 implements authenticated state retrieval and SSE invalidations, plus a reus
 
 Both require an ASP.NET Core protected `wordgame.player` cookie containing a server-issued NameIdentifier claim and a matching member of the game's immutable roster. Missing, forged, or expired credentials return 401 without redirects. Unknown games and nonmembers both return 404. Player IDs in query strings, bodies, event IDs, and lobby codes are not credentials. State and event payloads use explicit public projections: accepted-answer datasets and canonical IDs remain private.
 
-Cookie authentication protects these reads. F023 now supplies [guest identity issuance and lobby creation](private-lobbies.md) using this scheme. Gameplay action endpoints, joining/readiness, and gameplay UI remain later work; their workflows must build rosters from verified identities. There is no test login endpoint, client-selected identity header, committed credential, or anonymous private-game access. Integration tests create protected tickets internally with isolated ephemeral protection keys.
+Cookie authentication protects these reads. F023 now supplies [guest identity issuance and lobby creation](private-lobbies.md) using this scheme. F024â€“F027 add joining/readiness, gameplay commands, and the playable Party screen using verified identities. F028 adds [Party recovery and intentional departure](party-reconnection.md). There is no test login endpoint, client-selected identity header, committed credential, or anonymous private-game access. Integration tests create protected tickets internally with isolated ephemeral protection keys.
 
 Cookies are HttpOnly, SameSite=Lax, non-sliding, and configured for a one-day lifetime when issued using the scheme. Production requires Secure cookies/HTTPS; Development permits local HTTP. Use same-site frontend/API hosting. Development CORS permits credentialed requests only from explicitly configured frontend origins; production has no cross-origin policy by default. Data Protection uses the host's normal key management; key storage/deployment and guest identity lifecycle must be configured as identity features are introduced. Open streams close at ticket expiry.
 
@@ -31,7 +31,7 @@ Each active SSE request registers a unique presence connection, released on requ
 
 Opening/reopening always retrieves state. Native EventSource reconnects interrupted streams. While disconnected or when EventSource is unavailable, a single fallback loop retrieves state with delays increasing from two seconds to a thirty-second maximum and retries a closed/unavailable stream. Recovery stops that loop. HTTP 401/403/404 or a removed event closes events, cancels retries, and clears private state; identity changes require releasing the old subscription before subscribing again.
 
-Unsubscribing the last listener closes events, clears the retry timer, aborts pending HTTP work, and ignores late callbacks. Cleanup is idempotent. `useGameState(gameId)` uses React's useSyncExternalStore to rerender subscribers and release them on navigation/unmount. The placeholder homepage is unchanged; gameplay screens can consume this hook as they are introduced.
+Unsubscribing the last listener closes events, clears the retry timer, aborts pending HTTP work, and ignores late callbacks. Cleanup is idempotent. `useGameState(gameId)` uses React's useSyncExternalStore to rerender subscribers and release them on navigation/unmount. The Party game screen consumes this hook; F028 adds immediate online/offline recovery, public grace/departure status, and clear terminal-session guidance.
 
 ## Timers
 
@@ -54,6 +54,6 @@ Integration tests stream changes to two/four participants through real engine op
 | Server deadline timers                      | Public deadlines/serverTime and tests independent of client wall-clock changes.             |
 | Integration tests pass                      | Backend integration and frontend/component checks; commands in [testing](testing.md).       |
 
-Sessions remain in memory on one backend instance and disappear on restart/retention cleanup. F023 supplies guest issuance and lobby creation. Persistent history, actions, remaining lobby/matchmaking workflows, and gameplay UI remain separate issues.
+Sessions remain in memory on one backend instance and disappear on restart/retention cleanup. F023 supplies guest issuance and lobby creation. Playable Party actions and lifecycle are implemented. Persistent history, Online matchmaking, and presentation polish remain later issues.
 
 Implementation references: [ASP.NET Core SSE responses](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/responses?view=aspnetcore-10.0#server-sent-events-sse), [cookie authentication](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/cookie?view=aspnetcore-10.0).

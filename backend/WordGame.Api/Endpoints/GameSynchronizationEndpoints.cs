@@ -4,6 +4,7 @@ using WordGame.Api.Contracts.V1;
 using WordGame.Api.Mapping;
 using WordGame.Api.Synchronization;
 using WordGame.Application.Games;
+using WordGame.Application.Sessions;
 using WordGame.Application.Synchronization;
 
 namespace WordGame.Api.Endpoints;
@@ -19,7 +20,7 @@ internal static class GameSynchronizationEndpoints
             .Produces<GameEventResponse>(200, "text/event-stream").Produces(401).Produces(404);
     }
 
-    private static async Task<IResult> StateAsync(Guid gameId, HttpContext context, GameEventService events, TimeProvider clock,
+    private static async Task<IResult> StateAsync(Guid gameId, HttpContext context, GameEventService events, TimeProvider clock, SessionRetention retention,
         CancellationToken cancellationToken)
     {
         if (!Guid.TryParse(context.User.FindFirstValue(ClaimTypes.NameIdentifier), out var playerId))
@@ -30,7 +31,7 @@ internal static class GameSynchronizationEndpoints
         var state = await events.GetStateAsync(gameId, playerId, cancellationToken);
         context.Response.Headers.CacheControl = "no-store";
         context.Response.Headers.Vary = "Cookie";
-        return state is null ? TypedResults.NotFound() : TypedResults.Ok(GameStateMapper.Map(state, clock.GetUtcNow()));
+        return state is null ? TypedResults.NotFound() : TypedResults.Ok(GameStateMapper.Map(state, clock.GetUtcNow(), retention.DisconnectedGrace));
     }
 
     private static async Task<IResult> EventsAsync(Guid gameId, HttpContext context, GameEventService events, GameEngine engine,

@@ -335,9 +335,17 @@ export interface components {
       | components['schemas']['GameActionRequestPlaceBidAction']
       | components['schemas']['GameActionRequestCallBluffAction']
       | components['schemas']['GameActionRequestSubmitWordAction']
+      | components['schemas']['GameActionRequestLeaveMatchAction']
     GameActionRequestCallBluffAction: {
       /** @enum {string} */
       type: 'callBluff'
+      /** Format: uuid */
+      actionId: string
+      expectedVersion: string
+    }
+    GameActionRequestLeaveMatchAction: {
+      /** @enum {string} */
+      type: 'leaveMatch'
       /** Format: uuid */
       actionId: string
       expectedVersion: string
@@ -386,6 +394,10 @@ export interface components {
       /** Format: int32 */
       score: number
       isConnected: boolean
+      /** @default false */
+      hasLeft: boolean
+      /** Format: date-time */
+      reconnectUntil?: null | string
     }
     GameRoundResponse: {
       /** Format: uuid */

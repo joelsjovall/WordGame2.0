@@ -43,6 +43,7 @@ internal static class GameActionEndpoints
             PlaceBidAction bid => await engine.PlaceBidAsync(gameId, actor, bid.WordCount, action, cancellationToken),
             CallBluffAction => await engine.CallBluffAsync(gameId, actor, action, cancellationToken),
             SubmitWordAction word => await engine.SubmitWordAsync(gameId, actor, word.Word, action, cancellationToken),
+            LeaveMatchAction => await engine.LeaveAsync(gameId, actor, action, cancellationToken),
             _ => throw new InvalidOperationException("Unsupported game action.")
         };
         if (result.Succeeded)
