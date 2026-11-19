@@ -23,7 +23,12 @@ test('a browser creates a private lobby without an account and replays its reque
   )
   expect(result.created.status).toBe('waiting')
   expect(result.created.players).toEqual([
-    { id: result.created.hostPlayerId, displayName: 'Alice' },
+    {
+      id: result.created.hostPlayerId,
+      displayName: 'Alice',
+      isReady: false,
+      isConnected: false,
+    },
   ])
   expect(result.created.maximumPlayers).toBe(4)
   const cookies = await context.cookies(backendUrl)

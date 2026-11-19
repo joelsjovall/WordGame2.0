@@ -43,7 +43,8 @@ builder.Services.AddSingleton(_ => new SessionRetention(
     builder.Configuration.GetValue("Sessions:AbandonedRetention", TimeSpan.FromMinutes(5))));
 builder.Services.AddSingleton<IGameSessionStore, InMemoryGameSessionStore>();
 builder.Services.AddSingleton(_ => new LobbyRules(builder.Configuration.GetValue("Sessions:LobbyLifetime", TimeSpan.FromMinutes(30)),
-    builder.Configuration.GetValue("Sessions:DisconnectedGrace", TimeSpan.FromMinutes(2))));
+    // A lobby needs time to establish its first stream; game-session grace independently permits zero.
+    builder.Configuration.GetValue("Sessions:LobbyDisconnectedGrace", TimeSpan.FromMinutes(2))));
 builder.Services.AddSingleton<ILobbySessionStore, InMemoryLobbySessionStore>();
 builder.Services.AddSingleton<LobbyService>();
 builder.Services.AddSingleton<LobbyHostService>();
