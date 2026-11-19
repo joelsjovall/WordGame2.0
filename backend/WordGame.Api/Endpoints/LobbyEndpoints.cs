@@ -43,6 +43,10 @@ internal static class LobbyEndpoints
                 _ => "This player has already joined with a different display name."
             });
         }
+        catch (LobbyActionException exception)
+        {
+            return Problem(context, 409, exception.Message);
+        }
         catch (ArgumentException exception)
         {
             return Problem(context, 400, exception.ParamName switch

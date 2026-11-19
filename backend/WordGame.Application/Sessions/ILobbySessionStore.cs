@@ -9,5 +9,8 @@ public interface ILobbySessionStore
     Task<LobbyCreation> CreateAsync(Player host, Guid requestId, CancellationToken cancellationToken = default);
     Task<Lobby?> GetAsync(Guid lobbyId, CancellationToken cancellationToken = default);
     Task<Lobby?> JoinAsync(LobbyCode code, Player player, Guid? expectedLobbyId = null, CancellationToken cancellationToken = default);
+    Task<Lobby?> ConfigureAsync(Guid lobbyId, Guid actor, long expectedVersion, LobbySettings settings, CancellationToken cancellationToken = default);
+    Task<Lobby?> StartAsync(Guid lobbyId, Guid actor, long expectedVersion, Func<Lobby, Task<Guid>> createGame, CancellationToken cancellationToken = default);
+    IAsyncEnumerable<Lobby?> WatchAsync(Guid lobbyId, CancellationToken cancellationToken = default);
     Task<int> CleanupAsync(CancellationToken cancellationToken = default);
 }

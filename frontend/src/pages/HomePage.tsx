@@ -6,6 +6,9 @@ export function HomePage() {
       <p>A multiplayer word-bidding and bluffing game.</p>
       <p>Party Mode and Online Mode are coming soon.</p>
       <p>
+        <Link to="/lobbies/new">Create a private lobby</Link>
+      </p>
+      <p>
         <Link to="/join">Join a private lobby</Link>
       </p>
     </main>

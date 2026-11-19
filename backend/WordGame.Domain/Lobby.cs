@@ -1,6 +1,6 @@
 namespace WordGame.Domain;
 
-public enum LobbyStatus { Waiting }
+public enum LobbyStatus { Waiting, Starting, Started }
 
 // A pregame lobby can have one host; the gameplay engine still requires a fixed roster of 2–4.
 public sealed class Lobby
@@ -29,19 +29,74 @@ public sealed class Lobby
     public Guid Id { get; }
     public LobbyCode Code { get; }
     public Guid HostPlayerId { get; }
-    public LobbyStatus Status => LobbyStatus.Waiting;
+    public LobbyStatus Status { get; private init; } = LobbyStatus.Waiting;
+    public LobbySettings Settings { get; private init; } = new();
+    public long Version { get; private init; }
+    public Guid? GameId { get; private init; }
     public IReadOnlyList<Player> Players { get; }
     public DateTimeOffset CreatedAt { get; }
     public DateTimeOffset ExpiresAt { get; }
 
-    private Lobby(Lobby original, Player player)
+    private Lobby(Lobby original, Player? player = null)
     {
         Id = original.Id;
         Code = original.Code;
         HostPlayerId = original.HostPlayerId;
         CreatedAt = original.CreatedAt;
         ExpiresAt = original.ExpiresAt;
-        Players = Array.AsReadOnly(original.Players.Append(player).ToArray());
+        Players = player is null ? original.Players : Array.AsReadOnly(original.Players.Append(player).ToArray());
+        Status = original.Status;
+        Settings = original.Settings;
+        GameId = original.GameId;
+        Version = checked(original.Version + 1);
+    }
+
+    public void RequireHost(Guid actor)
+    {
+        if (actor != HostPlayerId)
+        {
+            throw new LobbyActionException("Only the lobby host can perform this action.", forbidden: true);
+        }
+    }
+
+    public Lobby Configure(Guid actor, LobbySettings settings)
+    {
+        RequireHost(actor);
+        ArgumentNullException.ThrowIfNull(settings);
+        RequireWaiting();
+        if (settings.MaximumPlayers < Players.Count)
+        {
+            throw new LobbyActionException("The player limit cannot be smaller than the current roster.");
+        }
+
+        return new Lobby(this) { Settings = settings };
+    }
+
+    public Lobby BeginStart(Guid actor)
+    {
+        RequireHost(actor);
+        RequireWaiting();
+        if (Players.Count < MinimumPlayers || Players.Count > Settings.MaximumPlayers)
+        {
+            throw new LobbyActionException("A match needs at least two players within the configured player limit.");
+        }
+
+        return new Lobby(this) { Status = LobbyStatus.Starting };
+    }
+
+    public Lobby CompleteStart(Guid gameId) => Status == LobbyStatus.Starting
+        ? new Lobby(this) { Status = LobbyStatus.Started, GameId = DomainGuard.Id(gameId, nameof(gameId)) }
+        : throw new LobbyActionException("The lobby is not starting.");
+
+    public Lobby AbortStart() => Status == LobbyStatus.Starting
+        ? new Lobby(this) { Status = LobbyStatus.Waiting } : this;
+
+    private void RequireWaiting()
+    {
+        if (Status != LobbyStatus.Waiting)
+        {
+            throw new LobbyActionException("The lobby has already started or is starting.");
+        }
     }
 
     public Lobby Join(Player player)
@@ -58,7 +113,8 @@ public sealed class Lobby
 
             return this;
         }
-        if (Players.Count >= MaximumPlayers)
+        RequireWaiting();
+        if (Players.Count >= Settings.MaximumPlayers)
         {
             throw new LobbyJoinException(LobbyJoinFailure.Full);
         }

@@ -45,6 +45,7 @@ builder.Services.AddSingleton<IGameSessionStore, InMemoryGameSessionStore>();
 builder.Services.AddSingleton(_ => new LobbyRules(builder.Configuration.GetValue("Sessions:LobbyLifetime", TimeSpan.FromMinutes(30))));
 builder.Services.AddSingleton<ILobbySessionStore, InMemoryLobbySessionStore>();
 builder.Services.AddSingleton<LobbyService>();
+builder.Services.AddSingleton<LobbyHostService>();
 builder.Services.AddSingleton(_ => new CategorySelectionRules(
     builder.Configuration.GetValue("Gameplay:CategorySelectionTimeoutEnabled", true)
         ? builder.Configuration.GetValue("Gameplay:CategorySelectionTimeout", TimeSpan.FromSeconds(45)) : null,
@@ -97,6 +98,7 @@ app.MapCategoryEndpoints();
 app.MapGameSynchronizationEndpoints();
 app.MapGuestEndpoints();
 app.MapLobbyEndpoints();
+app.MapLobbyHostEndpoints();
 
 if (app.Environment.IsDevelopment())
 {

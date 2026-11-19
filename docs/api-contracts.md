@@ -26,10 +26,14 @@ Future DTO deserialization requires constructor fields, respects nullable annota
 | POST /api/v1/guests | JSON {} ensures a server-issued guest identity; 200 GuestIdentityResponse and a protected cookie when needed |
 | POST /api/v1/lobbies | CreateLobbyRequest requires the cookie; 201 LobbyResponse, 200 replay, 400 invalid input, or 409 request conflict |
 | POST /api/v1/lobbies/join | JoinLobbyRequest: lobbyCode, displayName, optional lobbyId; cookie required; 200 LobbyResponse, 400/401/403/404/409 errors |
+| GET /api/v1/lobbies/{lobbyId} | Cookie and membership required; 200 LobbyResponse or 401/404 |
+| GET /api/v1/lobbies/{lobbyId}/events | Protected SSE lobby snapshots |
+| POST /api/v1/lobbies/{lobbyId}/settings | Host-only UpdateLobbySettingsRequest with expectedVersion; 200 LobbyResponse or 400/401/403/404/409 |
+| POST /api/v1/lobbies/{lobbyId}/start | Host-only StartLobbyRequest with expectedVersion; 200 LobbyResponse with gameId or 400/401/403/404/409 |
 
 CategoryResponse contains only id, name, and difficulty. Accepted answers, aliases, canonical answer IDs, and internal indexes are never returned. Invalid/empty/numeric/repeated difficulty parameters produce 400 with a field error. Unknown product routes produce 404 Problem Details.
 
-Metadata reads are public. F021 adds protected state/SSE reads using a server-protected identity cookie and roster checks; see [game synchronization](game-synchronization.md) for authorization, reconnects, and guest issuance boundaries. F023 adds [guest bootstrap and private lobby creation](private-lobbies.md). F024 adds [joining and invitations](lobby-joining.md). Game creation/actions, readiness, and matchmaking remain later work.
+Metadata reads are public. F021 adds protected state/SSE reads using a server-protected identity cookie and roster checks; see [game synchronization](game-synchronization.md) for authorization, reconnects, and guest issuance boundaries. F023 adds [guest bootstrap and private lobby creation](private-lobbies.md). F024 adds [joining and invitations](lobby-joining.md). F025 adds [host settings, protected lobby synchronization, and engine-backed startup](lobby-settings.md). Gameplay actions, readiness/player management, and matchmaking remain later work.
 
 ## Specified future workflows
 
@@ -40,9 +44,9 @@ The following describes the reserved contract intent, not available endpoints:
 | Create a Party game from a ready lobby | POST /api/v1/games | CreateGameRequest: lobbyId. A future authenticated host handler derives the fixed roster/settings from the lobby and returns 201 GameCreatedResponse with gameId and a Location header. Clients do not nominate arbitrary participants. |
 | Submit an action | POST /api/v1/games/{gameId}/actions | GameActionRequest discriminated union; returns GameActionResponse with actionId and the committed version. |
 
-CreateGameRequest applies to a ready Party lobby. Online matchmaking creates games internally after selecting opponents. Both routes into play use the same GameStateResponse, action contracts, event shape, session store, and shared game engine; there are no duplicated mode-specific gameplay DTOs.
+F025 implements Party creation through the host-only lobby start route. The older F009 CreateGameRequest/GameCreatedResponse schemas remain reserved specifications, not a second implemented creation route. Online matchmaking creates games internally after selecting opponents. Both routes into play use the same GameStateResponse, action contracts, event shape, session store, and shared game engine; there are no duplicated mode-specific gameplay DTOs.
 
-F023 implements guest credential issuance, private lobby creation, and LobbyResponse. F024 implements JoinLobbyRequest and LobbyResponse for joining; settings/readiness remain later issues. The unused speculative JoinGameRequest/JoinGameResponse schemas were removed. The protected cookie now authenticates lobby creation as well as state/events. Identity comes from a verified server-issued credential, not playerId/hostId fields supplied in a gameplay body. Merely possessing a lobby code does not grant identity or host rights.
+F023 implements guest credential issuance, private lobby creation, and LobbyResponse. F024 implements JoinLobbyRequest and LobbyResponse for joining; F025 adds settings/start; readiness remains F026. The unused speculative JoinGameRequest/JoinGameResponse schemas were removed. The protected cookie now authenticates lobby creation as well as state/events. Identity comes from a verified server-issued credential, not playerId/hostId fields supplied in a gameplay body. Merely possessing a lobby code does not grant identity or host rights.
 
 ### Actions and state
 

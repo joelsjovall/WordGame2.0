@@ -16,7 +16,8 @@ public sealed record GameStateResponse(
     IReadOnlyList<GamePlayerResponse> Players, GameRoundResponse? Round,
     MatchSettingsResponse Match, MatchResultResponse? Result);
 
-public sealed record MatchSettingsResponse(ApiMatchFormat Format, int RoundCount);
+public sealed record MatchSettingsResponse(ApiMatchFormat Format, int RoundCount, double? ChallengeSeconds = null,
+    IReadOnlyList<ApiCategoryDifficulty>? AllowedDifficulties = null);
 public sealed record MatchResultResponse(Guid GameId, ApiMatchFormat Format, int CompletedRoundCount,
     bool IsTie, IReadOnlyList<Guid> WinnerIds, IReadOnlyList<MatchStandingResponse> Standings);
 public sealed record MatchStandingResponse(Guid PlayerId, string DisplayName, int Score, int Rank);

@@ -1,6 +1,6 @@
 # Private lobby creation
 
-F023 adds private waiting-lobby creation without account registration. A lobby starts with one securely identified host and advertises the shared gameplay limits of 2–4 players. It is a pregame resource, separate from the fixed-roster GameSession: no fake second player, game, or alternate gameplay engine is created. F024 adds [joining and invitations](lobby-joining.md). Readiness, match settings/start, and the full waiting-room UI remain later issues.
+F023 adds private waiting-lobby creation without account registration. A lobby starts with one securely identified host and advertises the shared gameplay limits of 2–4 players. It is a pregame resource, separate from the fixed-roster GameSession: no fake second player, game, or alternate gameplay engine is created. F024 adds [joining and invitations](lobby-joining.md). F025 adds [host settings/start and a live lobby view](lobby-settings.md). Readiness and player management remain F026.
 
 ## Guest identity and creation API
 
