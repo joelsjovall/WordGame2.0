@@ -10,6 +10,7 @@ internal static class GuestEndpoints
 {
     internal static void MapGuestEndpoints(this WebApplication app) =>
         app.MapPost("/api/v1/guests", CreateAsync).AllowAnonymous().AddEndpointFilter<SameOriginWriteFilter>()
+            .RequireRateLimiting(LobbyRateLimiting.Guest).Produces(429)
             .WithTags("Guests").WithName("EnsureGuestIdentity").Produces<GuestIdentityResponse>().Produces(400).Produces(403);
 
     private static async Task<IResult> CreateAsync(CreateGuestRequest _, HttpContext context)

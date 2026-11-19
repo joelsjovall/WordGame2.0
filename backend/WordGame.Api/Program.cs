@@ -39,6 +39,7 @@ builder.Services.AddOpenApi("v1", options =>
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddHealthChecks();
 builder.AddPlayerAuthentication();
+builder.AddLobbyRateLimiting();
 builder.Services.AddSingleton<GameEventService>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton(_ => new SessionRetention(
@@ -118,6 +119,7 @@ if (app.Environment.IsDevelopment())
 }
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 app.MapHealthChecks("/health");
 

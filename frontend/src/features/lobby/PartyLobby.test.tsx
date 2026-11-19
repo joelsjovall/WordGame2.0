@@ -11,6 +11,20 @@ import { LobbyMembers } from './LobbyMembers.tsx'
 import { InvitationPanel } from './InvitationPanel.tsx'
 
 afterEach(() => vi.restoreAllMocks())
+test('display names containing markup render as text without creating elements', () => {
+  const displayName = '<img src=x onerror=alert(1)>'
+  const { container } = render(
+    <LobbyMembers
+      lobby={{ ...lobby, players: [{ ...lobby.players[1], displayName }] }}
+      playerId="bob"
+      busy={false}
+      remove={vi.fn()}
+    />,
+  )
+  expect(screen.getByText(displayName)).toBeVisible()
+  expect(container.querySelector('img')).toBeNull()
+})
+
 function state(overrides: Partial<ReturnType<typeof lobbyHook.useLobby>> = {}) {
   return {
     lobby: { ...lobby, canStart: true },

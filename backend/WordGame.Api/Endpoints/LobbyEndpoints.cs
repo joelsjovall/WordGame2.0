@@ -13,9 +13,11 @@ internal static class LobbyEndpoints
     internal static void MapLobbyEndpoints(this WebApplication app)
     {
         app.MapPost("/api/v1/lobbies", CreateAsync).RequireAuthorization().AddEndpointFilter<SameOriginWriteFilter>()
+            .RequireRateLimiting(LobbyRateLimiting.Create).Produces(429)
             .WithTags("Lobbies").WithName("CreatePrivateLobby")
             .Produces<LobbyResponse>(201).Produces<LobbyResponse>(200).Produces(400).Produces(401).Produces(403).Produces(409);
         app.MapPost("/api/v1/lobbies/join", JoinAsync).RequireAuthorization().AddEndpointFilter<SameOriginWriteFilter>()
+            .RequireRateLimiting(LobbyRateLimiting.Join).Produces(429)
             .WithTags("Lobbies").WithName("JoinPrivateLobby").Produces<LobbyResponse>()
             .Produces(400).Produces(401).Produces(403).Produces(404).Produces(409);
     }
