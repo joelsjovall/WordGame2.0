@@ -39,7 +39,7 @@ With the Development backend running on port 5000, run `npm run api:generate` to
 | Location            | Responsibility                                                        |
 | ------------------- | --------------------------------------------------------------------- |
 | `src/main.tsx`      | Browser entry point and router provider                               |
-| `src/App.tsx`       | Routes: `/`, `/join`, `/join/:lobbyId/:lobbyCode`, and fallback                       |
+| `src/App.tsx`       | Routes: `/`, `/join`, `/join/:lobbyId/:lobbyCode`, and fallback       |
 | `src/pages/`        | Route-level presentation                                              |
 | `src/services/api/` | Centralized HTTP client, category operations, and generated contracts |
 | `src/styles/`       | Shared styles                                                         |
