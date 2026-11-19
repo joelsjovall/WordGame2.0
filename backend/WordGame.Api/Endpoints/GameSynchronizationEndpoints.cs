@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using WordGame.Api.Authentication;
 using WordGame.Api.Contracts.V1;
 using WordGame.Api.Mapping;
 using WordGame.Api.Synchronization;
@@ -53,6 +54,8 @@ internal static class GameSynchronizationEndpoints
         context.Response.Headers.CacheControl = "no-store";
         context.Response.Headers.Vary = "Cookie";
         context.Response.Headers["X-Accel-Buffering"] = "no";
-        return TypedResults.ServerSentEvents(GameEventStream.ReadAsync(state, playerId, expires, events, engine, clock, cancellationToken));
+        var session = PlayerAuthentication.Session(context);
+        return session is null ? TypedResults.Unauthorized()
+            : TypedResults.ServerSentEvents(GameEventStream.ReadAsync(state, playerId, expires, events, engine, clock, session.Revoked, cancellationToken));
     }
 }

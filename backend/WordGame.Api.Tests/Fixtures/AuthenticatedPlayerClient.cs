@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using WordGame.Application.Sessions;
 
 namespace WordGame.Api.Tests.Fixtures;
 
@@ -14,7 +15,9 @@ internal static class AuthenticatedPlayerClient
         var client = factory.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost"), AllowAutoRedirect = false });
         var scheme = CookieAuthenticationDefaults.AuthenticationScheme;
         var options = factory.Services.GetRequiredService<IOptionsMonitor<CookieAuthenticationOptions>>().Get(scheme);
-        var identity = new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, playerId.ToString())], scheme);
+        var session = factory.Services.GetRequiredService<IGuestSessionStore>().Issue(playerId);
+        var identity = new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, playerId.ToString()),
+            new Claim("wordgame.session", session.Id.ToString())], scheme);
         var ticket = new AuthenticationTicket(new ClaimsPrincipal(identity), new AuthenticationProperties
         {
             IssuedUtc = DateTimeOffset.UtcNow.AddMinutes(-1),

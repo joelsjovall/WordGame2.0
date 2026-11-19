@@ -11,9 +11,10 @@ namespace WordGame.Api.Synchronization;
 internal static class LobbyEventStream
 {
     internal static async IAsyncEnumerable<SseItem<LobbyResponse>> ReadAsync(Lobby initial, Guid actor, DateTimeOffset credentialExpiry,
-        ILobbySessionStore store, LobbyPlayerService players, TimeProvider clock, [EnumeratorCancellation] CancellationToken cancellationToken)
+        ILobbySessionStore store, LobbyPlayerService players, TimeProvider clock, CancellationToken credentialRevoked,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, credentialRevoked);
         // Current-state reads enforce waiting/results expiry; active matches keep their lobby stream.
         var remaining = credentialExpiry - clock.GetUtcNow();
         if (remaining <= TimeSpan.Zero)

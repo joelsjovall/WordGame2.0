@@ -13,9 +13,9 @@ internal static class GameEventStream
 {
     internal static async IAsyncEnumerable<SseItem<GameEventResponse>> ReadAsync(SessionSnapshot initial, Guid playerId,
         DateTimeOffset expires, GameEventService events, GameEngine engine, TimeProvider clock,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
+        CancellationToken credentialRevoked, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, credentialRevoked);
         var remaining = expires - clock.GetUtcNow();
         if (remaining <= TimeSpan.Zero)
         {

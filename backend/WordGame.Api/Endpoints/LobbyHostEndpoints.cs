@@ -49,7 +49,9 @@ internal static class LobbyHostEndpoints
         context.Response.Headers.Vary = "Cookie";
         context.Response.Headers["X-Accel-Buffering"] = "no";
         var expiry = identity.Properties?.ExpiresUtc ?? clock.GetUtcNow();
-        return TypedResults.ServerSentEvents(LobbyEventStream.ReadAsync(lobby, actor, expiry, store, players, clock, cancellationToken));
+        var session = PlayerAuthentication.Session(context);
+        return session is null ? TypedResults.Unauthorized()
+            : TypedResults.ServerSentEvents(LobbyEventStream.ReadAsync(lobby, actor, expiry, store, players, clock, session.Revoked, cancellationToken));
     }
 
     private static Task<IResult> ConfigureAsync(Guid lobbyId, UpdateLobbySettingsRequest request, HttpContext context,

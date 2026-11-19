@@ -2,6 +2,8 @@
 
 F031 (#33) reviews the existing Party authorization boundaries and adds request throttling. Both modes continue to use the shared authoritative game engine.
 
+F033 extends the same cookies with [server session validation and reset/revocation](guest-sessions.md); refer there for current session lifetime and reset semantics.
+
 ## Identity and permissions
 
 Guest identities are random server-issued IDs in protected ASP.NET Core authentication cookies. Production cookies are Secure, HttpOnly, SameSite=Lax, and expire after one day without sliding renewal. Request bodies and identity headers cannot choose the acting player. Unknown JSON fields are rejected. Lobby reads and SSE subscriptions require authenticated membership; writes verify membership and host permissions in server-side lobby operations. Host migration changes who may perform settings, start, rematch, and removal actions.

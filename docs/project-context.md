@@ -73,8 +73,9 @@ The planned backlog contains 57 issues across six milestones. Work proceeds one 
 - **Completed:** [F029, Build responsive Party Mode lobby UI (#31)](https://github.com/joelsjovall/WordGame2.0/issues/31), merged through PR #88 (merge commit `56a7151`). See [responsive Party lobby](party-lobby-ui.md).
 - **Completed:** [F030, Implement real-time lobby synchronization (#32)](https://github.com/joelsjovall/WordGame2.0/issues/32), merged through PR #89 (merge commit `85ac49a`). See [lobby synchronization](lobby-synchronization.md).
 - **Completed:** [F031, Secure private lobbies and host permissions (#33)](https://github.com/joelsjovall/WordGame2.0/issues/33), merged through PR #90 (merge commit `c83149b`). See [lobby security](lobby-security.md).
-- **Active:** [F032, Refactor and test complete Party Mode flow (#34)](https://github.com/joelsjovall/WordGame2.0/issues/34). See [Party Mode review and beta handoff](party-mode-review.md) for cleanup, acceptance coverage, checks, and beta limitations. Online Multiplayer begins after this issue is merged.
-- **Current local state (2026-11-19):** Working on `feature/F032-party-flow-review` from updated `main`. Commit and push require user authorization.
+- **Completed:** [F032, Refactor and test complete Party Mode flow (#34)](https://github.com/joelsjovall/WordGame2.0/issues/34), merged through PR #91 (merge commit `2bc95bf`). The Party milestone F023-F032 is merged; see [Party Mode review and beta handoff](party-mode-review.md).
+- **Active:** [F033, Implement secure guest player identities and online sessions (#35)](https://github.com/joelsjovall/WordGame2.0/issues/35). See [shared guest sessions](guest-sessions.md) for server validation, expiry/reset, shared-mode coverage, and display-name policy.
+- **Current local state (2026-11-19):** Working on `feature/F033-guest-sessions` from updated `main`. Commit and push require user authorization.
 - **Outstanding security follow-up:** A database credential was previously exposed in the public V1 repository. Never reuse or reproduce it. Rotation must be verified; this handoff provides no evidence that rotation has occurred.
 
 Update this section as issues are completed or the handoff state changes.
