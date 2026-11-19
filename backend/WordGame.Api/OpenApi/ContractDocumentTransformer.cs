@@ -8,7 +8,6 @@ internal sealed class ContractDocumentTransformer : IOpenApiDocumentTransformer
 {
     private static readonly Type[] ContractTypes =
     [
-        typeof(CreateGameRequest), typeof(GameCreatedResponse),
         typeof(GameStateResponse), typeof(GameActionRequest), typeof(GameActionResponse), typeof(GameEventResponse),
         typeof(ApiProblemDetails)
     ];
@@ -18,25 +17,10 @@ internal sealed class ContractDocumentTransformer : IOpenApiDocumentTransformer
     {
         document.Info.Title = "WordGame API";
         document.Info.Version = "v1";
-        document.Info.Description = "Category metadata, guest identity, private lobby creation, and authenticated game state/SSE endpoints are implemented. Game creation, lobby joining, and action schemas specify future handlers.";
+        document.Info.Description = "Category metadata, guest identity, private lobby lifecycle, and authenticated gameplay/state/SSE endpoints are implemented.";
         foreach (var type in ContractTypes)
         {
             var schema = await context.GetOrCreateSchemaAsync(type, null, cancellationToken);
-            if (type == typeof(GameActionRequest) && schema is OpenApiSchema actionSchema)
-            {
-                // Unmapped contract variants are inline; avoid discriminator references to
-                // components the endpoint generator has not registered. The literal type
-                // properties still form a strongly typed discriminated union.
-                actionSchema.Discriminator = null;
-                foreach (var variant in actionSchema.AnyOf ?? [])
-                {
-                    if (variant is OpenApiSchema actionVariant)
-                    {
-                        actionVariant.Required ??= new HashSet<string>();
-                        actionVariant.Required.Add("type");
-                    }
-                }
-            }
             document.AddComponent(type.Name, schema);
         }
     }

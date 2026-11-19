@@ -21,15 +21,17 @@ internal static class LobbyHostEndpoints
             .Produces<LobbyResponse>().Produces(400).Produces(401).Produces(403).Produces(404).Produces(409);
         group.MapPost("/start", StartAsync).AddEndpointFilter<SameOriginWriteFilter>().WithName("StartLobby")
             .Produces<LobbyResponse>().Produces(400).Produces(401).Produces(403).Produces(404).Produces(409);
+        group.MapPost("/rematch", RematchAsync).AddEndpointFilter<SameOriginWriteFilter>().WithName("PreparePartyRematch")
+            .Produces<LobbyResponse>().Produces(400).Produces(401).Produces(403).Produces(404).Produces(409);
     }
 
-    private static async Task<IResult> StateAsync(Guid lobbyId, HttpContext context, ILobbySessionStore store, CancellationToken cancellationToken)
+    private static async Task<IResult> StateAsync(Guid lobbyId, HttpContext context, ILobbySessionStore store, TimeProvider clock, CancellationToken cancellationToken)
     {
         context.Response.Headers.CacheControl = "no-store";
         context.Response.Headers.Vary = "Cookie";
         var lobby = await store.GetAsync(lobbyId, cancellationToken);
         return lobby?.Players.Any(player => player.Id == Actor(context)) == true
-            ? TypedResults.Ok(LobbyMapper.Map(lobby)) : TypedResults.NotFound();
+            ? TypedResults.Ok(LobbyMapper.Map(lobby, clock.GetUtcNow())) : TypedResults.NotFound();
     }
 
     private static async Task<IResult> EventsAsync(Guid lobbyId, HttpContext context, ILobbySessionStore store, LobbyPlayerService players, TimeProvider clock,
@@ -59,5 +61,9 @@ internal static class LobbyHostEndpoints
     private static Task<IResult> StartAsync(Guid lobbyId, StartLobbyRequest request, HttpContext context,
         LobbyHostService service, CancellationToken cancellationToken) => ExecuteAsync(context, () =>
             service.StartAsync(lobbyId, Actor(context), Version(request.ExpectedVersion), cancellationToken));
+
+    private static Task<IResult> RematchAsync(Guid lobbyId, StartLobbyRequest request, HttpContext context,
+        LobbyHostService service, CancellationToken cancellationToken) => ExecuteAsync(context, () =>
+            service.RematchAsync(lobbyId, Actor(context), Version(request.ExpectedVersion), cancellationToken));
 
 }

@@ -27,7 +27,7 @@ public static class GameStateMapper
         _ => throw new InvalidOperationException("Unsupported match format.")
     };
 
-    private static MatchResultResponse MapMatchResult(Domain.MatchResult result) => new(
+    internal static MatchResultResponse MapMatchResult(Domain.MatchResult result) => new(
         result.GameId, MapFormat(result.Format), result.CompletedRoundCount, result.IsTie, result.WinnerIds,
         result.Standings.Select(standing => new MatchStandingResponse(standing.PlayerId, standing.DisplayName, standing.Score, standing.Rank)).ToArray());
 

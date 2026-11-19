@@ -103,6 +103,15 @@ public sealed class InMemoryLobbySessionStore(TimeProvider clock, LobbyRules rul
         }
     }
 
+    public Task<IReadOnlyList<Lobby>> GetPlayingAsync(CancellationToken cancellationToken = default)
+    {
+        lock (gate)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult<IReadOnlyList<Lobby>>(lobbies.Values.Where(entry => entry.Lobby.Status == LobbyStatus.Started).Select(entry => entry.Lobby).ToArray());
+        }
+    }
+
     public Task<Lobby?> JoinAsync(LobbyCode code, Player player, Guid? expectedLobbyId = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(code);
@@ -176,7 +185,7 @@ public sealed class InMemoryLobbySessionStore(TimeProvider clock, LobbyRules rul
             }
 
             RequireVersion(entry.Lobby, expectedVersion);
-            starting = entry.Lobby.BeginStart(actor);
+            starting = entry.Lobby.BeginStart(actor, clock.GetUtcNow().Add(rules.StartCountdown));
             lobbies[lobbyId] = entry with { Lobby = starting };
             Publish(starting);
         }
@@ -186,7 +195,7 @@ public sealed class InMemoryLobbySessionStore(TimeProvider clock, LobbyRules rul
             var gameId = await createGame(starting);
             lock (gate)
             {
-                var complete = lobbies[lobbyId].Lobby.CompleteStart(gameId);
+                var complete = lobbies[lobbyId].Lobby.CompleteStart(gameId, clock.GetUtcNow());
                 lobbies[lobbyId] = lobbies[lobbyId] with { Lobby = complete };
                 Publish(complete);
                 return complete;
@@ -267,7 +276,7 @@ public sealed class InMemoryLobbySessionStore(TimeProvider clock, LobbyRules rul
         return entry;
     }
 
-    private static bool IsExpired(Entry entry, DateTimeOffset now) => entry.Lobby.Status != LobbyStatus.Starting && now >= entry.Lobby.ExpiresAt;
+    private static bool IsExpired(Entry entry, DateTimeOffset now) => entry.Lobby.Status is not (LobbyStatus.Starting or LobbyStatus.Started) && now >= entry.Lobby.ExpiresAt;
     private static void RequireVersion(Lobby lobby, long expectedVersion)
     {
         if (expectedVersion != lobby.Version)

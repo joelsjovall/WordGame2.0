@@ -10,7 +10,7 @@ public sealed class LobbyHostStoreTests
     public async Task WatchersGetInitialAndLatestStateAndCannotMissSubscriptionRace()
     {
         var clock = new ManualSessionClock();
-        var store = new InMemoryLobbySessionStore(clock, new LobbyRules(TimeSpan.FromMinutes(30)));
+        var store = new InMemoryLobbySessionStore(clock, new LobbyRules(TimeSpan.FromMinutes(30), startCountdown: TimeSpan.Zero));
         var host = new Player(Guid.NewGuid(), "Host");
         var lobby = (await store.CreateAsync(host, Guid.NewGuid())).Lobby;
         using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
@@ -33,7 +33,7 @@ public sealed class LobbyHostStoreTests
     public async Task StartupSerializesRacesSurvivesExpiryAndReplaysOneGame()
     {
         var clock = new ManualSessionClock();
-        var store = new InMemoryLobbySessionStore(clock, new LobbyRules(TimeSpan.FromMinutes(30)));
+        var store = new InMemoryLobbySessionStore(clock, new LobbyRules(TimeSpan.FromMinutes(30), startCountdown: TimeSpan.Zero));
         var host = new Player(Guid.NewGuid(), "Host");
         var lobby = (await store.CreateAsync(host, Guid.NewGuid())).Lobby;
         lobby = (await store.JoinAsync(lobby.Code, new Player(Guid.NewGuid(), "Bob")))!;
@@ -53,14 +53,17 @@ public sealed class LobbyHostStoreTests
         var id = Guid.NewGuid(); game.SetResult(id);
         Assert.Equal(id, (await starting)!.GameId);
         Assert.Equal(1, calls);
-        // Completed rooms expire normally; an unexpired retry is covered by API tests.
+        // Active matches retain the lobby beyond its original waiting deadline.
+        Assert.NotNull(await store.GetAsync(lobby.Id));
+        await store.UpdateAsync(lobby.Id, current => current.FinishMatch(id, null, clock.GetUtcNow(), TimeSpan.FromMinutes(30)));
+        clock.Advance(TimeSpan.FromMinutes(30));
         Assert.Null(await store.GetAsync(lobby.Id));
     }
 
     [Fact]
     public async Task FailedStartupRestoresWaitingWithANewVersionAndNoPartialSettings()
     {
-        var store = new InMemoryLobbySessionStore(new ManualSessionClock(), new LobbyRules(TimeSpan.FromMinutes(30)));
+        var store = new InMemoryLobbySessionStore(new ManualSessionClock(), new LobbyRules(TimeSpan.FromMinutes(30), startCountdown: TimeSpan.Zero));
         var host = new Player(Guid.NewGuid(), "Host");
         var lobby = (await store.CreateAsync(host, Guid.NewGuid())).Lobby;
         lobby = (await store.JoinAsync(lobby.Code, new Player(Guid.NewGuid(), "Bob")))!;

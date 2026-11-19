@@ -79,7 +79,7 @@ public sealed class ApiContractTests
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var paths = document.RootElement.GetProperty("paths");
-        Assert.Equal(14, paths.EnumerateObject().Count());
+        Assert.Equal(16, paths.EnumerateObject().Count());
         Assert.True(paths.TryGetProperty("/api/v1/lobbies/join", out _));
         Assert.True(paths.TryGetProperty("/api/v1/guests", out _));
         Assert.True(paths.TryGetProperty("/api/v1/lobbies", out _));
@@ -88,7 +88,7 @@ public sealed class ApiContractTests
         Assert.True(paths.TryGetProperty("/api/v1/categories", out _));
         Assert.False(paths.TryGetProperty("/api/v1/games", out _));
         var schemas = document.RootElement.GetProperty("components").GetProperty("schemas");
-        foreach (var type in new[] { "CreateGameRequest", "JoinLobbyRequest", "GameStateResponse", "GameActionRequest",
+        foreach (var type in new[] { "StartLobbyRequest", "JoinLobbyRequest", "GameStateResponse", "GameActionRequest",
             "GameActionResponse", "GameEventResponse", "ApiProblemDetails" })
         {
             Assert.True(schemas.TryGetProperty(type, out _), type);
@@ -96,7 +96,12 @@ public sealed class ApiContractTests
         var action = schemas.GetProperty("GameActionRequest");
         Assert.Equal(4, action.GetProperty("anyOf").GetArrayLength());
         Assert.All(action.GetProperty("anyOf").EnumerateArray(),
-            variant => Assert.Contains(variant.GetProperty("required").EnumerateArray(), item => item.GetString() == "type"));
+            variant =>
+            {
+                var component = variant.TryGetProperty("$ref", out var reference)
+                    ? schemas.GetProperty(reference.GetString()!.Split('/').Last()) : variant;
+                Assert.Contains(component.GetProperty("required").EnumerateArray(), item => item.GetString() == "type");
+            });
         Assert.Contains(schemas.GetProperty("GameStateResponse").GetProperty("properties")
             .GetProperty("round").GetProperty("oneOf").EnumerateArray(), item => item.TryGetProperty("type", out var type) && type.GetString() == "null");
         var roundProperties = schemas.GetProperty("GameRoundResponse").GetProperty("properties");

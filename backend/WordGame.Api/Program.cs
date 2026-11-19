@@ -31,7 +31,11 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict;
     options.SerializerOptions.UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow;
 });
-builder.Services.AddOpenApi("v1", options => options.AddDocumentTransformer<ContractDocumentTransformer>());
+builder.Services.AddOpenApi("v1", options =>
+{
+    options.AddDocumentTransformer<ContractDocumentTransformer>();
+    options.AddSchemaTransformer<GameActionSchemaTransformer>();
+});
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddHealthChecks();
 builder.AddPlayerAuthentication();
@@ -44,11 +48,14 @@ builder.Services.AddSingleton(_ => new SessionRetention(
 builder.Services.AddSingleton<IGameSessionStore, InMemoryGameSessionStore>();
 builder.Services.AddSingleton(_ => new LobbyRules(builder.Configuration.GetValue("Sessions:LobbyLifetime", TimeSpan.FromMinutes(30)),
     // A lobby needs time to establish its first stream; game-session grace independently permits zero.
-    builder.Configuration.GetValue("Sessions:LobbyDisconnectedGrace", TimeSpan.FromMinutes(2))));
+    builder.Configuration.GetValue("Sessions:LobbyDisconnectedGrace", TimeSpan.FromMinutes(2)),
+    builder.Configuration.GetValue("Sessions:LobbyStartCountdown", TimeSpan.FromSeconds(3))));
 builder.Services.AddSingleton<ILobbySessionStore, InMemoryLobbySessionStore>();
 builder.Services.AddSingleton<LobbyService>();
 builder.Services.AddSingleton<LobbyHostService>();
 builder.Services.AddSingleton<LobbyPlayerService>();
+builder.Services.AddSingleton<PartyLifecycleService>();
+builder.Services.AddHostedService<PartyLifecycleWorker>();
 builder.Services.AddSingleton(_ => new CategorySelectionRules(
     builder.Configuration.GetValue("Gameplay:CategorySelectionTimeoutEnabled", true)
         ? builder.Configuration.GetValue("Gameplay:CategorySelectionTimeout", TimeSpan.FromSeconds(45)) : null,
@@ -99,6 +106,7 @@ if (app.Environment.IsDevelopment())
 }
 app.MapCategoryEndpoints();
 app.MapGameSynchronizationEndpoints();
+app.MapGameActionEndpoints();
 app.MapGuestEndpoints();
 app.MapLobbyEndpoints();
 app.MapLobbyHostEndpoints();

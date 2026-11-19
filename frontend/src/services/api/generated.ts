@@ -1,5 +1,21 @@
 // Generated from backend OpenAPI. Do not edit by hand.
 export interface paths {
+  '/api/v1/games/{gameId}/actions': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post: operations['SubmitGameAction']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/guests': {
     parameters: {
       query?: never
@@ -178,6 +194,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/lobbies/{lobbyId}/rematch': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post: operations['PreparePartyRematch']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/lobbies/{lobbyId}/ready': {
     parameters: {
       query?: never
@@ -237,7 +269,7 @@ export interface components {
     /** @enum {unknown} */
     ApiEventKind: 'updated' | 'removed'
     /** @enum {unknown} */
-    ApiLobbyStatus: 'waiting' | 'starting' | 'started' | 'closed'
+    ApiLobbyStatus: 'waiting' | 'starting' | 'started' | 'closed' | 'completed'
     /** @enum {unknown} */
     ApiMatchFormat: 'party' | 'online'
     ApiProblemDetails: {
@@ -292,10 +324,6 @@ export interface components {
       acceptedWordCount: number
       submissions: components['schemas']['SubmittedWordResponse'][]
     }
-    CreateGameRequest: {
-      /** Format: uuid */
-      lobbyId: string
-    }
     CreateGuestRequest: Record<string, never>
     CreateLobbyRequest: {
       /** Format: uuid */
@@ -303,46 +331,46 @@ export interface components {
       displayName: string
     }
     GameActionRequest:
-      | {
-          /** @enum {string} */
-          type: 'selectCategory'
-          categoryId: string
-          /** Format: uuid */
-          actionId: string
-          expectedVersion: string
-        }
-      | {
-          /** @enum {string} */
-          type: 'placeBid'
-          /** Format: int32 */
-          wordCount: number
-          /** Format: uuid */
-          actionId: string
-          expectedVersion: string
-        }
-      | {
-          /** @enum {string} */
-          type: 'callBluff'
-          /** Format: uuid */
-          actionId: string
-          expectedVersion: string
-        }
-      | {
-          /** @enum {string} */
-          type: 'submitWord'
-          word: string
-          /** Format: uuid */
-          actionId: string
-          expectedVersion: string
-        }
+      | components['schemas']['GameActionRequestSelectCategoryAction']
+      | components['schemas']['GameActionRequestPlaceBidAction']
+      | components['schemas']['GameActionRequestCallBluffAction']
+      | components['schemas']['GameActionRequestSubmitWordAction']
+    GameActionRequestCallBluffAction: {
+      /** @enum {string} */
+      type: 'callBluff'
+      /** Format: uuid */
+      actionId: string
+      expectedVersion: string
+    }
+    GameActionRequestPlaceBidAction: {
+      /** @enum {string} */
+      type: 'placeBid'
+      /** Format: int32 */
+      wordCount: number
+      /** Format: uuid */
+      actionId: string
+      expectedVersion: string
+    }
+    GameActionRequestSelectCategoryAction: {
+      /** @enum {string} */
+      type: 'selectCategory'
+      categoryId: string
+      /** Format: uuid */
+      actionId: string
+      expectedVersion: string
+    }
+    GameActionRequestSubmitWordAction: {
+      /** @enum {string} */
+      type: 'submitWord'
+      word: string
+      /** Format: uuid */
+      actionId: string
+      expectedVersion: string
+    }
     GameActionResponse: {
       /** Format: uuid */
       actionId: string
       version: string
-    }
-    GameCreatedResponse: {
-      /** Format: uuid */
-      gameId: string
     }
     GameEventResponse: {
       /** Format: uuid */
@@ -425,6 +453,11 @@ export interface components {
       /** Format: uuid */
       gameId: null | string
       canStart: boolean
+      /** Format: date-time */
+      startsAt: null | string
+      /** Format: date-time */
+      serverTime: string
+      lastResult: null | components['schemas']['MatchResultResponse']
     }
     LobbySettingsRequest: {
       /** Format: int32 */
@@ -521,6 +554,67 @@ export interface components {
 }
 export type $defs = Record<string, never>
 export interface operations {
+  SubmitGameAction: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        gameId: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['GameActionRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['GameActionResponse']
+        }
+      }
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
   EnsureGuestIdentity: {
     parameters: {
       query?: never
@@ -965,6 +1059,67 @@ export interface operations {
     }
   }
   StartLobby: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        lobbyId: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['StartLobbyRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['LobbyResponse']
+        }
+      }
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  PreparePartyRematch: {
     parameters: {
       query?: never
       header?: never

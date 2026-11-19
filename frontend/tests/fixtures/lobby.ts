@@ -17,6 +17,9 @@ export const lobbyFixture: Lobby = {
   version: '1',
   gameId: null,
   canStart: false,
+  startsAt: null,
+  serverTime: '2026-11-19T12:00:00Z',
+  lastResult: null,
   settings: {
     maximumPlayers: 4,
     roundCount: null,

@@ -12,6 +12,12 @@ export function createLobbiesApi(
   identity = createGuestsApi(client),
 ) {
   return {
+    rematch(id: string, expectedVersion: string): Promise<Lobby> {
+      return client.request(
+        `/api/v1/lobbies/${encodeURIComponent(id)}/rematch`,
+        { method: 'POST', credentials: 'include', body: { expectedVersion } },
+      )
+    },
     setReady(
       id: string,
       expectedVersion: string,

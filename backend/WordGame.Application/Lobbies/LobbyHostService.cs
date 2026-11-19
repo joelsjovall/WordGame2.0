@@ -5,10 +5,22 @@ using WordGame.Domain;
 
 namespace WordGame.Application.Lobbies;
 
-public sealed class LobbyHostService(ILobbySessionStore lobbies, GameEngine engine, CategorySelectionService categories)
+public sealed class LobbyHostService(ILobbySessionStore lobbies, GameEngine engine, CategorySelectionService categories, TimeProvider clock)
 {
     public Task<Lobby?> ConfigureAsync(Guid id, Guid actor, long version, LobbySettings settings, CancellationToken cancellationToken = default) =>
         lobbies.ConfigureAsync(id, actor, version, settings, cancellationToken);
+
+    public Task<Lobby?> RematchAsync(Guid id, Guid actor, long version, CancellationToken cancellationToken = default) =>
+        lobbies.UpdateAsync(id, lobby =>
+        {
+            lobby.RequireHost(actor);
+            if (lobby.Version != version)
+            {
+                throw new LobbyActionException("The lobby changed. Refresh and try again.");
+            }
+
+            return lobby.PrepareRematch(actor);
+        }, cancellationToken);
 
     public async Task<Lobby?> StartAsync(Guid id, Guid actor, long version, CancellationToken cancellationToken = default)
     {
@@ -49,7 +61,18 @@ public sealed class LobbyHostService(ILobbySessionStore lobbies, GameEngine engi
         var id = created.State!.Id;
         try
         {
-            if (!(await engine.InitializeAsync(id)).Succeeded || !(await engine.StartAsync(id)).Succeeded)
+            if (!(await engine.InitializeAsync(id)).Succeeded)
+            {
+                throw new LobbyActionException("The match could not initialize.");
+            }
+
+            // Timers can wake early; only the server clock can finish the countdown.
+            while (lobby.StartsAt is { } at && at - clock.GetUtcNow() is var remaining && remaining > TimeSpan.Zero)
+            {
+                await Task.Delay(remaining < TimeSpan.FromMilliseconds(1) ? TimeSpan.FromMilliseconds(1) : remaining, clock, CancellationToken.None);
+            }
+
+            if (!(await engine.StartAsync(id)).Succeeded)
             {
                 throw new LobbyActionException("The match could not start. Try again.");
             }

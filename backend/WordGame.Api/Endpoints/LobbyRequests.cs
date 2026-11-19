@@ -24,7 +24,7 @@ internal static class LobbyRequests
         try
         {
             var result = await action();
-            return result is null ? TypedResults.NotFound() : TypedResults.Ok(LobbyMapper.Map(result));
+            return result is null ? TypedResults.NotFound() : TypedResults.Ok(LobbyMapper.Map(result, context.RequestServices.GetRequiredService<TimeProvider>().GetUtcNow()));
         }
         catch (LobbyActionException exception)
         {

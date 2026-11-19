@@ -8,6 +8,7 @@ public interface ILobbySessionStore
     // Same host/request/name replays the original active lobby; a different name conflicts.
     Task<LobbyCreation> CreateAsync(Player host, Guid requestId, CancellationToken cancellationToken = default);
     Task<Lobby?> GetAsync(Guid lobbyId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Lobby>> GetPlayingAsync(CancellationToken cancellationToken = default);
     // Trusted backend mutation; membership and lifecycle guards belong to the Domain operation.
     Task<Lobby?> UpdateAsync(Guid lobbyId, Func<Lobby, Lobby> update, CancellationToken cancellationToken = default);
     Task<Lobby?> JoinAsync(LobbyCode code, Player player, Guid? expectedLobbyId = null, CancellationToken cancellationToken = default);

@@ -14,8 +14,8 @@ internal static class LobbyEventStream
         ILobbySessionStore store, LobbyPlayerService players, TimeProvider clock, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        var expiry = credentialExpiry < initial.ExpiresAt ? credentialExpiry : initial.ExpiresAt;
-        var remaining = expiry - clock.GetUtcNow();
+        // Current-state reads enforce waiting/results expiry; active matches keep their lobby stream.
+        var remaining = credentialExpiry - clock.GetUtcNow();
         if (remaining <= TimeSpan.Zero)
         {
             yield break;
@@ -53,10 +53,10 @@ internal static class LobbyEventStream
                     var lobby = await store.GetAsync(initial.Id, lifetime.Token);
                     if (lobby is null || !lobby.Players.Any(player => player.Id == actor))
                     {
-                        yield return new SseItem<LobbyResponse>(LobbyMapper.Map(initial), lobby is null ? "expired" : "removed");
+                        yield return new SseItem<LobbyResponse>(LobbyMapper.Map(initial, clock.GetUtcNow()), lobby is null ? "expired" : "removed");
                         break;
                     }
-                    yield return new SseItem<LobbyResponse>(LobbyMapper.Map(lobby), "lobby")
+                    yield return new SseItem<LobbyResponse>(LobbyMapper.Map(lobby, clock.GetUtcNow()), "lobby")
                     { EventId = lobby.Version.ToString(System.Globalization.CultureInfo.InvariantCulture), ReconnectionInterval = TimeSpan.FromSeconds(2) };
                     if (!heartbeat)
                     {
