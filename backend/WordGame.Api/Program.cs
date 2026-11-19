@@ -42,6 +42,7 @@ builder.AddPlayerAuthentication();
 builder.AddLobbyRateLimiting();
 builder.Services.AddSingleton<GameEventService>();
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<IGuestSessionStore, InMemoryGuestSessionStore>();
 builder.Services.AddSingleton(_ => new SessionRetention(
     builder.Configuration.GetValue("Sessions:DisconnectedGrace", TimeSpan.FromMinutes(2)),
     builder.Configuration.GetValue("Sessions:CompletedRetention", TimeSpan.FromMinutes(10)),

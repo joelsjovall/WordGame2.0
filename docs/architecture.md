@@ -61,6 +61,7 @@ Storage implementations must remain separate from gameplay rules.
 ## Security
 
 - Players use securely issued guest identities.
+- Both modes share [server-validated guest sessions](guest-sessions.md), with absolute expiry, revocation, and reset; the initial session registry is in memory alongside active games.
 - Protected actions require verified player identity.
 - Host permissions are checked on the server.
 - Lobby codes are not authentication credentials.
