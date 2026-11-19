@@ -9,6 +9,36 @@ const request = {
 }
 const guest = { playerId: '7ede379e-1770-450e-b5e6-a6042156bb2c' }
 
+test('ready, leave, and removal use credentialed writes without accepting an acting player identity', async () => {
+  const calls: { url: string; options: RequestInit | undefined }[] = []
+  const api = createLobbiesApi(
+    createApiClient('', async (input, options) => {
+      calls.push({ url: String(input), options })
+      return Response.json({ id: 'room' })
+    }),
+  )
+  await api.setReady('room', '8', true)
+  await api.leave('room')
+  await api.remove('room', 'bob')
+  expect(calls.map((call) => call.url)).toEqual([
+    '/api/v1/lobbies/room/ready',
+    '/api/v1/lobbies/room/leave',
+    '/api/v1/lobbies/room/remove',
+  ])
+  expect(calls.map((call) => JSON.parse(String(call.options?.body)))).toEqual([
+    { expectedVersion: '8', isReady: true },
+    {},
+    { playerId: 'bob' },
+  ])
+  expect(
+    calls.every(
+      (call) =>
+        call.options?.credentials === 'include' &&
+        call.options.method === 'POST',
+    ),
+  ).toBe(true)
+})
+
 test('lobby reads and host commands send cookies and authoritative version without bootstrapping a new identity', async () => {
   const calls: { url: string; options: RequestInit | undefined }[] = []
   const api = createLobbiesApi(

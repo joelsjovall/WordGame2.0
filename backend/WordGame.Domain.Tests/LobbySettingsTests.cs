@@ -37,6 +37,11 @@ public sealed class LobbySettingsTests
         var configured = lobby.Configure(host.Id, new LobbySettings(2, 7, 90, [CategoryDifficulty.Hard]));
         var joined = configured.Join(new Player(Guid.NewGuid(), "Bob"));
         Assert.Equal(LobbyJoinFailure.Full, Assert.Throws<LobbyJoinException>(() => joined.Join(new Player(Guid.NewGuid(), "Carol"))).Reason);
+        foreach (var player in joined.Players)
+        {
+            joined = joined.Connect(player.Id, Guid.NewGuid()).SetReady(player.Id, true);
+        }
+
         var starting = joined.BeginStart(host.Id);
         Assert.Throws<LobbyActionException>(() => starting.Configure(host.Id, new()));
         Assert.Throws<LobbyActionException>(() => starting.Join(new Player(Guid.NewGuid(), "Carol")));

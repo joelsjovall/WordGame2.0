@@ -8,6 +8,7 @@ export function useLobby(id: string) {
   const [lobby, setLobby] = useState<Lobby | null>(null)
   const [playerId, setPlayerId] = useState('')
   const [error, setError] = useState('')
+  const [unavailable, setUnavailable] = useState(false)
   const [connection, setConnection] = useState('Connecting…')
   const accept = useCallback((next: Lobby) => {
     if (!/^(0|[1-9]\d*)$/.test(next.version))
@@ -31,12 +32,12 @@ export function useLobby(id: string) {
       refreshing = true
       try {
         const state = await lobbiesApi.get(id, controller.signal)
-        if (!controller.signal.aborted) {
+        if (!controller.signal.aborted && !terminal) {
           accept(state)
           setError('')
         }
       } catch (failure) {
-        if (!controller.signal.aborted) {
+        if (!controller.signal.aborted && !terminal) {
           setError(
             failure instanceof ApiError && failure.status === 404
               ? 'This lobby is no longer available. Ask the host for a new invitation.'
@@ -49,6 +50,7 @@ export function useLobby(id: string) {
             [401, 403, 404].includes(failure.status)
           ) {
             terminal = true
+            setUnavailable(true)
             events?.close()
           }
         }
@@ -85,11 +87,19 @@ export function useLobby(id: string) {
         events.addEventListener('expired', () => {
           if (controller.signal.aborted) return
           terminal = true
+          setUnavailable(true)
           events?.close()
           setError('This lobby is no longer available.')
         })
+        events.addEventListener('removed', () => {
+          if (controller.signal.aborted) return
+          terminal = true
+          events?.close()
+          setUnavailable(true)
+          setError('You have left or been removed from this lobby.')
+        })
         events.onerror = () => {
-          if (!controller.signal.aborted) {
+          if (!controller.signal.aborted && !terminal) {
             setConnection('Reconnecting…')
             void refresh()
           }
@@ -104,5 +114,5 @@ export function useLobby(id: string) {
       events?.close()
     }
   }, [id, accept])
-  return { lobby, playerId, error, connection, accept }
+  return { lobby, playerId, error, connection, unavailable, accept }
 }

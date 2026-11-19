@@ -10,8 +10,27 @@ public sealed class LobbyHostService(ILobbySessionStore lobbies, GameEngine engi
     public Task<Lobby?> ConfigureAsync(Guid id, Guid actor, long version, LobbySettings settings, CancellationToken cancellationToken = default) =>
         lobbies.ConfigureAsync(id, actor, version, settings, cancellationToken);
 
-    public Task<Lobby?> StartAsync(Guid id, Guid actor, long version, CancellationToken cancellationToken = default) =>
-        lobbies.StartAsync(id, actor, version, CreateGameAsync, cancellationToken);
+    public async Task<Lobby?> StartAsync(Guid id, Guid actor, long version, CancellationToken cancellationToken = default)
+    {
+        Guid? created = null;
+        try
+        {
+            return await lobbies.StartAsync(id, actor, version, async frozen =>
+            {
+                created = await CreateGameAsync(frozen);
+                return created.Value;
+            }, cancellationToken);
+        }
+        catch
+        {
+            if (created is { } gameId)
+            {
+                await engine.CancelAsync(gameId);
+            }
+
+            throw;
+        }
+    }
 
     private async Task<Guid> CreateGameAsync(Lobby lobby)
     {

@@ -29,12 +29,13 @@ public sealed class InMemoryLobbySessionStore(TimeProvider clock, LobbyRules rul
         {
             cancellationToken.ThrowIfCancellationRequested();
             var now = clock.GetUtcNow();
-            RemoveExpired(now);
+            RefreshLobbies();
             var key = (host.Id, requestId);
             if (requests.TryGetValue(key, out var previousId))
             {
                 var previous = lobbies[previousId].Lobby;
-                if (!StringComparer.Ordinal.Equals(previous.Players[0].DisplayName, host.DisplayName))
+                if (!previous.Players.Any(player => player.Id == host.Id) ||
+                    !StringComparer.Ordinal.Equals(lobbies[previousId].OriginalDisplayName, host.DisplayName))
                 {
                     throw new LobbyCreationConflictException();
                 }
@@ -57,7 +58,7 @@ public sealed class InMemoryLobbySessionStore(TimeProvider clock, LobbyRules rul
 
                 var lobby = new Lobby(id, code, host, now, now.Add(rules.Lifetime));
                 cancellationToken.ThrowIfCancellationRequested();
-                lobbies.Add(id, new Entry(lobby, key));
+                lobbies.Add(id, new Entry(lobby, key, host.DisplayName));
                 codes.Add(code, id);
                 requests.Add(key, id);
                 return Task.FromResult(new LobbyCreation(lobby, true));
@@ -72,17 +73,33 @@ public sealed class InMemoryLobbySessionStore(TimeProvider clock, LobbyRules rul
         lock (gate)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (!lobbies.TryGetValue(lobbyId, out var entry))
+            return Task.FromResult(Find(lobbyId)?.Lobby);
+        }
+    }
+
+    public Task<Lobby?> UpdateAsync(Guid lobbyId, Func<Lobby, Lobby> update, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(update);
+        lock (gate)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var entry = Find(lobbyId);
+            if (entry is null)
             {
                 return Task.FromResult<Lobby?>(null);
             }
 
-            if (IsExpired(entry, clock.GetUtcNow()))
+            var changed = update(entry.Lobby);
+            if (changed.Status == LobbyStatus.Closed)
             {
                 Remove(entry);
-                return Task.FromResult<Lobby?>(null);
             }
-            return Task.FromResult<Lobby?>(entry.Lobby);
+            else if (!ReferenceEquals(changed, entry.Lobby))
+            {
+                lobbies[lobbyId] = entry with { Lobby = changed };
+                Publish(changed);
+            }
+            return Task.FromResult<Lobby?>(changed);
         }
     }
 
@@ -99,13 +116,13 @@ public sealed class InMemoryLobbySessionStore(TimeProvider clock, LobbyRules rul
                 return Task.FromResult<Lobby?>(null);
             }
 
-            var entry = lobbies[id];
-            if (IsExpired(entry, clock.GetUtcNow()))
+            var entry = Find(id);
+            if (entry is null)
             {
-                Remove(entry);
                 return Task.FromResult<Lobby?>(null);
             }
-            var joined = entry.Lobby.Join(player);
+
+            var joined = entry.Lobby.Join(player, clock.GetUtcNow());
             cancellationToken.ThrowIfCancellationRequested();
             lobbies[id] = entry with { Lobby = joined };
             if (!ReferenceEquals(joined, entry.Lobby))
@@ -169,7 +186,7 @@ public sealed class InMemoryLobbySessionStore(TimeProvider clock, LobbyRules rul
             var gameId = await createGame(starting);
             lock (gate)
             {
-                var complete = starting.CompleteStart(gameId);
+                var complete = lobbies[lobbyId].Lobby.CompleteStart(gameId);
                 lobbies[lobbyId] = lobbies[lobbyId] with { Lobby = complete };
                 Publish(complete);
                 return complete;
@@ -179,7 +196,7 @@ public sealed class InMemoryLobbySessionStore(TimeProvider clock, LobbyRules rul
         {
             lock (gate)
             {
-                var restored = starting.AbortStart();
+                var restored = lobbies[lobbyId].Lobby.AbortStart();
                 lobbies[lobbyId] = lobbies[lobbyId] with { Lobby = restored };
                 Publish(restored);
             }
@@ -238,13 +255,16 @@ public sealed class InMemoryLobbySessionStore(TimeProvider clock, LobbyRules rul
             return null;
         }
 
-        if (!IsExpired(entry, clock.GetUtcNow()))
+        if (IsExpired(entry, clock.GetUtcNow())) { Remove(entry); return null; }
+        var pruned = entry.Lobby.PruneDisconnected(clock.GetUtcNow(), rules.DisconnectedGrace);
+        if (pruned.Status == LobbyStatus.Closed) { Remove(entry); return null; }
+        if (!ReferenceEquals(pruned, entry.Lobby))
         {
-            return entry;
+            entry = entry with { Lobby = pruned };
+            lobbies[id] = entry;
+            Publish(pruned);
         }
-
-        Remove(entry);
-        return null;
+        return entry;
     }
 
     private static bool IsExpired(Entry entry, DateTimeOffset now) => entry.Lobby.Status != LobbyStatus.Starting && now >= entry.Lobby.ExpiresAt;
@@ -272,19 +292,19 @@ public sealed class InMemoryLobbySessionStore(TimeProvider clock, LobbyRules rul
         lock (gate)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return Task.FromResult(RemoveExpired(clock.GetUtcNow()));
+            return Task.FromResult(RefreshLobbies());
         }
     }
 
-    private int RemoveExpired(DateTimeOffset now)
+    private int RefreshLobbies()
     {
-        var expired = lobbies.Values.Where(entry => IsExpired(entry, now)).ToArray();
-        foreach (var entry in expired)
+        var before = lobbies.Count;
+        foreach (var id in lobbies.Keys.ToArray())
         {
-            Remove(entry);
+            _ = Find(id);
         }
 
-        return expired.Length;
+        return before - lobbies.Count;
     }
 
     private void Remove(Entry entry)
@@ -309,5 +329,5 @@ public sealed class InMemoryLobbySessionStore(TimeProvider clock, LobbyRules rul
         return new LobbyCode(new string(characters));
     }
 
-    private sealed record Entry(Lobby Lobby, (Guid HostId, Guid RequestId) CreationKey);
+    private sealed record Entry(Lobby Lobby, (Guid HostId, Guid RequestId) CreationKey, string OriginalDisplayName);
 }

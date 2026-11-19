@@ -91,3 +91,39 @@ test('malformed or unrelated updates recover without replacing valid state', asy
   await waitFor(() => expect(get).toHaveBeenCalledTimes(3))
   expect(view.result.current.lobby).toEqual(lobby)
 })
+
+test('removal closes the stream and revokes the active lobby view', async () => {
+  setup()
+  const view = renderHook(() => useLobby(lobby.id))
+  await waitFor(() => expect(view.result.current.lobby).toEqual(lobby))
+  await act(async () => Events.latest.dispatchEvent(new Event('removed')))
+  expect(view.result.current.unavailable).toBe(true)
+  expect(view.result.current.error).toBe(
+    'You have left or been removed from this lobby.',
+  )
+  expect(Events.latest.close).toHaveBeenCalledOnce()
+  await act(async () => Events.latest.send({ ...lobby, version: '99' }))
+  expect(view.result.current.unavailable).toBe(true)
+  expect(view.result.current.lobby?.version).toBe(lobby.version)
+})
+
+test('a late recovery response cannot clear removal or restore the active view', async () => {
+  const get = setup()
+  const view = renderHook(() => useLobby(lobby.id))
+  await waitFor(() => expect(view.result.current.lobby).toEqual(lobby))
+  let resolve!: (value: typeof lobby) => void
+  get.mockImplementation(
+    () =>
+      new Promise((finish) => {
+        resolve = finish
+      }),
+  )
+  await act(async () => Events.latest.onerror?.())
+  await act(async () => Events.latest.dispatchEvent(new Event('removed')))
+  await act(async () => resolve({ ...lobby, version: '100' }))
+  expect(view.result.current.unavailable).toBe(true)
+  expect(view.result.current.error).toBe(
+    'You have left or been removed from this lobby.',
+  )
+  expect(view.result.current.lobby?.version).toBe(lobby.version)
+})

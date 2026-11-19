@@ -178,6 +178,54 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/lobbies/{lobbyId}/ready': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post: operations['SetLobbyReady']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/lobbies/{lobbyId}/leave': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post: operations['LeaveLobby']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/lobbies/{lobbyId}/remove': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post: operations['RemoveLobbyPlayer']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
 }
 export type webhooks = Record<string, never>
 export interface components {
@@ -189,7 +237,7 @@ export interface components {
     /** @enum {unknown} */
     ApiEventKind: 'updated' | 'removed'
     /** @enum {unknown} */
-    ApiLobbyStatus: 'waiting' | 'starting' | 'started'
+    ApiLobbyStatus: 'waiting' | 'starting' | 'started' | 'closed'
     /** @enum {unknown} */
     ApiMatchFormat: 'party' | 'online'
     ApiProblemDetails: {
@@ -348,10 +396,13 @@ export interface components {
       /** Format: uuid */
       lobbyId?: null | string
     }
+    LeaveLobbyRequest: Record<string, never>
     LobbyPlayerResponse: {
       /** Format: uuid */
       id: string
       displayName: string
+      isReady: boolean
+      isConnected: boolean
     }
     LobbyResponse: {
       /** Format: uuid */
@@ -373,6 +424,7 @@ export interface components {
       settings: components['schemas']['LobbySettingsRequest']
       /** Format: uuid */
       gameId: null | string
+      canStart: boolean
     }
     LobbySettingsRequest: {
       /** Format: int32 */
@@ -411,6 +463,10 @@ export interface components {
       /** Format: int32 */
       rank: number
     }
+    RemoveLobbyPlayerRequest: {
+      /** Format: uuid */
+      playerId: string
+    }
     RoundPlayerScoreResponse: {
       /** Format: uuid */
       playerId: string
@@ -440,6 +496,10 @@ export interface components {
       outcome: components['schemas']['ApiChallengeOutcome']
       submissions: components['schemas']['SubmittedWordResponse'][]
       scores: components['schemas']['RoundPlayerScoreResponse'][]
+    }
+    SetLobbyReadyRequest: {
+      expectedVersion: string
+      isReady: boolean
     }
     StartLobbyRequest: {
       expectedVersion: string
@@ -916,6 +976,189 @@ export interface operations {
     requestBody: {
       content: {
         'application/json': components['schemas']['StartLobbyRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['LobbyResponse']
+        }
+      }
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  SetLobbyReady: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        lobbyId: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SetLobbyReadyRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['LobbyResponse']
+        }
+      }
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  LeaveLobby: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        lobbyId: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LeaveLobbyRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['LobbyResponse']
+        }
+      }
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  RemoveLobbyPlayer: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        lobbyId: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RemoveLobbyPlayerRequest']
       }
     }
     responses: {

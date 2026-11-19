@@ -141,6 +141,7 @@ public sealed class LobbySessionStoreTests
         var host = new Player(Guid.NewGuid(), "Alice");
         var request = Guid.NewGuid();
         var original = await store.CreateAsync(host, request);
+        await store.UpdateAsync(original.Lobby.Id, lobby => lobby.Connect(host.Id, Guid.NewGuid()));
         clock.Advance(TimeSpan.FromMinutes(30) - TimeSpan.FromTicks(1));
         Assert.NotNull(await store.GetAsync(original.Lobby.Id));
         Assert.Equal(0, await store.CleanupAsync());

@@ -42,10 +42,13 @@ builder.Services.AddSingleton(_ => new SessionRetention(
     builder.Configuration.GetValue("Sessions:CompletedRetention", TimeSpan.FromMinutes(10)),
     builder.Configuration.GetValue("Sessions:AbandonedRetention", TimeSpan.FromMinutes(5))));
 builder.Services.AddSingleton<IGameSessionStore, InMemoryGameSessionStore>();
-builder.Services.AddSingleton(_ => new LobbyRules(builder.Configuration.GetValue("Sessions:LobbyLifetime", TimeSpan.FromMinutes(30))));
+builder.Services.AddSingleton(_ => new LobbyRules(builder.Configuration.GetValue("Sessions:LobbyLifetime", TimeSpan.FromMinutes(30)),
+    // A lobby needs time to establish its first stream; game-session grace independently permits zero.
+    builder.Configuration.GetValue("Sessions:LobbyDisconnectedGrace", TimeSpan.FromMinutes(2))));
 builder.Services.AddSingleton<ILobbySessionStore, InMemoryLobbySessionStore>();
 builder.Services.AddSingleton<LobbyService>();
 builder.Services.AddSingleton<LobbyHostService>();
+builder.Services.AddSingleton<LobbyPlayerService>();
 builder.Services.AddSingleton(_ => new CategorySelectionRules(
     builder.Configuration.GetValue("Gameplay:CategorySelectionTimeoutEnabled", true)
         ? builder.Configuration.GetValue("Gameplay:CategorySelectionTimeout", TimeSpan.FromSeconds(45)) : null,
@@ -99,6 +102,7 @@ app.MapGameSynchronizationEndpoints();
 app.MapGuestEndpoints();
 app.MapLobbyEndpoints();
 app.MapLobbyHostEndpoints();
+app.MapLobbyPlayerEndpoints();
 
 if (app.Environment.IsDevelopment())
 {

@@ -36,6 +36,14 @@ public sealed class LobbyHostTests
         using var stale = await host.PostAsJsonAsync($"/api/v1/lobbies/{id}/settings", Settings(version!));
         Assert.Equal(HttpStatusCode.Conflict, stale.StatusCode);
         version = configured.GetProperty("version").GetString();
+        var lobbies = factory.Services.GetRequiredService<ILobbySessionStore>();
+        var lobby = (await lobbies.GetAsync(id))!;
+        foreach (var player in lobby.Players)
+        {
+            lobby = (await lobbies.UpdateAsync(id, current => current.Connect(player.Id, Guid.NewGuid()).SetReady(player.Id, true)))!;
+        }
+
+        version = lobby.Version.ToString(System.Globalization.CultureInfo.InvariantCulture);
         using var started = await host.PostAsJsonAsync($"/api/v1/lobbies/{id}/start", new StartLobbyRequest(version!));
         Assert.Equal(HttpStatusCode.OK, started.StatusCode);
         var committed = await Read(started);
@@ -102,12 +110,12 @@ public sealed class LobbyHostTests
         Assert.Equal("text/event-stream", events.Content.Headers.ContentType!.MediaType);
         using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         using var reader = new StreamReader(await events.Content.ReadAsStreamAsync(cancellation.Token));
-        Assert.Contains("\"version\":\"0\"", await Data(reader, cancellation.Token));
-        using var update = await host.PostAsJsonAsync($"/api/v1/lobbies/{id}/settings", Settings("0"));
+        Assert.Contains("\"version\":\"1\"", await Data(reader, cancellation.Token));
+        using var update = await host.PostAsJsonAsync($"/api/v1/lobbies/{id}/settings", Settings("1"));
         Assert.Equal(HttpStatusCode.OK, update.StatusCode);
         var payload = await Data(reader, cancellation.Token);
         Assert.Contains("\"challengeSeconds\":75", payload);
-        Assert.Contains("\"version\":\"1\"", payload);
+        Assert.Contains("\"version\":\"2\"", payload);
         host.DefaultRequestHeaders.Add("Origin", "https://foreign.example");
         using var foreign = await host.PostAsJsonAsync($"/api/v1/lobbies/{id}/settings", Settings("1"));
         Assert.Equal(HttpStatusCode.Forbidden, foreign.StatusCode);

@@ -26,7 +26,7 @@ All routes below require the server-issued identity cookie. Reads and events req
 
 Malformed settings/revisions return 400, missing identity 401, nonhost writes or foreign origins 403, missing/expired lobbies 404, and stale revisions or lifecycle/capacity conflicts 409. Successful joins, settings changes, and startup transitions advance the revision. Failed writes preserve the state. A startup failure restores waiting status with a newer revision so clients recover rather than reuse stale commands.
 
-The in-memory store registers subscriptions and the initial snapshot under the same gate as updates. Each subscriber has a bounded latest-state channel; slow clients can skip intermediate revisions without losing the current state. SSE sends a fresh snapshot on reconnect and at 15-second heartbeat intervals, closes by credential/lobby expiry, and releases subscriptions on cancellation. It never changes game presence. The browser refreshes state after connection errors, ignores older revisions, stops on lost authorization/membership, and closes the stream when leaving the page. Draft host edits reset when a newer lobby revision arrives; save edits before starting.
+The in-memory store registers subscriptions and the initial snapshot under the same gate as updates. Each subscriber has a bounded latest-state channel; slow clients can skip intermediate revisions without losing the current state. SSE sends a fresh snapshot on reconnect and at 15-second heartbeat intervals, closes by credential/lobby expiry, and releases subscriptions on cancellation. F026 adds independent lobby presence leases; game presence remains separate. The browser refreshes state after connection errors, ignores older revisions, stops on lost authorization/membership, and closes the stream when leaving the page. Draft host edits reset when authoritative settings change, while unrelated presence/ready updates preserve the draft; save edits before starting.
 
 ## Startup and frozen match state
 
@@ -34,7 +34,7 @@ The host must have at least two players within the configured capacity. A matchi
 
 Once reserved, startup finishes even if the HTTP request disconnects. Cleanup temporarily preserves a starting lobby so it cannot disappear midway through the operation. Engine startup failure abandons any partially created game and restores the waiting lobby. Normal lobby expiry resumes afterward; it does not extend the match settings or mutate the separate game session. All state remains single-instance/in-memory and is lost on restart.
 
-Readiness, leave/kick, host migration, disconnect presence, and ready-dependent startup are F026. F025 validates roster count and settings; it does not invent ready states. The browser shows that the server started a match, but playable gameplay controls and action routes remain later work.
+F026 adds [readiness, leave/kick, host migration and disconnect presence](lobby-players.md), including all-member ready/connected startup checks and compensation for a disconnect during startup. The browser shows that the server started a match, but playable gameplay controls and action routes remain later work.
 
 ## Acceptance review
 
