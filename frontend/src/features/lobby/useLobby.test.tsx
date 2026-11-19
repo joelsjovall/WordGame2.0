@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { act, renderHook, waitFor } from '@testing-library/react'
+import { StrictMode, type PropsWithChildren } from 'react'
 import { afterEach, expect, test, vi } from 'vitest'
 import { ApiError } from '../../services/api/client.ts'
 import { guestsApi } from '../../services/api/guests.ts'
@@ -9,6 +10,7 @@ import { lobbyFixture as lobby } from '../../../tests/fixtures/lobby.ts'
 
 class Events extends EventTarget {
   static latest: Events
+  static instances: Events[] = []
   readyState = 0
   close = vi.fn(() => {
     this.readyState = 2
@@ -21,6 +23,7 @@ class Events extends EventTarget {
     this.url = url
     this.options = options
     Events.latest = this
+    Events.instances.push(this)
   }
   send(value: unknown) {
     this.readyState = 1
@@ -30,9 +33,77 @@ class Events extends EventTarget {
   }
 }
 afterEach(() => {
+  Events.instances = []
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
   vi.useRealTimers()
+})
+
+test('StrictMode, repeated online events, and rerenders keep one live subscription and cleanup stops recovery', async () => {
+  vi.useFakeTimers()
+  const get = setup()
+  const view = renderHook(() => useLobby(lobby.id), {
+    wrapper: ({ children }: PropsWithChildren) => (
+      <StrictMode>{children}</StrictMode>
+    ),
+  })
+  await act(async () => {
+    await Promise.resolve()
+  })
+  expect(Events.instances).toHaveLength(1)
+  const source = Events.latest
+  await act(async () => source.send(lobby))
+  view.rerender()
+  await act(async () => {
+    window.dispatchEvent(new Event('online'))
+    window.dispatchEvent(new Event('online'))
+  })
+  expect(Events.instances).toHaveLength(1)
+  const calls = get.mock.calls.length
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(90000)
+  })
+  expect(get).toHaveBeenCalledTimes(calls)
+  await act(async () => source.onerror?.())
+  view.unmount()
+  const callsAfterUnmount = get.mock.calls.length
+  await act(async () => {
+    window.dispatchEvent(new Event('online'))
+    await vi.advanceTimersByTimeAsync(90000)
+  })
+  expect(source.close).toHaveBeenCalledOnce()
+  expect(Events.instances).toHaveLength(1)
+  expect(get).toHaveBeenCalledTimes(callsAfterUnmount)
+})
+
+test('native SSE reconnection retrieves current state without opening another subscription', async () => {
+  vi.useFakeTimers()
+  const get = setup()
+  const view = renderHook(() => useLobby(lobby.id))
+  await act(async () => {
+    await Promise.resolve()
+  })
+  const source = Events.latest
+  await act(async () => source.send(lobby))
+  get.mockResolvedValue({ ...lobby, version: '8', hostPlayerId: 'new-host' })
+  source.readyState = 0
+  await act(async () => source.onerror?.())
+  expect(view.result.current.lobby?.version).toBe('8')
+  // A reconnecting native EventSource owns its retry; the application must not open a parallel stream.
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(2000)
+  })
+  expect(Events.instances).toHaveLength(1)
+  await act(async () =>
+    source.send({ ...lobby, version: '9', hostPlayerId: 'new-host' }),
+  )
+  const calls = get.mock.calls.length
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(90000)
+  })
+  expect(view.result.current.lobby?.version).toBe('9')
+  expect(get).toHaveBeenCalledTimes(calls)
+  view.unmount()
 })
 
 test('failed guest bootstrap retries without requiring reload and stops polling after a live update', async () => {

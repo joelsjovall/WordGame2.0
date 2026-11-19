@@ -70,8 +70,9 @@ The planned backlog contains 57 issues across six milestones. Work proceeds one 
 - **Completed:** [F026, Implement lobby player management and ready system (#28)](https://github.com/joelsjovall/WordGame2.0/issues/28), merged through PR #85 (merge commit `666ba65`). See [lobby players](lobby-players.md).
 - **Completed:** [F027, Implement party game start, rematch and lobby lifecycle (#29)](https://github.com/joelsjovall/WordGame2.0/issues/29), merged through PR #86 (merge commit `387d182`). See [Party lifecycle](party-lifecycle.md).
 - **Completed:** [F028, Implement player reconnection and disconnect handling (#30)](https://github.com/joelsjovall/WordGame2.0/issues/30), merged through PR #87 (merge commit `5e6e199`). See [Party reconnection](party-reconnection.md).
-- **Active:** [F029, Build responsive Party Mode lobby UI (#31)](https://github.com/joelsjovall/WordGame2.0/issues/31). Implementation and local verification are ready; see [responsive Party lobby](party-lobby-ui.md) for the acceptance review and browser limitations.
-- **Current local state (2026-11-19):** Working on `feature/F029-party-lobby-ui` from updated `main`. Commit and push require user authorization.
+- **Completed:** [F029, Build responsive Party Mode lobby UI (#31)](https://github.com/joelsjovall/WordGame2.0/issues/31), merged through PR #88 (merge commit `56a7151`). See [responsive Party lobby](party-lobby-ui.md).
+- **Active:** [F030, Implement real-time lobby synchronization (#32)](https://github.com/joelsjovall/WordGame2.0/issues/32). Existing production behavior meets the requirements; dedicated delivery/subscription tests and the [acceptance review](lobby-synchronization.md) verify it.
+- **Current local state (2026-11-19):** Working on `feature/F030-lobby-synchronization` from updated `main`. Commit and push require user authorization.
 - **Outstanding security follow-up:** A database credential was previously exposed in the public V1 repository. Never reuse or reproduce it. Rotation must be verified; this handoff provides no evidence that rotation has occurred.
 
 Update this section as issues are completed or the handoff state changes.
