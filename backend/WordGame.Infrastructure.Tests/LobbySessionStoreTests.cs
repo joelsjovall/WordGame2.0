@@ -7,6 +7,46 @@ namespace WordGame.Infrastructure.Tests;
 public sealed class LobbySessionStoreTests
 {
     [Fact]
+    public async Task CompetingJoinsCannotExceedCapacityAndSamePlayerReplaysUseOneSlot()
+    {
+        var store = Store();
+        var created = (await store.CreateAsync(new Player(Guid.NewGuid(), "Host"), Guid.NewGuid())).Lobby;
+        var bob = new Player(Guid.NewGuid(), "Bob");
+        var replays = await Task.WhenAll(Enumerable.Range(0, 20).Select(_ => Task.Run(() => store.JoinAsync(created.Code, bob))));
+        Assert.All(replays, lobby => Assert.Equal(2, lobby!.Players.Count));
+        var results = await Task.WhenAll(Enumerable.Range(0, 20).Select(index => Task.Run(async () =>
+        {
+            try { await store.JoinAsync(created.Code, new Player(Guid.NewGuid(), $"Player {index}")); return true; }
+            catch (LobbyJoinException exception) when (exception.Reason == LobbyJoinFailure.Full) { return false; }
+        })));
+        Assert.Equal(2, results.Count(joined => joined));
+        Assert.Equal(4, (await store.GetAsync(created.Id))!.Players.Count);
+        Assert.Single(created.Players);
+        Assert.Equal(4, (await store.JoinAsync(created.Code, bob))!.Players.Count);
+    }
+
+    [Fact]
+    public async Task JoinsEnforceExpiryAndInvitationIdentityEvenAfterCodeReuse()
+    {
+        var clock = new ManualSessionClock();
+        var store = new InMemoryLobbySessionStore(clock, new LobbyRules(TimeSpan.FromMinutes(30)), () => new LobbyCode("ABC234"));
+        var host = new Player(Guid.NewGuid(), "Host");
+        var original = (await store.CreateAsync(host, Guid.NewGuid())).Lobby;
+        var player = new Player(Guid.NewGuid(), "Bob");
+        Assert.Null(await store.JoinAsync(original.Code, player, Guid.NewGuid()));
+        Assert.Null(await store.JoinAsync(new LobbyCode("XYZ567"), player));
+        clock.Advance(TimeSpan.FromMinutes(30));
+        Assert.Null(await store.JoinAsync(original.Code, player));
+        var replacement = (await store.CreateAsync(host, Guid.NewGuid())).Lobby;
+        Assert.Null(await store.JoinAsync(original.Code, player, original.Id));
+        Assert.Equal(2, (await store.JoinAsync(replacement.Code, player, replacement.Id))!.Players.Count);
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => store.JoinAsync(replacement.Code, new Player(Guid.NewGuid(), "Carol"), cancellationToken: cancellation.Token));
+        Assert.Equal(2, (await store.GetAsync(replacement.Id))!.Players.Count);
+    }
+
+    [Fact]
     public async Task ACollisionCanBeSkippedWithinTheSameCreation()
     {
         var codes = new Queue<LobbyCode>([new("ABC234"), new("ABC234"), new("XYZ567")]);

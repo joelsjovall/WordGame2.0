@@ -1,0 +1,57 @@
+.lobby-card {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+  padding: clamp(1rem, 4vw, 2rem);
+  background: white;
+  border: 1px solid #cbd3e0;
+  border-radius: 0.75rem;
+  min-width: 0;
+}
+.lobby-card h2,
+.lobby-card p {
+  margin: 0;
+}
+.lobby-card label {
+  font-weight: 600;
+}
+.lobby-card input,
+.lobby-card button {
+  font: inherit;
+  min-height: 2.75rem;
+  border: 1px solid #8291ab;
+  border-radius: 0.4rem;
+  padding: 0.7rem;
+  width: 100%;
+  min-width: 0;
+}
+.lobby-card button {
+  background: #244fb3;
+  color: white;
+  cursor: pointer;
+}
+.lobby-card button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+.lobby-card input:read-only {
+  background: #f5f7fb;
+}
+.lobby-card :focus-visible {
+  outline: 3px solid #244fb3;
+  outline-offset: 3px;
+}
+.lobby-card [role='alert'] {
+  color: #9b2020;
+}
+.lobby-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.lobby-actions button {
+  flex: 1 1 12rem;
+}
+.lobby-players {
+  overflow-wrap: anywhere;
+}

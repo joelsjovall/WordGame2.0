@@ -3,6 +3,31 @@ namespace WordGame.Domain.Tests;
 public sealed class LobbyTests
 {
     [Fact]
+    public void JoiningPreservesSnapshotsAndRejectsDuplicateIdentitiesNamesAndOverCapacity()
+    {
+        var host = new Player(Guid.NewGuid(), "Alice");
+        var original = new Lobby(Guid.NewGuid(), new LobbyCode("ABC234"), host, DomainTestData.StartedAt, DomainTestData.StartedAt.AddMinutes(30));
+        var bob = new Player(Guid.NewGuid(), "Bob");
+        var joined = original.Join(bob);
+        Assert.Single(original.Players);
+        Assert.Equal(2, joined.Players.Count);
+        Assert.Equal(original.Id, joined.Id);
+        Assert.Equal(original.Code, joined.Code);
+        Assert.Equal(original.HostPlayerId, joined.HostPlayerId);
+        Assert.Equal(original.ExpiresAt, joined.ExpiresAt);
+        Assert.Same(joined, joined.Join(new Player(bob.Id, " bob ")));
+        Assert.Equal("Bob", joined.Players[1].DisplayName);
+        Assert.Equal(LobbyJoinFailure.DifferentPlayerName, Assert.Throws<LobbyJoinException>(() => joined.Join(new Player(bob.Id, "Changed"))).Reason);
+        Assert.Equal(LobbyJoinFailure.DisplayNameTaken, Assert.Throws<LobbyJoinException>(() => joined.Join(new Player(Guid.NewGuid(), "ALICE"))).Reason);
+        var full = joined.Join(new Player(Guid.NewGuid(), "Carol")).Join(new Player(Guid.NewGuid(), "Dan"));
+        Assert.Equal(4, full.Players.Count);
+        Assert.Same(full, full.Join(bob));
+        Assert.Equal(LobbyJoinFailure.Full, Assert.Throws<LobbyJoinException>(() => full.Join(new Player(Guid.NewGuid(), "Eve"))).Reason);
+        Assert.Throws<ArgumentException>(() => original.Join(new Player(Guid.NewGuid(), new string('A', 33))));
+        Assert.Throws<ArgumentNullException>(() => original.Join(null!));
+    }
+
+    [Fact]
     public void LobbyStartsWithOneHostAndUsesTheSharedGameplayCapacity()
     {
         var host = new Player(Guid.NewGuid(), " Alice ");

@@ -79,7 +79,8 @@ public sealed class ApiContractTests
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var paths = document.RootElement.GetProperty("paths");
-        Assert.Equal(6, paths.EnumerateObject().Count());
+        Assert.Equal(7, paths.EnumerateObject().Count());
+        Assert.True(paths.TryGetProperty("/api/v1/lobbies/join", out _));
         Assert.True(paths.TryGetProperty("/api/v1/guests", out _));
         Assert.True(paths.TryGetProperty("/api/v1/lobbies", out _));
         Assert.True(paths.TryGetProperty("/api/v1/games/{gameId}/state", out _));
@@ -87,7 +88,7 @@ public sealed class ApiContractTests
         Assert.True(paths.TryGetProperty("/api/v1/categories", out _));
         Assert.False(paths.TryGetProperty("/api/v1/games", out _));
         var schemas = document.RootElement.GetProperty("components").GetProperty("schemas");
-        foreach (var type in new[] { "CreateGameRequest", "JoinGameRequest", "GameStateResponse", "GameActionRequest",
+        foreach (var type in new[] { "CreateGameRequest", "JoinLobbyRequest", "GameStateResponse", "GameActionRequest",
             "GameActionResponse", "GameEventResponse", "ApiProblemDetails" })
         {
             Assert.True(schemas.TryGetProperty(type, out _), type);
