@@ -15,7 +15,12 @@ test('display names containing markup render as text without creating elements',
   const displayName = '<img src=x onerror=alert(1)>'
   const { container } = render(
     <LobbyMembers
-      lobby={{ ...lobby, players: [{ ...lobby.players[1], displayName }] }}
+      lobby={{
+        ...lobby,
+        players: [
+          { id: 'bob', displayName, isReady: false, isConnected: true },
+        ],
+      }}
       playerId="bob"
       busy={false}
       remove={vi.fn()}
