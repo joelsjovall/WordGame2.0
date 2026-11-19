@@ -4,12 +4,17 @@ import { GameControls, type GameCommand } from './GameControls.tsx'
 import { gamesApi } from '../../services/api/games.ts'
 import { ApiError } from '../../services/api/client.ts'
 import { gameSynchronization } from '../../services/gameSynchronization.ts'
+import { GameConnectionStatus } from './GameConnectionStatus.tsx'
+import { ServerCountdown } from './ServerCountdown.tsx'
+import { Link } from 'react-router'
 
 export function PartyGame({ id, playerId }: { id: string; playerId: string }) {
   const { state, connection, error: syncError } = useGameState(id)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const pending = useRef(false)
+  const hasLeft =
+    state?.players.find((player) => player.id === playerId)?.hasLeft === true
   async function send(command: GameCommand) {
     if (!state || pending.current) return
     pending.current = true
@@ -37,11 +42,14 @@ export function PartyGame({ id, playerId }: { id: string; playerId: string }) {
   return (
     <>
       <h1>Match started</h1>
-      <p role="status">Game connection: {connection}</p>
+      <GameConnectionStatus connection={connection} />
       {(error || syncError) && (
         <p role="alert">{error || syncError?.message}</p>
       )}
-      {!state && <p>Loading game…</p>}
+      {!state &&
+        (connection === 'connecting' || connection === 'recovering') && (
+          <p>Loading game…</p>
+        )}
       {state && (
         <>
           <p>
@@ -53,7 +61,24 @@ export function PartyGame({ id, playerId }: { id: string; playerId: string }) {
           <ul aria-label="Match scores">
             {state.players.map((player) => (
               <li key={player.id}>
-                {player.displayName}: {player.score} points
+                {player.displayName}: {player.score} points —{' '}
+                {player.hasLeft ? (
+                  'Left match'
+                ) : player.isConnected ? (
+                  'Connected'
+                ) : player.reconnectUntil ? (
+                  <>
+                    Reconnecting, grace ends in{' '}
+                    <ServerCountdown
+                      key={player.reconnectUntil}
+                      deadline={player.reconnectUntil}
+                      serverTime={state.serverTime}
+                    />{' '}
+                    seconds
+                  </>
+                ) : (
+                  'Offline'
+                )}
               </li>
             ))}
           </ul>
@@ -65,13 +90,29 @@ export function PartyGame({ id, playerId }: { id: string; playerId: string }) {
           {state.status === 'completed' && (
             <p>The match is complete. Preparing final results…</p>
           )}
-          <GameControls
-            key={`${state.round?.id ?? ''}/${state.round?.status ?? ''}/${state.round?.highestBid?.wordCount ?? ''}`}
-            state={state}
-            playerId={playerId}
-            busy={busy || connection !== 'connected'}
-            send={(command) => void send(command)}
-          />
+          {hasLeft ? (
+            <p>
+              You left this match. Reopening this page will not rejoin it.{' '}
+              <Link to="/">Back to homepage</Link>
+            </p>
+          ) : (
+            <GameControls
+              key={`${state.round?.id ?? ''}/${state.round?.status ?? ''}/${state.round?.highestBid?.wordCount ?? ''}`}
+              state={state}
+              playerId={playerId}
+              busy={busy || connection !== 'connected'}
+              send={(command) => void send(command)}
+            />
+          )}
+          {!hasLeft && state.status === 'active' && (
+            <button
+              className="lobby-start"
+              disabled={busy || connection !== 'connected'}
+              onClick={() => void send({ type: 'leaveMatch' })}
+            >
+              Leave match
+            </button>
+          )}
         </>
       )}
     </>

@@ -1,6 +1,6 @@
 # Party matches, results, and rematches
 
-F027 completes the private lobby-to-match flow using the shared GameEngine. A ready host starts a server-timed countdown, all members transition to the game screen, and ended matches return to results in the same lobby. The minimal game screen supports category selection, bidding, bluff calls, timed word submissions, round scores, and final standings. Presentation polish and expanded reconnection behavior remain later issues.
+F027 completes the private lobby-to-match flow using the shared GameEngine. A ready host starts a server-timed countdown, all members transition to the game screen, and ended matches return to results in the same lobby. The minimal game screen supports category selection, bidding, bluff calls, timed word submissions, round scores, and final standings. F028 adds [Party reconnection and intentional match departure](party-reconnection.md). Presentation polish remains later work.
 
 ```mermaid
 stateDiagram-v2
@@ -35,7 +35,7 @@ Completed results show final ranks, scores, winner IDs, and shared victories. Th
 
 `POST /api/v1/lobbies/{lobbyId}/rematch` takes `{ "expectedVersion": "<current revision>" }`. Only the current host can prepare a rematch after the match ends. It returns the same lobby to waiting, preserves settings and current identities/membership, clears the current game ID/countdown, and resets readiness. Every client returns to the lobby screen. The next valid start creates a new engine session with zero scores, round one, and no previous bids, challenges, submissions, or round results. Starting the new match clears lastResult.
 
-Players who decline use Leave lobby, either from results or the renewed waiting room. Host departure uses F026 migration. Remaining members must explicitly become ready again; fewer than two connected, ready members cannot start. Leave/removal during active play remains outside the waiting-lobby workflow. No membership changes mutate a previously started game's fixed roster or settings.
+Players who decline use Leave lobby, either from results or the renewed waiting room. Host departure uses F026 migration. Remaining members must explicitly become ready again; fewer than two connected, ready members cannot start. F028 adds an explicit leaveMatch action for active play; lobby removal remains outside that workflow. No membership changes mutate a previously started game's fixed roster or settings.
 
 ## Retention and cleanup
 

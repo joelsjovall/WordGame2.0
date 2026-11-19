@@ -25,9 +25,10 @@ internal static class GameEventStream
         lifetime.CancelAfter(remaining);
         var connectionId = Guid.NewGuid();
         var connected = false;
-        if (initial.Status != SessionStatus.Abandoned && !initial.Players.Single(player => player.PlayerId == playerId).HasLeft)
+        if (initial.Status is SessionStatus.Waiting or SessionStatus.Starting or SessionStatus.Active && !initial.Players.Single(player => player.PlayerId == playerId).HasLeft)
         {
-            connected = (await engine.ConnectAsync(initial.Id, playerId, connectionId, lifetime.Token)).Succeeded;
+            var result = await engine.ConnectAsync(initial.Id, playerId, connectionId, lifetime.Token);
+            connected = result.Succeeded && result.State!.Players.Single(player => player.PlayerId == playerId).ConnectionCount > 0;
         }
         try
         {

@@ -68,8 +68,9 @@ The planned backlog contains 57 issues across six milestones. Work proceeds one 
 - **Completed:** [F024, Implement lobby join and invitation system (#26)](https://github.com/joelsjovall/WordGame2.0/issues/26), merged through PR #83 (merge commit `5063128`). See [lobby joining](lobby-joining.md).
 - **Completed:** [F025, Implement lobby settings and host controls (#27)](https://github.com/joelsjovall/WordGame2.0/issues/27), merged through PR #84 (merge commit `591389c`). See [lobby settings](lobby-settings.md).
 - **Completed:** [F026, Implement lobby player management and ready system (#28)](https://github.com/joelsjovall/WordGame2.0/issues/28), merged through PR #85 (merge commit `666ba65`). See [lobby players](lobby-players.md).
-- **Active:** [F027, Implement party game start, rematch and lobby lifecycle (#29)](https://github.com/joelsjovall/WordGame2.0/issues/29). See [Party lifecycle](party-lifecycle.md) for countdown, playable controls, automatic round progression, final results, retention and rematches.
-- **Current local state (2026-11-19):** Working on `feature/F027-party-lifecycle` from updated `main`. Commit and push require user authorization.
+- **Completed:** [F027, Implement party game start, rematch and lobby lifecycle (#29)](https://github.com/joelsjovall/WordGame2.0/issues/29), merged through PR #86 (merge commit `387d182`). See [Party lifecycle](party-lifecycle.md).
+- **Active:** [F028, Implement player reconnection and disconnect handling (#30)](https://github.com/joelsjovall/WordGame2.0/issues/30). See [Party reconnection](party-reconnection.md) for recovery, grace/timer policy, public presence, intentional leave, and expired-session handling.
+- **Current local state (2026-11-19):** Working on `feature/F028-party-reconnection` from updated `main`. Commit and push require user authorization.
 - **Outstanding security follow-up:** A database credential was previously exposed in the public V1 repository. Never reuse or reproduce it. Rotation must be verified; this handoff provides no evidence that rotation has occurred.
 
 Update this section as issues are completed or the handoff state changes.

@@ -9,7 +9,10 @@ import { lobbyFixture as lobby } from '../../../tests/fixtures/lobby.ts'
 
 class Events extends EventTarget {
   static latest: Events
-  close = vi.fn()
+  readyState = 0
+  close = vi.fn(() => {
+    this.readyState = 2
+  })
   onerror: (() => void) | null = null
   url: string
   options: EventSourceInit
@@ -20,6 +23,7 @@ class Events extends EventTarget {
     Events.latest = this
   }
   send(value: unknown) {
+    this.readyState = 1
     this.dispatchEvent(
       new MessageEvent('lobby', { data: JSON.stringify(value) }),
     )
@@ -28,6 +32,54 @@ class Events extends EventTarget {
 afterEach(() => {
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
+  vi.useRealTimers()
+})
+
+test('failed guest bootstrap retries without requiring reload and stops polling after a live update', async () => {
+  vi.useFakeTimers()
+  const get = setup()
+  const ensure = vi
+    .spyOn(guestsApi, 'ensure')
+    .mockRejectedValueOnce(new TypeError('offline'))
+    .mockResolvedValue({ playerId: 'host' })
+  const view = renderHook(() => useLobby(lobby.id))
+  await act(async () => {
+    await Promise.resolve()
+  })
+  expect(view.result.current.connection).toBe('Reconnecting…')
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(2000)
+  })
+  expect(ensure).toHaveBeenCalledTimes(2)
+  expect(view.result.current.playerId).toBe('host')
+  await act(async () => Events.latest.send(lobby))
+  const calls = get.mock.calls.length
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(90000)
+  })
+  expect(get).toHaveBeenCalledTimes(calls)
+  view.unmount()
+})
+
+test('closed streams reopen with the existing identity and ignore late callbacks from the old source', async () => {
+  vi.useFakeTimers()
+  setup()
+  const view = renderHook(() => useLobby(lobby.id))
+  await act(async () => {
+    await Promise.resolve()
+  })
+  const old = Events.latest
+  old.readyState = 2
+  await act(async () => old.onerror?.())
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(2000)
+  })
+  expect(Events.latest).not.toBe(old)
+  await act(async () => Events.latest.send({ ...lobby, version: '4' }))
+  await act(async () => old.send({ ...lobby, version: '100' }))
+  expect(view.result.current.lobby?.version).toBe('4')
+  expect(guestsApi.ensure).toHaveBeenCalledOnce()
+  view.unmount()
 })
 function setup() {
   vi.stubGlobal('EventSource', Events)

@@ -6,8 +6,20 @@ export const gameFixture: GameState = {
   status: 'active',
   serverTime: '2026-11-19T12:00:00Z',
   players: [
-    { id: 'host', displayName: 'Host', score: 0, isConnected: true },
-    { id: 'bob', displayName: 'Bob', score: 0, isConnected: true },
+    {
+      id: 'host',
+      displayName: 'Host',
+      score: 0,
+      isConnected: true,
+      hasLeft: false,
+    },
+    {
+      id: 'bob',
+      displayName: 'Bob',
+      score: 0,
+      isConnected: true,
+      hasLeft: false,
+    },
   ],
   match: {
     format: 'party',

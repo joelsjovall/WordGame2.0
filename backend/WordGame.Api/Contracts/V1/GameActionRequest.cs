@@ -7,6 +7,7 @@ namespace WordGame.Api.Contracts.V1;
 [JsonDerivedType(typeof(PlaceBidAction), "placeBid")]
 [JsonDerivedType(typeof(CallBluffAction), "callBluff")]
 [JsonDerivedType(typeof(SubmitWordAction), "submitWord")]
+[JsonDerivedType(typeof(LeaveMatchAction), "leaveMatch")]
 public abstract record GameActionRequest(Guid ActionId, string ExpectedVersion);
 
 public sealed record SelectCategoryAction(Guid ActionId, string ExpectedVersion, string CategoryId)
@@ -16,4 +17,6 @@ public sealed record PlaceBidAction(Guid ActionId, string ExpectedVersion, int W
 public sealed record CallBluffAction(Guid ActionId, string ExpectedVersion)
     : GameActionRequest(ActionId, ExpectedVersion);
 public sealed record SubmitWordAction(Guid ActionId, string ExpectedVersion, string Word)
+    : GameActionRequest(ActionId, ExpectedVersion);
+public sealed record LeaveMatchAction(Guid ActionId, string ExpectedVersion)
     : GameActionRequest(ActionId, ExpectedVersion);
