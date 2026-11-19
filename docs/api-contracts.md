@@ -38,7 +38,7 @@ DTO deserialization requires constructor fields, respects nullable annotations, 
 
 CategoryResponse contains only id, name, and difficulty. Accepted answers, aliases, canonical answer IDs, and internal indexes are never returned. Invalid/empty/numeric/repeated difficulty parameters produce 400 with a field error. Unknown product routes produce 404 Problem Details.
 
-Metadata reads are public. F021 adds protected state/SSE reads using a server-protected identity cookie and roster checks; see [game synchronization](game-synchronization.md) for authorization, reconnects, and guest issuance boundaries. F023 adds [guest bootstrap and private lobby creation](private-lobbies.md). F024 adds [joining and invitations](lobby-joining.md). F025 adds [host settings, protected lobby synchronization, and engine-backed startup](lobby-settings.md). F026 adds [lobby readiness and player management](lobby-players.md). F027 adds [authenticated gameplay actions and the Party lifecycle](party-lifecycle.md). Matchmaking remains later work.
+Metadata reads are public. F021 adds protected state/SSE reads using a server-protected identity cookie and roster checks; see [game synchronization](game-synchronization.md) for authorization, reconnects, and guest issuance boundaries. F023 adds [guest bootstrap and private lobby creation](private-lobbies.md). F024 adds [joining and invitations](lobby-joining.md). F025 adds [host settings, protected lobby synchronization, and engine-backed startup](lobby-settings.md). F026 adds [lobby readiness and player management](lobby-players.md). F027 adds [authenticated gameplay actions and the Party lifecycle](party-lifecycle.md). F034 adds the authenticated matchmaking queue; Online game creation remains later work.
 
 ## Party workflow
 
@@ -62,7 +62,7 @@ GameStateResponse includes session status, revision, server time, public player 
 
 ### Matchmaking specification
 
-Future Online Mode can use POST /api/v1/matchmaking/searches to enter a search, GET /api/v1/matchmaking/searches/{searchId} for status, and DELETE on that resource to cancel (204). The authenticated identity is implicit; a future response should include searchId, a searching/matched/cancelled/expired state, and gameId only once matched. F033-F035 will finalize acceptance, expiration, and rematch details before mapping routes or generating matchmaking DTOs. No placeholder implementation is added here.
+F034 implements POST /api/v1/matchmaking/searches, GET /api/v1/matchmaking/searches/{searchId}, and DELETE on that resource (204 when cancelled). GET /api/v1/matchmaking/status returns the caller's current search or idle. Identity comes from the verified guest session. MatchmakingResponse includes searchId, status, timestamps, a nullable matchId for a selected pair reservation, and a nullable gameId. In F034 gameId is always null: F035 owns actual game creation, acceptance, and notifications. See [matchmaking queue](matchmaking-queue.md) for concurrency, cancellation conflicts, expiry, and ownership checks. These routes and DTOs are included in generated OpenAPI/client types.
 
 ## Errors
 

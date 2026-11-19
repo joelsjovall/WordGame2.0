@@ -9,6 +9,7 @@ using WordGame.Application.Categories;
 using WordGame.Application.Challenges;
 using WordGame.Application.Games;
 using WordGame.Application.Lobbies;
+using WordGame.Application.Matchmaking;
 using WordGame.Application.Sessions;
 using WordGame.Application.Synchronization;
 using WordGame.Application.Words;
@@ -43,6 +44,13 @@ builder.AddLobbyRateLimiting();
 builder.Services.AddSingleton<GameEventService>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IGuestSessionStore, InMemoryGuestSessionStore>();
+builder.Services.AddSingleton<IMatchmakingQueueStore, InMemoryMatchmakingQueueStore>();
+builder.Services.AddSingleton<IMatchmakingPolicy, FifoDuelPolicy>();
+builder.Services.AddSingleton(_ => new MatchmakingRules(
+    builder.Configuration.GetValue("Matchmaking:SearchLifetime", TimeSpan.FromMinutes(2)),
+    builder.Configuration.GetValue("Matchmaking:ReservationLifetime", TimeSpan.FromMinutes(1)),
+    builder.Configuration.GetValue("Matchmaking:TerminalRetention", TimeSpan.FromMinutes(10))));
+builder.Services.AddSingleton<MatchmakingService>();
 builder.Services.AddSingleton(_ => new SessionRetention(
     builder.Configuration.GetValue("Sessions:DisconnectedGrace", TimeSpan.FromMinutes(2)),
     builder.Configuration.GetValue("Sessions:CompletedRetention", TimeSpan.FromMinutes(10)),
@@ -110,6 +118,7 @@ app.MapCategoryEndpoints();
 app.MapGameSynchronizationEndpoints();
 app.MapGameActionEndpoints();
 app.MapGuestEndpoints();
+app.MapMatchmakingEndpoints();
 app.MapLobbyEndpoints();
 app.MapLobbyHostEndpoints();
 app.MapLobbyPlayerEndpoints();
