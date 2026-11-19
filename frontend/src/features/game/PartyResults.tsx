@@ -1,7 +1,6 @@
-import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { lobbiesApi, type Lobby } from '../../services/api/lobbies.ts'
-import { ApiError } from '../../services/api/client.ts'
+import { useLobbyActions } from '../lobby/useLobbyActions.ts'
 
 export function PartyResults({
   lobby,
@@ -13,36 +12,7 @@ export function PartyResults({
   accept: (next: Lobby) => void
 }) {
   const navigate = useNavigate()
-  const [error, setError] = useState('')
-  const [busy, setBusy] = useState(false)
-  const pending = useRef(false)
-  async function act(rematch: boolean) {
-    if (pending.current) return
-    pending.current = true
-    setBusy(true)
-    setError('')
-    try {
-      const next = rematch
-        ? await lobbiesApi.rematch(lobby.id, lobby.version)
-        : await lobbiesApi.leave(lobby.id)
-      if (rematch) accept(next)
-      else void navigate('/')
-    } catch (failure) {
-      setError(
-        failure instanceof ApiError
-          ? failure.message
-          : 'Unable to update the lobby. Please try again.',
-      )
-      try {
-        accept(await lobbiesApi.get(lobby.id))
-      } catch {
-        /* Preserve the action error. */
-      }
-    } finally {
-      pending.current = false
-      setBusy(false)
-    }
-  }
+  const { act, error, busy } = useLobbyActions(lobby.id, accept)
   return (
     <>
       <h1>Match results</h1>
@@ -70,11 +40,26 @@ export function PartyResults({
       {error && <p role="alert">{error}</p>}
       <div className="lobby-actions">
         {playerId === lobby.hostPlayerId && (
-          <button disabled={busy} onClick={() => void act(true)}>
+          <button
+            disabled={busy}
+            onClick={() =>
+              void act(() => lobbiesApi.rematch(lobby.id, lobby.version))
+            }
+          >
             Play Again
           </button>
         )}
-        <button disabled={busy} onClick={() => void act(false)}>
+        <button
+          disabled={busy}
+          onClick={() =>
+            void act(
+              () => lobbiesApi.leave(lobby.id),
+              () => {
+                void navigate('/')
+              },
+            )
+          }
+        >
           Leave lobby
         </button>
       </div>
