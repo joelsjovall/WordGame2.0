@@ -9,6 +9,45 @@ const request = {
 }
 const guest = { playerId: '7ede379e-1770-450e-b5e6-a6042156bb2c' }
 
+test('lobby reads and host commands send cookies and authoritative version without bootstrapping a new identity', async () => {
+  const calls: { url: string; options: RequestInit | undefined }[] = []
+  const api = createLobbiesApi(
+    createApiClient('', async (input, options) => {
+      calls.push({ url: String(input), options })
+      return Response.json({ id: 'room' })
+    }),
+  )
+  const settings = {
+    maximumPlayers: 2,
+    roundCount: 8,
+    challengeSeconds: 90,
+    allowedDifficulties: ['hard'] as const,
+  }
+  const controller = new AbortController()
+  await api.get('room', controller.signal)
+  await api.configure('room', '5', {
+    ...settings,
+    allowedDifficulties: [...settings.allowedDifficulties],
+  })
+  await api.start('room', '6')
+  expect(calls.map((call) => call.url)).toEqual([
+    '/api/v1/lobbies/room',
+    '/api/v1/lobbies/room/settings',
+    '/api/v1/lobbies/room/start',
+  ])
+  expect(calls.every((call) => call.options?.credentials === 'include')).toBe(
+    true,
+  )
+  expect(calls[0]?.options?.signal).toBe(controller.signal)
+  expect(JSON.parse(String(calls[1]?.options?.body))).toEqual({
+    expectedVersion: '5',
+    settings,
+  })
+  expect(JSON.parse(String(calls[2]?.options?.body))).toEqual({
+    expectedVersion: '6',
+  })
+})
+
 test('joining bootstraps identity and sends code, name, and expected invitation ID', async () => {
   const join = {
     lobbyCode: 'ABC234',

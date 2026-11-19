@@ -7,7 +7,7 @@ A multiplayer word-bidding and bluffing game for mobile and desktop browsers. Pl
 - **Party Mode:** planned private lobbies for 2–4 players, lobby codes/invitation links, host settings, readiness, reconnection, and rematches.
 - **Online Multiplayer:** planned random 1v1 matchmaking with guest identities, automatic matches, disconnect/forfeit handling, and rematches. Persistent statistics will follow when storage is introduced; ranked play is optional.
 
-Both modes will use the same server-authoritative gameplay engine. This repository currently provides domain models, the shared [game-engine lifecycle](docs/game-engine.md), word validation, local category datasets, an in-memory session store, category metadata API contracts, guest identity, private lobby creation/joining APIs, protected game state/SSE endpoints, a lobby join/invitation screen, automated tests, and CI. Playable matches, the full waiting-room UI, and matchmaking remain planned. See [project progress](docs/project-context.md) for the issue handoff.
+Both modes will use the same server-authoritative gameplay engine. This repository currently provides domain models, the shared [game-engine lifecycle](docs/game-engine.md), word validation, local category datasets, an in-memory session store, category metadata API contracts, guest identity, private lobby creation/joining APIs, protected game state/SSE endpoints, lobby creation/joining screens with live host settings and match startup, automated tests, and CI. Playable gameplay controls, readiness/player management, and matchmaking remain planned. See [project progress](docs/project-context.md) for the issue handoff.
 
 ## Stack and structure
 
@@ -41,7 +41,7 @@ npm ci
 npm run dev
 ```
 
-The API serves `http://localhost:5000`; Vite normally serves `http://localhost:5173`. The homepage currently needs no API connection. Before using API-backed features, set the public `VITE_API_BASE_URL` in `frontend/.env.local` as described in [development setup](docs/development-setup.md). Use `npm.cmd` on PowerShell if script execution blocks `npm`.
+The API serves `http://localhost:5000`; Vite normally serves `http://localhost:5173`. The homepage renders without an API connection; creating/joining lobbies and configuring matches require the backend. Before using API-backed features, set the public `VITE_API_BASE_URL` in `frontend/.env.local` as described in [development setup](docs/development-setup.md). Use `npm.cmd` on PowerShell if script execution blocks `npm`.
 
 ## Build, test, and contribute
 

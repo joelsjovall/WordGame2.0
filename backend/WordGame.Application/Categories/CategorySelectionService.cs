@@ -39,8 +39,9 @@ public sealed class CategorySelectionService(ICategoryProvider provider, Categor
 
     public async Task<GameEngineResult> ExpireAsync(Guid gameId, long expectedVersion, CancellationToken cancellationToken = default)
     {
+        var snapshot = await sessions.GetAsync(gameId, cancellationToken);
         var definition = rules.TimeoutBehavior == CategoryTimeoutBehavior.AutoSelect
-            ? await ResolveTimeoutAsync(cancellationToken) : null;
+            ? await ResolveTimeoutAsync(snapshot?.Game.Settings.AllowedDifficulties, cancellationToken) : null;
         return await commands.UpdateAsync(gameId, session =>
         {
             RequireSelectionPhase(session);
@@ -89,10 +90,15 @@ public sealed class CategorySelectionService(ICategoryProvider provider, Categor
         return await LoadAsync(categoryId, cancellationToken);
     }
 
-    private async Task<CategoryDefinition?> ResolveTimeoutAsync(CancellationToken cancellationToken = default)
+    private async Task<CategoryDefinition?> ResolveTimeoutAsync(IReadOnlyList<CategoryDifficulty>? allowed, CancellationToken cancellationToken = default)
     {
         foreach (var category in await GetAvailableAsync(cancellationToken: cancellationToken))
         {
+            if (allowed is not null && !allowed.Contains(category.Difficulty))
+            {
+                continue;
+            }
+
             var definition = await LoadAsync(category.Id, cancellationToken);
             if (definition is not null)
             {
@@ -109,7 +115,8 @@ public sealed class CategorySelectionService(ICategoryProvider provider, Categor
             throw new InvalidOperationException(timeout ? "Category selection has not expired." : "Category selection has expired.");
         }
 
-        if (!rules.AllowedDifficulties.Contains(definition.Category.Difficulty))
+        if (!rules.AllowedDifficulties.Contains(definition.Category.Difficulty) ||
+            session.Game.Settings.AllowedDifficulties is { } allowed && !allowed.Contains(definition.Category.Difficulty))
         {
             throw new InvalidOperationException("This difficulty is unavailable.");
         }

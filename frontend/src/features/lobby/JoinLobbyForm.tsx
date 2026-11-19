@@ -71,6 +71,7 @@ export function JoinLobbyForm({
           ))}
         </ul>
         <InvitationPanel lobby={lobby} />
+        <Link to={`/lobbies/${lobby.id}`}>Open lobby settings</Link>
         <p>Send the invitation to friends to bring them into the lobby.</p>
         <Link to="/">Back to homepage</Link>
       </>

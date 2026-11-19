@@ -55,3 +55,24 @@
 .lobby-players {
   overflow-wrap: anywhere;
 }
+.lobby-card fieldset {
+  display: grid;
+  gap: 0.75rem;
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+.lobby-card .lobby-choice {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.lobby-choice input {
+  width: auto;
+}
+.lobby-start {
+  font: inherit;
+  min-height: 2.75rem;
+  padding: 0.7rem 1.5rem;
+  cursor: pointer;
+}
