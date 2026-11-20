@@ -46,9 +46,6 @@ h3 {
   font-family: var(--font-display);
   line-height: 1.25;
 }
-.home-page .wg-card {
-  border-top: 5px solid var(--color-secondary);
-}
 a {
   color: var(--color-primary);
   text-underline-offset: 0.2em;

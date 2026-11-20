@@ -17,7 +17,7 @@ describe('application routes', () => {
       screen.getByRole('heading', { level: 1, name: 'WordGame 2.0' }),
     ).toBeVisible()
     expect(
-      screen.getByText('A multiplayer word-bidding and bluffing game.'),
+      screen.getByText(/Pick a category, outbid your rivals/),
     ).toBeVisible()
     expect(
       screen.getByText('Play with friends or find a new rival.'),
