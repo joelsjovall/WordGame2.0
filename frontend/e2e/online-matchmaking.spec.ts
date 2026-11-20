@@ -1,0 +1,178 @@
+import { expect, test, type Page, type BrowserContext } from '@playwright/test'
+import { backendUrl, frontendUrl } from './support/environment.ts'
+
+async function join(page: Page, name: string) {
+  await page.getByLabel('Your display name').fill(name)
+  await expect(
+    page.getByRole('button', { name: 'Play Online', exact: true }),
+  ).toBeEnabled()
+  await page.getByRole('button', { name: 'Play Online', exact: true }).click()
+}
+async function current(page: Page) {
+  const response = await page.request.get(
+    `${backendUrl}/api/v1/matchmaking/status`,
+  )
+  expect(response.ok()).toBe(true)
+  return (await response.json()) as {
+    searchId: string
+    gameId: string | null
+    status: string
+  }
+}
+async function noOverflow(page: Page) {
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true)
+  for (const button of await page.getByRole('button').all()) {
+    if (await button.isVisible())
+      expect((await button.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+  }
+}
+
+async function clearPendingSearch(context: BrowserContext) {
+  try {
+    await context.setOffline(false)
+    const response = await context.request.get(
+      `${backendUrl}/api/v1/matchmaking/status`,
+    )
+    if (!response.ok()) return
+    const state = (await response.json()) as {
+      status: string
+      searchId: string | null
+    }
+    const path = `${backendUrl}/api/v1/matchmaking/searches/${state.searchId}`
+    if (state.status === 'searching') await context.request.delete(path)
+    if (state.status === 'matched')
+      await context.request.post(`${path}/decline`, { data: {} })
+  } catch {
+    /* Do not mask an original browser assertion failure during cleanup. */
+  }
+}
+
+test('Online players cancel, restore, decline, and enter the same game on desktop and mobile', async ({
+  browser,
+}, testInfo) => {
+  test.setTimeout(60000)
+  for (const width of [1280, 390]) {
+    const options = {
+      baseURL: frontendUrl,
+      viewport: { width, height: 844 },
+      isMobile: width < 768,
+      hasTouch: width < 768,
+    }
+    const first = await browser.newContext(options)
+    const second = await browser.newContext(options)
+    try {
+      const alice = await first.newPage()
+      const bob = await second.newPage()
+      await alice.goto('/')
+      await alice
+        .getByRole('link', { name: 'Play Online', exact: true })
+        .click()
+      await expect(
+        alice.getByRole('heading', { name: 'Find your match', exact: true }),
+      ).toBeVisible()
+      await noOverflow(alice)
+      await alice.screenshot({
+        path: testInfo.outputPath(`online-idle-${width}.png`),
+        fullPage: true,
+      })
+      await join(alice, 'Alice')
+      await expect(
+        alice.getByRole('heading', { name: 'Finding your next rival' }),
+      ).toBeVisible()
+      await expect(alice.getByText(/Search time:/)).toBeVisible()
+      await alice.getByRole('button', { name: 'Cancel Search' }).click()
+      await expect(alice.getByText(/Matchmaking cancelled/)).toBeVisible()
+      await join(alice, 'Alice')
+      const before = await current(alice)
+      await alice.reload()
+      await expect(
+        alice.getByRole('heading', { name: 'Finding your next rival' }),
+      ).toBeVisible()
+      expect((await current(alice)).searchId).toBe(before.searchId)
+      await first.setOffline(true)
+      await expect(alice.getByRole('alert')).toContainText(
+        /offline|interrupted/i,
+      )
+      await expect(
+        alice.getByRole('button', { name: 'Cancel Search' }),
+      ).toBeDisabled()
+      await first.setOffline(false)
+      await expect(
+        alice.getByRole('button', { name: 'Cancel Search' }),
+      ).toBeEnabled({ timeout: 15000 })
+      expect((await current(alice)).searchId).toBe(before.searchId)
+      await bob.goto('/online')
+      await join(bob, 'Bob')
+      await expect(
+        alice.getByRole('heading', { name: 'Match found!' }),
+      ).toBeVisible()
+      await expect(
+        bob.getByRole('heading', { name: 'Match found!' }),
+      ).toBeVisible()
+      await expect(alice.getByText('Bob', { exact: true })).toBeVisible()
+      await expect(bob.getByText('Alice', { exact: true })).toBeVisible()
+      await bob.getByRole('button', { name: 'Decline match' }).click()
+      await expect(alice.getByText(/Matchmaking cancelled/)).toBeVisible()
+      await expect(bob.getByText(/Matchmaking cancelled/)).toBeVisible()
+      await join(alice, 'Alice')
+      await join(bob, 'Bob')
+      await expect(
+        alice.getByRole('heading', { name: 'Match found!' }),
+      ).toBeVisible()
+      await expect(alice.getByText('Bob', { exact: true })).toBeVisible()
+      await noOverflow(alice)
+      await alice.screenshot({
+        path: testInfo.outputPath(`online-found-${width}.png`),
+        fullPage: true,
+      })
+      await alice.getByRole('button', { name: 'Accept match' }).click()
+      await expect(
+        alice.getByRole('button', { name: 'Accepted' }),
+      ).toBeDisabled()
+      await expect(alice).toHaveURL(/\/online$/)
+      await bob.getByRole('button', { name: 'Accept match' }).click()
+      await expect(alice).toHaveURL(/\/online\/games\/[a-f0-9-]+$/)
+      await expect(bob).toHaveURL(alice.url())
+      await expect(
+        alice.getByRole('heading', { name: 'Match started', exact: true }),
+      ).toBeVisible()
+      await expect(
+        bob.getByRole('heading', { name: 'Match started', exact: true }),
+      ).toBeVisible()
+      const room = await current(alice)
+      expect(room.status).toBe('ready')
+      expect(alice.url()).toContain(room.gameId)
+      const gameResponse = await alice.request.get(
+        `${backendUrl}/api/v1/games/${room.gameId}/state`,
+      )
+      const game = (await gameResponse.json()) as {
+        match: { format: string; roundCount: number }
+      }
+      expect(game.match).toMatchObject({ format: 'online', roundCount: 6 })
+      await alice.reload()
+      await expect(alice.getByLabel('Match scores')).toContainText(
+        'Alice: 0 points',
+      )
+      await alice
+        .getByRole('button', { name: /European Capitals.*easy/i })
+        .click()
+      await alice.getByLabel('Your bid').fill('1')
+      await alice
+        .getByRole('button', { name: 'Place bid', exact: true })
+        .click()
+      await expect(
+        bob.getByRole('button', { name: 'Call bluff', exact: true }),
+      ).toBeEnabled()
+      await noOverflow(alice)
+    } finally {
+      await clearPendingSearch(first)
+      await clearPendingSearch(second)
+      await first.close()
+      await second.close()
+    }
+  }
+})

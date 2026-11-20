@@ -14,7 +14,7 @@ test('homepage renders on a real browser with no runtime errors', async ({
     page.getByRole('heading', { name: 'WordGame 2.0', exact: true }),
   ).toBeVisible()
   await expect(
-    page.getByText('Party Mode and Online Mode are coming soon.'),
+    page.getByText('Play with friends or find a new rival.'),
   ).toBeVisible()
   expect(
     await page.evaluate(

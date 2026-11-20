@@ -8,7 +8,7 @@ import { GameConnectionStatus } from './GameConnectionStatus.tsx'
 import { ServerCountdown } from './ServerCountdown.tsx'
 import { Link } from 'react-router'
 
-export function PartyGame({ id, playerId }: { id: string; playerId: string }) {
+export function GameView({ id, playerId }: { id: string; playerId: string }) {
   const { state, connection, error: syncError } = useGameState(id)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
