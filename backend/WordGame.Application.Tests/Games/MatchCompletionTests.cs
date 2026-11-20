@@ -49,6 +49,9 @@ public sealed class MatchCompletionTests
         Assert.True(result.IsTie);
         Assert.Equal(game.Players.Select(player => player.Id), result.WinnerIds);
         Assert.All(result.Standings, standing => Assert.Equal(1, standing.Rank));
+        var history = WordGame.Application.Statistics.OnlineMatchHistory.From(await game.State());
+        if (online) { Assert.All(history!.Players, player => { Assert.True(player.Draw); Assert.False(player.Won); }); }
+        else { Assert.Null(history); }
     }
 
     [Fact]

@@ -5,3 +5,4 @@
 *.user
 *.suo
 appsettings.Local.json
+**/Data/OnlineHistory/
