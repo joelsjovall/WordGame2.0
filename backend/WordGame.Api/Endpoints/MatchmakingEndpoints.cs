@@ -98,10 +98,8 @@ internal static class MatchmakingEndpoints
         }
         try { return await operation(session); }
         catch (UnauthorizedAccessException) { return TypedResults.Unauthorized(); }
-        catch (MatchmakingConflictException exception) { return Problem(context, 409, exception.Message); }
-        catch (ArgumentException) { return Problem(context, 400, "Use a nonblank display name of at most 32 characters without control characters."); }
+        catch (MatchmakingConflictException exception) { return ApiProblems.Result(context, 409, exception.Message); }
+        catch (ArgumentException) { return ApiProblems.Result(context, 400, "Use a nonblank display name of at most 32 characters without control characters."); }
     }
 
-    private static IResult Problem(HttpContext context, int status, string title) =>
-        TypedResults.Json(ApiProblems.Create(context, status, title), statusCode: status, contentType: "application/problem+json");
 }

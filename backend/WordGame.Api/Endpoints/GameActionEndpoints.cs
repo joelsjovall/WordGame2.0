@@ -34,7 +34,7 @@ internal static class GameActionEndpoints
         if (!long.TryParse(request.ExpectedVersion, NumberStyles.None, CultureInfo.InvariantCulture, out var version) ||
             version < 0 || request.ExpectedVersion != version.ToString(CultureInfo.InvariantCulture) || request.ActionId == Guid.Empty)
         {
-            return Problem(context, 400, "Provide a nonempty action ID and canonical nonnegative version.");
+            return ApiProblems.Result(context, 400, "Provide a nonempty action ID and canonical nonnegative version.");
         }
 
         var action = new PlayerActionContext(request.ActionId, version);
@@ -62,8 +62,6 @@ internal static class GameActionEndpoints
         };
         context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("WordGame.Security")
             .LogWarning("Gameplay action rejected with code {Code}", result.Error.Code);
-        return Problem(context, status, result.Error.Message);
+        return ApiProblems.Result(context, status, result.Error.Message);
     }
-    private static IResult Problem(HttpContext context, int status, string title) =>
-        TypedResults.Json(ApiProblems.Create(context, status, title), statusCode: status, contentType: "application/problem+json");
 }

@@ -26,7 +26,7 @@ public sealed class PartyLifecycleTests
         {
             builder.ConfigureServices(services => services.AddSingleton<TimeProvider>(clock));
             builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string?>
-            { ["Sessions:LobbyStartCountdown"] = "00:00:00", ["Gameplay:TimeoutSweepInterval"] = "01:00:00", ["Sessions:CleanupInterval"] = "01:00:00" }));
+            { ["Sessions:LobbyStartCountdown"] = "00:00:00", ["Gameplay:TimeoutSweepInterval"] = "00:00:00.020", ["Sessions:CleanupInterval"] = "01:00:00" }));
         });
         using var host = await Guest(factory); using var bob = await Guest(factory); using var stranger = await Guest(factory);
         var room = await Create(host); await Join(bob, room);
@@ -74,6 +74,7 @@ public sealed class PartyLifecycleTests
             if (round == 1)
             {
                 clock.Advance(TimeSpan.FromSeconds(3));
+                await WaitForRound(host, gameId, 2);
             }
 
             await lifecycle.RefreshAsync((await factory.Services.GetRequiredService<ILobbySessionStore>().GetAsync(room.Id))!);
@@ -189,7 +190,7 @@ public sealed class PartyLifecycleTests
         {
             builder.ConfigureServices(services => services.AddSingleton<TimeProvider>(clock));
             builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string?>
-            { ["Sessions:LobbyStartCountdown"] = "00:00:00", ["Gameplay:TimeoutSweepInterval"] = "01:00:00", ["Sessions:CleanupInterval"] = "01:00:00" }));
+            { ["Sessions:LobbyStartCountdown"] = "00:00:00", ["Gameplay:TimeoutSweepInterval"] = "00:00:00.020", ["Sessions:CleanupInterval"] = "01:00:00" }));
         });
         using var host = await Guest(factory);
         using var bob = await Guest(factory);
@@ -245,6 +246,7 @@ public sealed class PartyLifecycleTests
                 await Action(caller, gameId, "callBluff");
                 await Action(bidder, gameId, "submitWord");
                 clock.Advance(TimeSpan.FromSeconds(3));
+                if (round < 4) { await WaitForRound(host, gameId, round + 1); }
                 await lifecycle.RefreshAsync((await factory.Services.GetRequiredService<ILobbySessionStore>().GetAsync(room.Id))!);
             }
             var completed = await Room(host, room.Id);
@@ -287,6 +289,11 @@ public sealed class PartyLifecycleTests
         }
 
         throw new InvalidOperationException("No countdown received.");
+    }
+    private static async Task WaitForRound(HttpClient client, Guid game, int round)
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        while ((await State(client, game)).Round!.Number != round) { await Task.Delay(20, timeout.Token); }
     }
     private static async Task Action(HttpClient client, Guid game, string type)
     {

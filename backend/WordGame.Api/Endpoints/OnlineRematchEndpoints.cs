@@ -35,6 +35,6 @@ internal static class OnlineRematchEndpoints
         catch (UnauthorizedAccessException) { return TypedResults.Unauthorized(); }
         catch (KeyNotFoundException) { return TypedResults.NotFound(); }
         catch (MatchmakingConflictException exception)
-        { return TypedResults.Json(ApiProblems.Create(context, 409, exception.Message), statusCode: 409, contentType: "application/problem+json"); }
+        { return ApiProblems.Result(context, 409, exception.Message); }
     }
 }

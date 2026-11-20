@@ -20,11 +20,5 @@ public sealed class PartyLifecycleService(ILobbySessionStore lobbies, GameEngine
         {
             await lobbies.UpdateAsync(lobby.Id, current => current.FinishMatch(id, state?.Game.Result, clock.GetUtcNow(), rules.Lifetime), cancellationToken);
         }
-        else if (state.Status == SessionStatus.Active && state.Game.CurrentRound is { Status: RoundStatus.Completed } round &&
-            clock.GetUtcNow() >= state.UpdatedAt.AddSeconds(3))
-        {
-            // The shared engine rejects a delayed transition if the round/revision is no longer current.
-            await engine.NextRoundAsync(id, round.Id, state.Version, cancellationToken);
-        }
     }
 }

@@ -1,6 +1,6 @@
 # Online matchmaking queue
 
-F034 adds FIFO selection; F035 creates one shared-engine Online game per pair and starts it after both players accept. The Online UI remains later work.
+The FIFO queue creates one shared-engine Online game per pair and starts it after both players accept. The `/online` UI supports search, acceptance, recovery, full six-round matches, rematches, and returning to queue; completed matches update persistent statistics/history.
 
 ## API
 
@@ -20,7 +20,7 @@ Responses include IDs, timestamps, status, and the caller's `hasAccepted`. `matc
 
 Names use the same backend validation as Party lobbies: trimmed, nonblank, at most 32 characters, without control characters. Name collisions between unrelated queue users are not identity collisions. A duplicate join returns the same searching/matched entry without extending its deadline or changing its FIFO position. A different name conflicts until the current search is cancelled or expires. Unknown JSON fields, including actor IDs, are rejected.
 
-POST and DELETE apply the existing same-origin protection. Joining also uses a per-connection-IP fixed-window limit of 30/minute, configurable as `LobbyRateLimits:MatchmakingPermitsPerMinute` alongside existing sensitive-endpoint limits. Changing identities does not reset this budget; 429 responses include Retry-After. See [lobby security](lobby-security.md) for shared-network/proxy limits.
+POST and DELETE apply the existing same-origin protection. Join/cancel/accept/decline and rematch writes share a per-IP budget; reads/stream opening and gameplay actions have separate budgets. Changing identities does not reset them; 429 responses include Retry-After. See [lobby security](lobby-security.md) for settings and shared-network/proxy limits.
 
 ## States and concurrency
 
