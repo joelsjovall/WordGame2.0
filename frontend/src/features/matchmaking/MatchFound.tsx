@@ -1,5 +1,6 @@
 import type { MatchmakingState } from '../../services/api/matchmaking.ts'
 import { SearchTimer } from './SearchTimer.tsx'
+import { Button, Badge } from '../../components/ui.tsx'
 
 export function MatchFound({
   state,
@@ -21,7 +22,7 @@ export function MatchFound({
           {Array.from(opponent)[0]?.toUpperCase() ?? '?'}
         </span>
         <strong>{opponent || 'Getting your opponent’s name…'}</strong>
-        <span>Online · 1 vs 1</span>
+        <Badge>Online · 1 vs 1</Badge>
       </div>
       {state.expiresAt && (
         <p className="online-clock">
@@ -34,16 +35,20 @@ export function MatchFound({
           : 'Ready to put your words to the test?'}
       </p>
       <div className="online-actions">
-        <button
+        <Button
           className="online-primary"
           disabled={disabled || state.hasAccepted}
           onClick={() => respond('accept')}
         >
           {state.hasAccepted ? 'Accepted' : 'Accept match'}
-        </button>
-        <button disabled={disabled} onClick={() => respond('decline')}>
+        </Button>
+        <Button
+          variant="secondary"
+          disabled={disabled}
+          onClick={() => respond('decline')}
+        >
           Decline match
-        </button>
+        </Button>
       </div>
     </>
   )

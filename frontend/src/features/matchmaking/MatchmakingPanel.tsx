@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { useMatchmaking } from './useMatchmaking.ts'
 import { SearchTimer } from './SearchTimer.tsx'
 import { MatchFound } from './MatchFound.tsx'
+import { TextField, Button } from '../../components/ui.tsx'
 
 export function MatchmakingPanel({
   matchmaking,
@@ -92,8 +93,8 @@ export function MatchmakingPanel({
               void join(name.trim())
             }}
           >
-            <label htmlFor="online-name">Your display name</label>
-            <input
+            <TextField
+              label="Your display name"
               id="online-name"
               autoComplete="nickname"
               value={name}
@@ -102,12 +103,14 @@ export function MatchmakingPanel({
               required
               disabled={busy}
             />
-            <button
+            <Button
+              type="submit"
+              busy={busy}
               className="online-primary"
               disabled={disabled || !name.trim()}
             >
               {busy ? 'Joining…' : 'Play Online'}
-            </button>
+            </Button>
           </form>
           <p className="online-note">
             One opponent. Six rounds. Make every word count.

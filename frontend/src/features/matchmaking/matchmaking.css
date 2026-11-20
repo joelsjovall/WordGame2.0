@@ -1,14 +1,14 @@
 .online-page {
-  --online-ink: #193e36;
-  --online-green: #205f4e;
-  max-width: 68rem;
+  --online-ink: var(--color-ink);
+  --online-green: var(--color-primary);
+  max-width: var(--content-width);
   color: var(--online-ink);
   padding-top: 1.25rem;
 }
 .online-back {
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
+  min-height: var(--control-height);
   color: inherit;
   font-weight: 650;
 }
@@ -30,16 +30,16 @@
 }
 .online-layout {
   display: grid;
-  gap: 1.5rem;
+  gap: var(--space-5);
   align-items: start;
 }
 .online-card {
   padding: clamp(1.3rem, 4vw, 2.5rem);
-  border: 1px solid #cbd9cf;
-  border-radius: 1.5rem;
-  background: #fffefa;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
   min-width: 0;
-  box-shadow: 0 10px 30px #193e3608;
+  box-shadow: var(--shadow-card);
 }
 .online-card h2 {
   font-size: clamp(1.5rem, 4vw, 2rem);
@@ -47,7 +47,7 @@
   margin: 0.7rem 0 1rem;
 }
 .online-card p {
-  color: #456056;
+  color: var(--color-muted);
 }
 .online-card form {
   display: grid;
@@ -59,44 +59,32 @@
 .online-card input {
   width: 100%;
   min-width: 0;
-  min-height: 48px;
+  min-height: var(--control-height);
   padding: 0.85rem;
-  border: 1px solid #809a8b;
-  border-radius: 0.65rem;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-control);
   font: inherit;
-  background: white;
+  background: var(--color-surface);
   color: inherit;
 }
-.online-card button,
-.home-online {
-  min-height: 48px;
+.online-card button {
+  min-height: var(--control-height);
   padding: 0.85rem 1.1rem;
-  border: 1px solid #809a8b;
-  border-radius: 0.65rem;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-control);
   font: inherit;
   font-weight: 650;
   cursor: pointer;
   background: transparent;
   color: inherit;
 }
-.online-card button.online-primary,
-.home-online {
-  background: #205f4e;
-  color: #fff;
-  border-color: #205f4e;
-}
-.home-online {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-}
-.online-card button:disabled {
-  opacity: 0.5;
-  cursor: default;
+.online-card button.online-primary {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border-color: var(--color-primary);
 }
 .online-page :focus-visible {
-  outline: 3px solid #d58a2f;
+  outline: 3px solid var(--color-focus);
   outline-offset: 4px;
 }
 .online-card .online-note {
@@ -104,8 +92,8 @@
   margin-bottom: 0;
 }
 .online-guide {
-  border-radius: 1.5rem;
-  background: #eaf0e5;
+  border-radius: var(--radius-card);
+  background: var(--color-subtle);
   padding: 1.5rem;
   min-width: 0;
 }
@@ -124,11 +112,11 @@
   display: block;
   line-height: 1.6;
   margin-top: 0.25rem;
-  color: #456056;
+  color: var(--color-muted);
 }
 .online-guide a {
   display: inline-flex;
-  min-height: 44px;
+  min-height: var(--control-height);
   align-items: center;
   color: inherit;
   font-weight: 600;
@@ -137,7 +125,7 @@
 .online-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 .online-actions button {
   flex: 1 1 9rem;
@@ -151,9 +139,9 @@
   justify-items: center;
   gap: 0.65rem;
   text-align: center;
-  background: #edf3ea;
+  background: var(--color-subtle);
   padding: 1.5rem;
-  border-radius: 1rem;
+  border-radius: var(--radius-card);
 }
 .online-opponent strong {
   max-width: 100%;
@@ -168,9 +156,9 @@
   place-items: center;
   width: 64px;
   height: 64px;
-  border-radius: 50%;
-  background: #205f4e;
-  color: white;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
   font-weight: 700;
   font-size: 1.5rem;
 }
@@ -188,16 +176,16 @@
   content: '';
   position: absolute;
   inset: 0;
-  border: 3px solid #d5e3d6;
-  border-top-color: #205f4e;
-  border-radius: 50%;
+  border: 3px solid var(--color-line);
+  border-top-color: var(--color-primary);
+  border-radius: var(--radius-pill);
   animation: online-search 1.5s linear infinite;
 }
 .online-error {
-  color: #8d2825;
-  background: #fff0ea;
+  color: var(--color-error);
+  background: var(--color-error-soft);
   padding: 1rem;
-  border-radius: 0.65rem;
+  border-radius: var(--radius-control);
   overflow-wrap: anywhere;
 }
 @keyframes online-search {
