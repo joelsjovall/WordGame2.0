@@ -9,10 +9,12 @@ internal static class OnlineRematchEndpoints
 {
     internal static void MapOnlineRematchEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/v1/games/{gameId:guid}/rematch").RequireAuthorization().WithTags("Matchmaking");
-        group.MapGet("", GetAsync).WithName("GetOnlineRematch").Produces<OnlineRematchResponse>().Produces(401).Produces(404).Produces(409);
+        var group = app.MapGroup("/api/v1/games/{gameId:guid}/rematch").RequireAuthorization().WithTags("Matchmaking")
+            .RequireRateLimiting(LobbyRateLimiting.MatchmakingRead);
+        group.MapGet("", GetAsync).WithName("GetOnlineRematch").Produces<OnlineRematchResponse>().Produces(401).Produces(404).Produces(409).Produces(429);
         group.MapPost("", RespondAsync).AddEndpointFilter<SameOriginWriteFilter>().WithName("RespondOnlineRematch")
-            .Produces<OnlineRematchResponse>().Produces(400).Produces(401).Produces(403).Produces(404).Produces(409);
+            .RequireRateLimiting(LobbyRateLimiting.Matchmaking)
+            .Produces<OnlineRematchResponse>().Produces(400).Produces(401).Produces(403).Produces(404).Produces(409).Produces(429);
     }
     private static Task<IResult> GetAsync(Guid gameId, HttpContext context, OnlineRematchService rematches, CancellationToken cancellationToken) =>
         Execute(context, (actor, credential) => rematches.GetAsync(gameId, actor, credential, cancellationToken));

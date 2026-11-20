@@ -25,9 +25,9 @@ public sealed class ChallengeService(IGameSessionStore sessions, SessionRetentio
     public async Task<GameEngineResult> SubmitAsync(Guid gameId, Guid playerId, string word,
         PlayerActionContext context, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(word))
+        if (string.IsNullOrWhiteSpace(word) || word.Length > 256)
         {
-            return GameEngineResult.Rejected(GameEngineErrorCode.InvalidAction, "A nonblank word is required.");
+            return GameEngineResult.Rejected(GameEngineErrorCode.InvalidAction, "A nonblank word of at most 256 characters is required.");
         }
 
         WordSubmissionStatus? status = null;

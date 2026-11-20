@@ -883,6 +883,13 @@ export interface operations {
         }
         content?: never
       }
+      /** @description Too Many Requests */
+      429: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
     }
   }
   EnsureGuestIdentity: {
@@ -1361,6 +1368,13 @@ export interface operations {
         }
         content?: never
       }
+      /** @description Too Many Requests */
+      429: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
     }
   }
   RespondOnlineRematch: {
@@ -1417,6 +1431,13 @@ export interface operations {
       }
       /** @description Conflict */
       409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Too Many Requests */
+      429: {
         headers: {
           [name: string]: unknown
         }
@@ -1508,6 +1529,13 @@ export interface operations {
         }
         content?: never
       }
+      /** @description Too Many Requests */
+      429: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
     }
   }
   WatchMatchmaking: {
@@ -1530,6 +1558,13 @@ export interface operations {
       }
       /** @description Unauthorized */
       401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Too Many Requests */
+      429: {
         headers: {
           [name: string]: unknown
         }
@@ -1566,6 +1601,13 @@ export interface operations {
       }
       /** @description Not Found */
       404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Too Many Requests */
+      429: {
         headers: {
           [name: string]: unknown
         }
@@ -1614,6 +1656,13 @@ export interface operations {
       }
       /** @description Conflict */
       409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Too Many Requests */
+      429: {
         headers: {
           [name: string]: unknown
         }
@@ -1680,6 +1729,13 @@ export interface operations {
         }
         content?: never
       }
+      /** @description Too Many Requests */
+      429: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
     }
   }
   DeclineOnlineMatch: {
@@ -1736,6 +1792,13 @@ export interface operations {
       }
       /** @description Conflict */
       409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Too Many Requests */
+      429: {
         headers: {
           [name: string]: unknown
         }
