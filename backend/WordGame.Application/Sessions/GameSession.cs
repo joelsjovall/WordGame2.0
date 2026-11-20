@@ -79,6 +79,11 @@ public sealed class GameSession
         Require(Status == SessionStatus.Starting && Game.Status == GameStatus.InProgress,
             "Activation requires a starting session and an initialized game.");
         Status = SessionStatus.Active;
+        if (Game.Settings.Format == MatchFormat.Online)
+        {
+            foreach (var player in Game.Players.Where(player => connections[player.Id].Count == 0)) { disconnectedAt[player.Id] = UpdatedAt; }
+            if (connections.Values.All(ids => ids.Count == 0)) { AllDisconnectedSince = UpdatedAt; }
+        }
     }
 
     public void Complete()
@@ -157,7 +162,8 @@ public sealed class GameSession
     internal void RecordAction(Guid actionId) => processedActions.Add(actionId);
     internal bool HasLeft(Guid playerId) => departed.Contains(playerId);
     internal bool CanTakeTurn(Guid playerId, TimeSpan grace) => !departed.Contains(playerId) &&
-        (connections[playerId].Count > 0 || disconnectedAt[playerId] is { } since && UpdatedAt - since < grace);
+        (Game.Settings.Format == MatchFormat.Online && Status is SessionStatus.Waiting or SessionStatus.Starting ||
+            connections[playerId].Count > 0 || disconnectedAt[playerId] is { } since && UpdatedAt - since < grace);
 
     internal void Leave(Guid playerId)
     {
@@ -174,6 +180,28 @@ public sealed class GameSession
         {
             Abandon();
         }
+    }
+
+    internal void Forfeit(Guid playerId, TimeSpan grace)
+    {
+        Require(Status == SessionStatus.Active && Game.Settings.Format == MatchFormat.Online, "Only an active Online match can be forfeited.");
+        Leave(playerId);
+        ResolveOnlineDeparture(grace, MatchEndReason.Forfeit);
+    }
+
+    internal bool ResolveOnlineDeparture(TimeSpan grace, MatchEndReason reason)
+    {
+        var eligible = Game.Players.Where(player => CanTakeTurn(player.Id, grace)).ToArray();
+        if (eligible.Length == 2) { return false; }
+        var unavailable = Game.Players.Where(player => !CanTakeTurn(player.Id, grace)).ToArray();
+        foreach (var player in unavailable.Where(player => !HasLeft(player.Id))) { Leave(player.Id); }
+        if (eligible.Length == 1)
+        {
+            Game.CompleteByForfeit(unavailable.Single().Id, reason);
+            Complete();
+        }
+        else { Abandon(); }
+        return true;
     }
 
     // Used by engine presence operations and the periodic cleanup sweep, using this draft's timestamp.

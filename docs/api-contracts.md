@@ -55,6 +55,7 @@ Each action includes a caller-generated UUID actionId and string expectedVersion
 - callBluff has no client-chosen bidder, count, or deadline.
 - submitWord adds word.
 - leaveMatch explicitly leaves the current match; it does not nominate a player ID.
+- forfeitMatch explicitly forfeits an active Online match using the authenticated player and the usual action ID/revision guards. Online leaveMatch has the same outcome. Match results include reason (completed, forfeit, or reconnectionExpired) and nullable forfeitedPlayerId; standings and winnerIds remain authoritative even when the winner has fewer points.
 
 No action accepts score changes, validation results, authoritative timestamps, or an acting player ID. The handler derives the actor from identity, compares expectedVersion, serializes operations through the shared session store, and uses Domain guards. Stale state and duplicate action IDs return 409. F014's [application turn layer](turn-management.md) prevents reused IDs from advancing state. F027 implements HTTP execution without automatically retrying commands or adding original-response receipt replay.
 

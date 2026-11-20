@@ -11,16 +11,20 @@ public sealed class GameplayTimeoutWorker : BackgroundService
     private readonly IGameSessionStore sessions;
     private readonly CategorySelectionService categories;
     private readonly ChallengeService challenges;
+    private readonly GameEngine engine;
+    private readonly SessionRetention retention;
     private readonly TimeProvider clock;
     private readonly ILogger<GameplayTimeoutWorker> logger;
     private readonly TimeSpan interval;
 
     public GameplayTimeoutWorker(IGameSessionStore sessions, CategorySelectionService categories, ChallengeService challenges,
-        TimeProvider clock, IConfiguration configuration, ILogger<GameplayTimeoutWorker> logger)
+        TimeProvider clock, IConfiguration configuration, ILogger<GameplayTimeoutWorker> logger, GameEngine engine, SessionRetention retention)
     {
         this.sessions = sessions;
         this.categories = categories;
         this.challenges = challenges;
+        this.engine = engine;
+        this.retention = retention;
         this.clock = clock;
         this.logger = logger;
         interval = configuration.GetValue<TimeSpan?>("Gameplay:TimeoutSweepInterval") ??
@@ -39,7 +43,11 @@ public sealed class GameplayTimeoutWorker : BackgroundService
         RunAsync("Challenge", session => session.Game.CurrentRound is
         { Status: RoundStatus.Challenge, Challenge: { Outcome: ChallengeOutcome.Pending } challenge } &&
                 clock.GetUtcNow() >= challenge.Deadline,
-            (session, token) => challenges.ResolveAsync(session.Id, session.Version, token), stoppingToken));
+            (session, token) => challenges.ResolveAsync(session.Id, session.Version, token), stoppingToken),
+        RunAsync("Online presence", session => session.Game.Settings.Format == MatchFormat.Online &&
+            session.Players.Any(player => !player.HasLeft && player.ConnectionCount == 0 && player.DisconnectedAt is { } at &&
+                clock.GetUtcNow() - at >= retention.OnlineDisconnectedGrace),
+            (session, token) => engine.ReconcileConnectionsAsync(session.Id, session.Version, token), stoppingToken));
 
     // Independent phase loops share the polling implementation; provider I/O cannot delay challenge expiry.
     private async Task RunAsync(string phase, Func<SessionSnapshot, bool> isDue,

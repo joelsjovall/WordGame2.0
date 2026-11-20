@@ -143,4 +143,15 @@ public sealed class Game
 
         Status = GameStatus.Cancelled;
     }
+
+    public void CompleteByForfeit(Guid playerId, MatchEndReason reason)
+    {
+        DomainGuard.State(Settings.Format == MatchFormat.Online && Status == GameStatus.InProgress,
+            "Only an active Online game can end by forfeit.");
+        DomainGuard.State(Players.Any(player => player.Id == playerId) && reason is MatchEndReason.Forfeit or MatchEndReason.ReconnectionExpired,
+            "A forfeiting roster member and valid reason are required.");
+        if (CurrentRound is { Status: not (RoundStatus.Completed or RoundStatus.Cancelled) } round) { round.Cancel(); }
+        Result = new MatchResult(this, reason, playerId);
+        Status = GameStatus.Completed;
+    }
 }

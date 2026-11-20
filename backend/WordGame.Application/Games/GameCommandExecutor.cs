@@ -5,15 +5,16 @@ namespace WordGame.Application.Games;
 // Shared transaction and player-action guards for engine use cases.
 internal sealed class GameCommandExecutor(IGameSessionStore sessions, SessionRetention retention)
 {
-    internal Task<GameEngineResult> PlayerUpdateAsync(Guid gameId, Guid playerId, PlayerActionContext context,
+    internal async Task<GameEngineResult> PlayerUpdateAsync(Guid gameId, Guid playerId, PlayerActionContext context,
         Action<GameSession> action, CancellationToken cancellationToken)
     {
         if (context is null || context.ActionId == Guid.Empty || context.ExpectedVersion < 0)
         {
-            return Task.FromResult(GameEngineResult.Rejected(GameEngineErrorCode.InvalidAction, "An action ID and nonnegative revision are required."));
+            return GameEngineResult.Rejected(GameEngineErrorCode.InvalidAction, "An action ID and nonnegative revision are required.");
         }
 
-        return UpdateAsync(gameId, session =>
+        var resolvedDeparture = false;
+        var result = await UpdateAsync(gameId, session =>
         {
             if (session.Status is SessionStatus.Completed or SessionStatus.Abandoned)
             {
@@ -25,12 +26,20 @@ internal sealed class GameCommandExecutor(IGameSessionStore sessions, SessionRet
                 throw new GameActionRejectedException(GameEngineErrorCode.PlayerNotInGame, "The player is not in this game.");
             }
 
+            if (session.Game.Settings.Format == WordGame.Domain.MatchFormat.Online && session.Status == SessionStatus.Active &&
+                session.ReconcileTurns(retention.GraceFor(session.Game.Settings.Format)))
+            {
+                // Commit the authoritative outcome without executing a late player command.
+                resolvedDeparture = true;
+                return;
+            }
+
             if (session.HasProcessedAction(context.ActionId))
             {
                 throw new GameActionRejectedException(GameEngineErrorCode.DuplicateAction, "This action has already been processed.");
             }
 
-            if (!session.CanTakeTurn(playerId, retention.DisconnectedGrace))
+            if (!session.CanTakeTurn(playerId, retention.GraceFor(session.Game.Settings.Format)))
             {
                 throw new GameActionRejectedException(GameEngineErrorCode.PlayerUnavailable, "The player is not eligible to act.");
             }
@@ -38,6 +47,8 @@ internal sealed class GameCommandExecutor(IGameSessionStore sessions, SessionRet
             action(session);
             session.RecordAction(context.ActionId);
         }, cancellationToken, context.ExpectedVersion);
+        return result.Succeeded && resolvedDeparture
+            ? GameEngineResult.Rejected(GameEngineErrorCode.PlayerUnavailable, "The match ended after a player failed to reconnect.") : result;
     }
 
     internal async Task<GameEngineResult> UpdateAsync(Guid gameId, Action<GameSession> action, CancellationToken cancellationToken, long? expectedVersion = null)

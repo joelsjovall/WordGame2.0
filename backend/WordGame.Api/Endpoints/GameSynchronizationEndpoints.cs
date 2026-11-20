@@ -32,7 +32,7 @@ internal static class GameSynchronizationEndpoints
         var state = await events.GetStateAsync(gameId, playerId, cancellationToken);
         context.Response.Headers.CacheControl = "no-store";
         context.Response.Headers.Vary = "Cookie";
-        return state is null ? TypedResults.NotFound() : TypedResults.Ok(GameStateMapper.Map(state, clock.GetUtcNow(), retention.DisconnectedGrace));
+        return state is null ? TypedResults.NotFound() : TypedResults.Ok(GameStateMapper.Map(state, clock.GetUtcNow(), retention.GraceFor(state.Game.Settings.Format)));
     }
 
     private static async Task<IResult> EventsAsync(Guid gameId, HttpContext context, GameEventService events, GameEngine engine,

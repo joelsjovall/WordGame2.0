@@ -16,7 +16,7 @@ public sealed class ChallengeService(IGameSessionStore sessions, SessionRetentio
         {
             var round = GamePhaseGuard.BiddingRound(session, playerId);
             GamePhaseGuard.Require(round.HighestBid is not null, "A bluff call requires an existing bid.");
-            GamePhaseGuard.Require(session.CanTakeTurn(round.HighestBid!.PlayerId, retention.DisconnectedGrace), "The bidder is unavailable.");
+            GamePhaseGuard.Require(session.CanTakeTurn(round.HighestBid!.PlayerId, retention.GraceFor(session.Game.Settings.Format)), "The bidder is unavailable.");
             var startedAt = session.UpdatedAt;
             round.BeginChallenge(new Challenge(Guid.NewGuid(), round.HighestBid, playerId, startedAt,
                 startedAt.Add(session.Game.Settings.ChallengeDuration ?? rules.Duration)));
@@ -64,7 +64,7 @@ public sealed class ChallengeService(IGameSessionStore sessions, SessionRetentio
             var challenge = round.Challenge!;
             GamePhaseGuard.Require(challenge.HasMetBid || session.UpdatedAt >= challenge.Deadline,
                 "An incomplete challenge cannot end before its deadline.");
-            session.ReconcileTurns(retention.DisconnectedGrace);
+            session.ReconcileTurns(retention.GraceFor(session.Game.Settings.Format));
             if (session.Status == SessionStatus.Active)
             {
                 Complete(session, round);

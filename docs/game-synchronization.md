@@ -56,4 +56,12 @@ Integration tests stream changes to two/four participants through real engine op
 
 Sessions remain in memory on one backend instance and disappear on restart/retention cleanup. F023 supplies guest issuance and lobby creation. Playable Party actions and lifecycle are implemented. Persistent history, Online matchmaking, and presentation polish remain later issues.
 
+## Online disconnects and forfeits
+
+`Sessions:OnlineDisconnectedGrace` is a strictly positive duration, defaulting to 30 seconds independently of Party grace. The initial connection window starts when the match activates; matchmaking owns the preceding acceptance deadline. Presence counts tabs, so closing one tab does not disconnect a player while another remains connected.
+
+During a temporary disconnect, scores and state are retained and gameplay timers continue. Reconnection must occur before the grace deadline. An explicit `forfeitMatch` (or Online `leaveMatch`) awards the other eligible player the win regardless of points; scores remain unchanged. Expired grace has the same outcome with reason `reconnectionExpired`. If neither player remains eligible, the match is abandoned without a winner.
+
+The backend checks expiry before accepting late gameplay actions and publishes the final state through SSE. Results resolve once and remain immutable; forfeited players cannot resume play. Ended sessions use the existing retention cleanup and remain subject to the single-instance, in-memory limitation.
+
 Implementation references: [ASP.NET Core SSE responses](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/responses?view=aspnetcore-10.0#server-sent-events-sse), [cookie authentication](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/cookie?view=aspnetcore-10.0).
