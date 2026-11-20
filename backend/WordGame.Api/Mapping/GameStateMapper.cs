@@ -31,7 +31,8 @@ public static class GameStateMapper
 
     internal static MatchResultResponse MapMatchResult(Domain.MatchResult result) => new(
         result.GameId, MapFormat(result.Format), result.CompletedRoundCount, result.IsTie, result.WinnerIds,
-        result.Standings.Select(standing => new MatchStandingResponse(standing.PlayerId, standing.DisplayName, standing.Score, standing.Rank)).ToArray());
+        result.Standings.Select(standing => new MatchStandingResponse(standing.PlayerId, standing.DisplayName, standing.Score, standing.Rank)).ToArray(),
+        Enum.Parse<ApiMatchEndReason>(result.Reason.ToString()), result.ForfeitedPlayerId);
 
     internal static ApiSessionStatus MapStatus(SessionStatus status) => status switch
     {

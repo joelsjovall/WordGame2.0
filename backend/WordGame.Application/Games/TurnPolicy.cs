@@ -30,6 +30,11 @@ internal static class TurnPolicy
             return false;
         }
 
+        if (session.Game.Settings.Format == MatchFormat.Online)
+        {
+            return session.Status == SessionStatus.Active && session.ResolveOnlineDeparture(grace, MatchEndReason.ReconnectionExpired);
+        }
+
         var round = session.Game.CurrentRound;
         var essentialPlayerMissing = round?.Status is RoundStatus.Bidding or RoundStatus.Challenge &&
             (round.HighestBid is { } bid && !session.CanTakeTurn(bid.PlayerId, grace) ||

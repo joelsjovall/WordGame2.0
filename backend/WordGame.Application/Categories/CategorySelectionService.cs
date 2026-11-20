@@ -50,7 +50,7 @@ public sealed class CategorySelectionService(ICategoryProvider provider, Categor
                 throw new InvalidOperationException("Category selection has not expired.");
             }
 
-            session.ReconcileTurns(retention.DisconnectedGrace);
+            session.ReconcileTurns(retention.GraceFor(session.Game.Settings.Format));
             if (session.Status != SessionStatus.Active)
             {
                 return;

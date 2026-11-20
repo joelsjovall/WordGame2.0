@@ -167,6 +167,55 @@ test('Online players cancel, restore, decline, and enter the same game on deskto
       await expect(
         bob.getByRole('button', { name: 'Call bluff', exact: true }),
       ).toBeEnabled()
+      await bob.getByRole('button', { name: 'Call bluff', exact: true }).click()
+      await alice.getByLabel('Your word').fill('Stockholm')
+      await alice
+        .getByRole('button', { name: 'Submit word', exact: true })
+        .click()
+      await expect(
+        alice.getByRole('heading', { name: 'Round complete', exact: true }),
+      ).toBeVisible()
+      const scoredResponse = await alice.request.get(
+        `${backendUrl}/api/v1/games/${room.gameId}/state`,
+      )
+      const scored = (await scoredResponse.json()) as {
+        round: { id: string }
+        players: { id: string; score: number }[]
+      }
+      expect(scored.players[0]!.score).toBeGreaterThan(0)
+      await first.setOffline(true)
+      await expect(bob.getByLabel('Match scores')).toContainText('Reconnecting')
+      await first.setOffline(false)
+      await expect(
+        alice.getByText('Connected to match.', { exact: true }),
+      ).toBeVisible({ timeout: 15000 })
+      const restoredResponse = await alice.request.get(
+        `${backendUrl}/api/v1/games/${room.gameId}/state`,
+      )
+      const restored = (await restoredResponse.json()) as typeof scored
+      expect(restored.round.id).toBe(scored.round.id)
+      expect(restored.players.map((player) => player.score)).toEqual(
+        scored.players.map((player) => player.score),
+      )
+      await alice
+        .getByRole('button', { name: 'Forfeit Match', exact: true })
+        .click()
+      await expect(
+        bob.getByRole('heading', { name: 'You won', exact: true }),
+      ).toBeVisible()
+      await expect(
+        alice.getByRole('heading', { name: 'Match over', exact: true }),
+      ).toBeVisible()
+      await expect(
+        bob.getByText('Alice forfeited the match.', { exact: true }),
+      ).toBeVisible()
+      await alice.reload()
+      await expect(
+        alice.getByRole('heading', { name: 'Match over', exact: true }),
+      ).toBeVisible()
+      await expect(
+        alice.getByRole('button', { name: 'Forfeit Match', exact: true }),
+      ).toHaveCount(0)
       await noOverflow(alice)
     } finally {
       await clearPendingSearch(first)

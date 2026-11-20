@@ -65,7 +65,7 @@ public sealed class GameEngine(IGameSessionStore sessions, SessionRetention rete
         commands.UpdateAsync(gameId, session =>
         {
             GamePhaseGuard.Require(session.Status == SessionStatus.Starting, "Only an initialized game can start.");
-            session.Game.StartRound(Guid.NewGuid(), TurnPolicy.FirstPlayer(session, retention.DisconnectedGrace));
+            session.Game.StartRound(Guid.NewGuid(), TurnPolicy.FirstPlayer(session, retention.GraceFor(session.Game.Settings.Format)));
             session.Activate();
             session.BeginCategorySelection(categories.Rules.Timeout);
         }, cancellationToken);
@@ -81,7 +81,7 @@ public sealed class GameEngine(IGameSessionStore sessions, SessionRetention rete
         {
             var round = GamePhaseGuard.BiddingRound(session, playerId);
             round.RecordBid(new Bid(playerId, wordCount));
-            round.AssignTurn(TurnPolicy.NextPlayer(session, playerId, retention.DisconnectedGrace));
+            round.AssignTurn(TurnPolicy.NextPlayer(session, playerId, retention.GraceFor(session.Game.Settings.Format)));
         }, cancellationToken);
 
     public Task<GameEngineResult> CallBluffAsync(Guid gameId, Guid playerId, PlayerActionContext context, CancellationToken cancellationToken = default) =>
@@ -108,7 +108,7 @@ public sealed class GameEngine(IGameSessionStore sessions, SessionRetention rete
         GamePhaseGuard.Require(round.Status == RoundStatus.Completed && session.Game.RoundResults.ContainsKey(round.Id),
             "The current round must have a scored result before progression.");
         GamePhaseGuard.Require(completedRoundId is null || completedRoundId == round.Id, "The completed round is no longer current.");
-        session.Game.StartRound(Guid.NewGuid(), TurnPolicy.NextPlayer(session, round.StartingPlayerId, retention.DisconnectedGrace));
+        session.Game.StartRound(Guid.NewGuid(), TurnPolicy.NextPlayer(session, round.StartingPlayerId, retention.GraceFor(session.Game.Settings.Format)));
         session.BeginCategorySelection(categories.Rules.Timeout);
     }
 
@@ -128,28 +128,43 @@ public sealed class GameEngine(IGameSessionStore sessions, SessionRetention rete
                 throw new InvalidOperationException("A departed player or abandoned match cannot reconnect.");
             }
             // Enforce elapsed grace before adding presence, so a late stream cannot revive an ended match.
-            session.ReconcileTurns(retention.DisconnectedGrace);
+            session.ReconcileTurns(retention.GraceFor(session.Game.Settings.Format));
             if (session.Status is SessionStatus.Completed or SessionStatus.Abandoned)
             {
                 return;
             }
 
             session.Connect(playerId, connectionId);
-            session.ReconcileTurns(retention.DisconnectedGrace);
+            session.ReconcileTurns(retention.GraceFor(session.Game.Settings.Format));
         }, cancellationToken);
 
     public Task<GameEngineResult> DisconnectAsync(Guid gameId, Guid playerId, Guid connectionId, CancellationToken cancellationToken = default) =>
         commands.UpdateAsync(gameId, session =>
         {
             session.Disconnect(playerId, connectionId);
-            session.ReconcileTurns(retention.DisconnectedGrace);
+            session.ReconcileTurns(retention.GraceFor(session.Game.Settings.Format));
         }, cancellationToken);
 
     public Task<GameEngineResult> LeaveAsync(Guid gameId, Guid playerId, PlayerActionContext context, CancellationToken cancellationToken = default) =>
         commands.PlayerUpdateAsync(gameId, playerId, context, session =>
         {
+            if (session.Game.Settings.Format == MatchFormat.Online && session.Status == SessionStatus.Active)
+            {
+                session.Forfeit(playerId, retention.GraceFor(session.Game.Settings.Format));
+                return;
+            }
             session.Leave(playerId);
-            session.ReconcileTurns(retention.DisconnectedGrace);
+            session.ReconcileTurns(retention.GraceFor(session.Game.Settings.Format));
         }, cancellationToken);
+
+    public Task<GameEngineResult> ForfeitAsync(Guid gameId, Guid playerId, PlayerActionContext context, CancellationToken cancellationToken = default) =>
+        commands.PlayerUpdateAsync(gameId, playerId, context, session =>
+        {
+            session.Forfeit(playerId, retention.GraceFor(session.Game.Settings.Format));
+        }, cancellationToken);
+
+    public Task<GameEngineResult> ReconcileConnectionsAsync(Guid gameId, long expectedVersion, CancellationToken cancellationToken = default) =>
+        commands.UpdateAsync(gameId, session => session.ReconcileTurns(retention.GraceFor(session.Game.Settings.Format)),
+            cancellationToken, expectedVersion);
 
 }

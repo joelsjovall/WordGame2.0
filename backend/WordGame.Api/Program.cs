@@ -58,7 +58,8 @@ builder.Services.AddHostedService<MatchmakingWorker>();
 builder.Services.AddSingleton(_ => new SessionRetention(
     builder.Configuration.GetValue("Sessions:DisconnectedGrace", TimeSpan.FromMinutes(2)),
     builder.Configuration.GetValue("Sessions:CompletedRetention", TimeSpan.FromMinutes(10)),
-    builder.Configuration.GetValue("Sessions:AbandonedRetention", TimeSpan.FromMinutes(5))));
+    builder.Configuration.GetValue("Sessions:AbandonedRetention", TimeSpan.FromMinutes(5)),
+    builder.Configuration.GetValue("Sessions:OnlineDisconnectedGrace", TimeSpan.FromSeconds(30))));
 builder.Services.AddSingleton<IGameSessionStore, InMemoryGameSessionStore>();
 builder.Services.AddSingleton(_ => new LobbyRules(builder.Configuration.GetValue("Sessions:LobbyLifetime", TimeSpan.FromMinutes(30)),
     // A lobby needs time to establish its first stream; game-session grace independently permits zero.

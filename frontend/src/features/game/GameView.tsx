@@ -7,6 +7,7 @@ import { gameSynchronization } from '../../services/gameSynchronization.ts'
 import { GameConnectionStatus } from './GameConnectionStatus.tsx'
 import { ServerCountdown } from './ServerCountdown.tsx'
 import { Link } from 'react-router'
+import { OnlineOutcome } from './OnlineOutcome.tsx'
 
 export function GameView({ id, playerId }: { id: string; playerId: string }) {
   const { state, connection, error: syncError } = useGameState(id)
@@ -84,12 +85,17 @@ export function GameView({ id, playerId }: { id: string; playerId: string }) {
           </ul>
           {state.status === 'abandoned' && (
             <p>
-              The match ended before completion. Returning to the lobby results…
+              {state.match.format === 'online'
+                ? 'The match ended without a winner.'
+                : 'The match ended before completion. Returning to the lobby results…'}
             </p>
           )}
-          {state.status === 'completed' && (
-            <p>The match is complete. Preparing final results…</p>
-          )}
+          {state.status === 'completed' &&
+            (state.match.format === 'online' ? (
+              <OnlineOutcome state={state} playerId={playerId} />
+            ) : (
+              <p>The match is complete. Preparing final results…</p>
+            ))}
           {hasLeft ? (
             <p>
               You left this match. Reopening this page will not rejoin it.{' '}
@@ -108,11 +114,27 @@ export function GameView({ id, playerId }: { id: string; playerId: string }) {
             <button
               className="lobby-start"
               disabled={busy || connection !== 'connected'}
-              onClick={() => void send({ type: 'leaveMatch' })}
+              onClick={() =>
+                void send({
+                  type:
+                    state.match.format === 'online'
+                      ? 'forfeitMatch'
+                      : 'leaveMatch',
+                })
+              }
             >
-              Leave match
+              {state.match.format === 'online'
+                ? 'Forfeit Match'
+                : 'Leave match'}
             </button>
           )}
+          {!hasLeft &&
+            state.status === 'active' &&
+            state.match.format === 'online' && (
+              <p>
+                Forfeiting ends this match and awards the win to your opponent.
+              </p>
+            )}
         </>
       )}
     </>

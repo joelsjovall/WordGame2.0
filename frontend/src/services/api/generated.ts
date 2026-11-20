@@ -382,6 +382,11 @@ export interface components {
     ApiEventKind: 'updated' | 'removed'
     /** @enum {unknown} */
     ApiLobbyStatus: 'waiting' | 'starting' | 'started' | 'closed' | 'completed'
+    /**
+     * @default completed
+     * @enum {unknown}
+     */
+    ApiMatchEndReason: 'completed' | 'forfeit' | 'reconnectionExpired'
     /** @enum {unknown} */
     ApiMatchFormat: 'party' | 'online'
     /** @enum {unknown} */
@@ -457,9 +462,17 @@ export interface components {
       | components['schemas']['GameActionRequestCallBluffAction']
       | components['schemas']['GameActionRequestSubmitWordAction']
       | components['schemas']['GameActionRequestLeaveMatchAction']
+      | components['schemas']['GameActionRequestForfeitMatchAction']
     GameActionRequestCallBluffAction: {
       /** @enum {string} */
       type: 'callBluff'
+      /** Format: uuid */
+      actionId: string
+      expectedVersion: string
+    }
+    GameActionRequestForfeitMatchAction: {
+      /** @enum {string} */
+      type: 'forfeitMatch'
       /** Format: uuid */
       actionId: string
       expectedVersion: string
@@ -628,6 +641,9 @@ export interface components {
       isTie: boolean
       winnerIds: string[]
       standings: components['schemas']['MatchStandingResponse'][]
+      reason?: components['schemas']['ApiMatchEndReason']
+      /** Format: uuid */
+      forfeitedPlayerId?: null | string
     }
     MatchSettingsResponse: {
       format: components['schemas']['ApiMatchFormat']

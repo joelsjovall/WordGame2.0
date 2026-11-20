@@ -175,14 +175,19 @@ public sealed class InMemoryGameSessionStore(TimeProvider clock, SessionRetentio
                 {
                     var draft = entry.Session.Copy(now);
                     bool changed;
-                    if (draft.AllDisconnectedSince is { } disconnected && now - disconnected >= retention.DisconnectedGrace)
+                    if (draft.Game.Settings.Format == MatchFormat.Online && draft.Status == SessionStatus.Starting)
+                    {
+                        // Matchmaking owns the acceptance deadline and cancels unaccepted games.
+                        changed = false;
+                    }
+                    else if (draft.AllDisconnectedSince is { } disconnected && now - disconnected >= retention.GraceFor(draft.Game.Settings.Format))
                     {
                         draft.Abandon();
                         changed = true;
                     }
                     else
                     {
-                        changed = draft.ReconcileTurns(retention.DisconnectedGrace);
+                        changed = draft.ReconcileTurns(retention.GraceFor(draft.Game.Settings.Format));
                     }
 
                     if (changed)
