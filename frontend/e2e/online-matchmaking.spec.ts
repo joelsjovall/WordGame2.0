@@ -217,6 +217,56 @@ test('Online players cancel, restore, decline, and enter the same game on deskto
         alice.getByRole('button', { name: 'Forfeit Match', exact: true }),
       ).toHaveCount(0)
       await noOverflow(alice)
+      await alice
+        .getByRole('button', { name: 'Request Rematch', exact: true })
+        .click()
+      await expect(
+        bob.getByText('Your opponent requested a rematch.', { exact: false }),
+      ).toBeVisible()
+      await bob
+        .getByRole('button', { name: 'Accept Rematch', exact: true })
+        .click()
+      await expect(alice).not.toHaveURL(new RegExp(`${room.gameId}$`))
+      await expect(alice).toHaveURL(/\/online\/games\//)
+      await expect(bob).toHaveURL(alice.url())
+      await expect(
+        alice.getByRole('button', { name: 'Forfeit Match', exact: true }),
+      ).toBeEnabled()
+      const freshId = alice.url().split('/').at(-1)!
+      const freshResponse = await alice.request.get(
+        `${backendUrl}/api/v1/games/${freshId}/state`,
+      )
+      const fresh = (await freshResponse.json()) as {
+        players: { score: number }[]
+        round: { number: number }
+      }
+      expect(fresh.players.every((player) => player.score === 0)).toBe(true)
+      expect(fresh.round.number).toBe(1)
+      await alice
+        .getByRole('button', { name: 'Forfeit Match', exact: true })
+        .click()
+      await bob
+        .getByRole('button', { name: 'Request Rematch', exact: true })
+        .click()
+      await alice
+        .getByRole('button', { name: 'Decline Rematch', exact: true })
+        .click()
+      await expect(
+        bob.getByText('The rematch was declined.', { exact: true }),
+      ).toBeVisible()
+      await bob
+        .getByRole('button', { name: 'Find New Opponent', exact: true })
+        .click()
+      await expect(bob).toHaveURL(/\/online$/)
+      await expect(
+        bob.getByRole('heading', {
+          name: 'Finding your next rival',
+          exact: true,
+        }),
+      ).toBeVisible()
+      await bob
+        .getByRole('button', { name: 'Cancel Search', exact: true })
+        .click()
     } finally {
       await clearPendingSearch(first)
       await clearPendingSearch(second)

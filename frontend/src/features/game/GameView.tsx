@@ -8,6 +8,7 @@ import { GameConnectionStatus } from './GameConnectionStatus.tsx'
 import { ServerCountdown } from './ServerCountdown.tsx'
 import { Link } from 'react-router'
 import { OnlineOutcome } from './OnlineOutcome.tsx'
+import { OnlineContinue } from './OnlineContinue.tsx'
 
 export function GameView({ id, playerId }: { id: string; playerId: string }) {
   const { state, connection, error: syncError } = useGameState(id)
@@ -96,6 +97,10 @@ export function GameView({ id, playerId }: { id: string; playerId: string }) {
             ) : (
               <p>The match is complete. Preparing final results…</p>
             ))}
+          {state.match.format === 'online' &&
+            (state.status === 'completed' || state.status === 'abandoned') && (
+              <OnlineContinue state={state} playerId={playerId} />
+            )}
           {hasLeft ? (
             <p>
               You left this match. Reopening this page will not rejoin it.{' '}

@@ -178,6 +178,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/games/{gameId}/rematch': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['GetOnlineRematch']
+    put?: never
+    post: operations['RespondOnlineRematch']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/matchmaking/searches': {
     parameters: {
       query?: never
@@ -439,6 +455,11 @@ export interface components {
         [key: string]: string[]
       }
     }
+    /** @enum {unknown} */
+    ApiRematchAction: 'request' | 'accept' | 'decline'
+    /** @enum {unknown} */
+    ApiRematchStatus:
+      'idle' | 'pending' | 'ready' | 'declined' | 'expired' | 'unavailable'
     /** @enum {unknown} */
     ApiRoundStatus:
       'categorySelection' | 'bidding' | 'challenge' | 'completed' | 'cancelled'
@@ -715,6 +736,19 @@ export interface components {
     }
     OnlineHistoryResponse: {
       items: components['schemas']['OnlineHistoryMatchResponse'][]
+    }
+    OnlineRematchRequest: {
+      action: components['schemas']['ApiRematchAction']
+    }
+    OnlineRematchResponse: {
+      /** Format: uuid */
+      sourceGameId: string
+      status: components['schemas']['ApiRematchStatus']
+      acceptedPlayerIds: string[]
+      /** Format: date-time */
+      expiresAt: null | string
+      /** Format: uuid */
+      gameId: null | string
     }
     OnlineStatisticsResponse: {
       /** Format: int32 */
@@ -1279,6 +1313,110 @@ export interface operations {
       }
       /** @description Not Found */
       404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  GetOnlineRematch: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        gameId: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['OnlineRematchResponse']
+        }
+      }
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  RespondOnlineRematch: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        gameId: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['OnlineRematchRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['OnlineRematchResponse']
+        }
+      }
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Conflict */
+      409: {
         headers: {
           [name: string]: unknown
         }
