@@ -14,7 +14,7 @@ using WordGame.Domain;
 
 namespace WordGame.Api.Tests;
 
-public sealed class MatchmakingTests
+public sealed partial class MatchmakingTests
 {
     private const string Searches = "/api/v1/matchmaking/searches";
     private const string Status = "/api/v1/matchmaking/status";
@@ -69,7 +69,7 @@ public sealed class MatchmakingTests
             }));
             var final = await Task.WhenAll(clients.Select(State));
             Assert.Equal(20, results.Select(search => search.SearchId).Distinct().Count());
-            Assert.All(final, search => { Assert.Equal(ApiMatchmakingStatus.Matched, search.Status); Assert.Null(search.GameId); });
+            Assert.All(final, search => { Assert.Equal(ApiMatchmakingStatus.Matched, search.Status); Assert.NotNull(search.GameId); });
             Assert.Equal(10, final.Select(search => search.MatchId).Distinct().Count());
             Assert.All(final.GroupBy(search => search.MatchId), pair => Assert.Equal(2, pair.Select(search => search.SearchId).Distinct().Count()));
             using var alreadyMatched = await clients[0].DeleteAsync($"{Searches}/{final[0].SearchId}");

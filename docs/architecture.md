@@ -11,7 +11,7 @@ The application supports two game modes:
 
 Both modes share the same server-authoritative gameplay engine.
 
-This is the intended product architecture. The current implementation includes domain models/invariants, word validation and [timed challenge submissions](word-challenges.md), local JSON category storage, an in-memory session store, the shared Application [GameEngine lifecycle](game-engine.md), public category metadata endpoints, authenticated [state/SSE synchronization](game-synchronization.md), API contracts, a playable React Party frontend, tests, and CI. F023 adds [guest identity and private waiting-lobby creation](private-lobbies.md). F024 adds [lobby joining and invitations](lobby-joining.md), including a mobile-friendly join screen. F025 adds [host settings, lobby synchronization, and shared-engine startup](lobby-settings.md). F026 adds [lobby readiness, player management, reconnection and host migration](lobby-players.md). F027 adds [playable Party matches, countdowns, results and rematches](party-lifecycle.md). F028 adds [Party reconnection and disconnect handling](party-reconnection.md). Online game creation and presentation polish remain planned. See [project context](project-context.md) for changing progress.
+This is the intended product architecture. The current implementation includes domain models/invariants, word validation and [timed challenge submissions](word-challenges.md), local JSON category storage, an in-memory session store, the shared Application [GameEngine lifecycle](game-engine.md), public category metadata endpoints, authenticated [state/SSE synchronization](game-synchronization.md), API contracts, a playable React Party frontend, tests, and CI. F023 adds [guest identity and private waiting-lobby creation](private-lobbies.md). F024 adds [lobby joining and invitations](lobby-joining.md), including a mobile-friendly join screen. F025 adds [host settings, lobby synchronization, and shared-engine startup](lobby-settings.md). F026 adds [lobby readiness, player management, reconnection and host migration](lobby-players.md). F027 adds [playable Party matches, countdowns, results and rematches](party-lifecycle.md). F028 adds [Party reconnection and disconnect handling](party-reconnection.md). The Online interface and further presentation polish remain planned. See [project context](project-context.md) for changing progress.
 
 ## Architecture
 
@@ -46,7 +46,7 @@ Party Mode handles private lobbies, invitations, host permissions, and custom ma
 
 Online Mode handles matchmaking, automatic match creation, and online-specific disconnect and forfeit rules.
 
-F034 supplies the [authenticated FIFO matchmaking queue](matchmaking-queue.md) with in-memory reservations. F035 will connect those reservations to shared-engine game creation and acceptance.
+The [authenticated FIFO queue](matchmaking-queue.md) creates shared-engine Online games, notifies players via SSE, and starts after both accept. Party and Online creation share an exclusive roster check; pending matches expire or can be declined.
 
 Server-Sent Events notify connected clients about state changes. Clients can retrieve authoritative game state through the API, including after reconnection.
 

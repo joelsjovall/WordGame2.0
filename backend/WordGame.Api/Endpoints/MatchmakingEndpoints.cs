@@ -1,6 +1,7 @@
 using WordGame.Api.Authentication;
 using WordGame.Api.Contracts.V1;
 using WordGame.Api.Errors;
+using WordGame.Api.Synchronization;
 using WordGame.Application.Matchmaking;
 using WordGame.Application.Sessions;
 
@@ -15,10 +16,27 @@ internal static class MatchmakingEndpoints
             .RequireRateLimiting(LobbyRateLimiting.Matchmaking).WithName("JoinMatchmaking")
             .Produces<MatchmakingResponse>().Produces(400).Produces(401).Produces(403).Produces(409).Produces(429);
         group.MapGet("/status", StatusAsync).WithName("GetMatchmakingStatus").Produces<MatchmakingResponse>().Produces(401);
+        group.MapGet("/events", EventsAsync).WithName("WatchMatchmaking")
+            .Produces<MatchmakingResponse>(200, "text/event-stream").Produces(401);
         group.MapGet("/searches/{searchId:guid}", SearchAsync).WithName("GetMatchmakingSearch")
             .Produces<MatchmakingResponse>().Produces(401).Produces(404);
         group.MapDelete("/searches/{searchId:guid}", CancelAsync).AddEndpointFilter<SameOriginWriteFilter>()
             .WithName("CancelMatchmaking").Produces(204).Produces(401).Produces(403).Produces(404).Produces(409);
+        group.MapPost("/searches/{searchId:guid}/accept", AcceptAsync).AddEndpointFilter<SameOriginWriteFilter>()
+            .WithName("AcceptOnlineMatch").Produces<MatchmakingResponse>().Produces(400).Produces(401).Produces(403).Produces(404).Produces(409);
+        group.MapPost("/searches/{searchId:guid}/decline", DeclineAsync).AddEndpointFilter<SameOriginWriteFilter>()
+            .WithName("DeclineOnlineMatch").Produces<MatchmakingResponse>().Produces(400).Produces(401).Produces(403).Produces(404).Produces(409);
+    }
+
+    private static IResult EventsAsync(HttpContext context, IMatchmakingQueueStore queue, MatchmakingService matchmaking,
+        TimeProvider clock, CancellationToken cancellationToken)
+    {
+        var session = PlayerAuthentication.Session(context);
+        if (session is null) { return TypedResults.Unauthorized(); }
+        context.Response.Headers.CacheControl = "no-store";
+        context.Response.Headers.Vary = "Cookie";
+        context.Response.Headers["X-Accel-Buffering"] = "no";
+        return TypedResults.ServerSentEvents(MatchmakingEventStream.ReadAsync(session, queue, matchmaking, clock, cancellationToken));
     }
 
     private static Task<IResult> JoinAsync(JoinMatchmakingRequest request, HttpContext context, MatchmakingService matchmaking, CancellationToken cancellationToken) =>
@@ -47,9 +65,23 @@ internal static class MatchmakingEndpoints
                 ? TypedResults.NoContent() : TypedResults.NotFound();
         });
 
-    private static MatchmakingResponse Map(MatchmakingSearch? search) => search is null
-        ? new(null, ApiMatchmakingStatus.Idle, null, null, null, null)
-        : new(search.Id, Enum.Parse<ApiMatchmakingStatus>(search.Status.ToString()), search.CreatedAt, search.ExpiresAt, search.MatchId, null);
+    private static Task<IResult> AcceptAsync(Guid searchId, MatchAcceptanceRequest _, HttpContext context, MatchmakingService matchmaking, CancellationToken cancellationToken) =>
+        RespondAsync(searchId, true, context, matchmaking, cancellationToken);
+
+    private static Task<IResult> DeclineAsync(Guid searchId, MatchAcceptanceRequest _, HttpContext context, MatchmakingService matchmaking, CancellationToken cancellationToken) =>
+        RespondAsync(searchId, false, context, matchmaking, cancellationToken);
+
+    private static Task<IResult> RespondAsync(Guid id, bool accept, HttpContext context, MatchmakingService matchmaking, CancellationToken cancellationToken) =>
+        ExecuteAsync(context, async session =>
+        {
+            var search = await matchmaking.RespondAsync(session.PlayerId, session.Id, id, accept, cancellationToken);
+            return search is null ? TypedResults.NotFound() : TypedResults.Ok(Map(search));
+        });
+
+    internal static MatchmakingResponse Map(MatchmakingSearch? search) => search is null
+        ? new(null, ApiMatchmakingStatus.Idle, null, null, null, null, false)
+        : new(search.Id, Enum.Parse<ApiMatchmakingStatus>(search.Status.ToString()), search.CreatedAt,
+            search.Status == MatchmakingStatus.Ready ? null : search.ExpiresAt, search.MatchId, search.GameId, search.HasAccepted);
 
     private static async Task<IResult> ExecuteAsync(HttpContext context, Func<GuestSession, Task<IResult>> operation)
     {

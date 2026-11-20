@@ -9,6 +9,7 @@ namespace WordGame.Application.Games;
 public sealed class GameEngine(IGameSessionStore sessions, SessionRetention retention, CategorySelectionService categories, ChallengeService challenges)
 {
     private readonly GameCommandExecutor commands = new(sessions, retention);
+    private readonly SemaphoreSlim creationGate = new(1, 1);
     public Task<GameEngineResult> CreateAsync(IEnumerable<Player> players, CancellationToken cancellationToken = default) =>
         CreateCoreAsync(players, null, cancellationToken);
 
@@ -16,16 +17,29 @@ public sealed class GameEngine(IGameSessionStore sessions, SessionRetention rete
     public Task<GameEngineResult> CreateAsync(IEnumerable<Player> players, MatchSettings settings, CancellationToken cancellationToken = default) =>
         CreateCoreAsync(players, settings, cancellationToken);
 
-    private async Task<GameEngineResult> CreateCoreAsync(IEnumerable<Player> players, MatchSettings? settings, CancellationToken cancellationToken)
+    // Live lobby/matchmaking workflows reserve players; general engine setup retains independent-session semantics.
+    public Task<GameEngineResult> CreateExclusiveAsync(IEnumerable<Player> players, MatchSettings settings, CancellationToken cancellationToken = default) =>
+        CreateCoreAsync(players, settings, cancellationToken, true);
+
+    private async Task<GameEngineResult> CreateCoreAsync(IEnumerable<Player> players, MatchSettings? settings, CancellationToken cancellationToken, bool exclusive = false)
     {
+        await creationGate.WaitAsync(cancellationToken);
         try
         {
-            return GameEngineResult.Accepted(await sessions.CreateAsync(players, cancellationToken, settings));
+            var roster = players.ToArray();
+            if (roster.Any(player => player is null)) { throw new ArgumentException("Players must not contain null entries.", nameof(players)); }
+            var ids = roster.Select(player => player.Id).ToHashSet();
+            if (exclusive && (await sessions.GetOpenAsync(cancellationToken)).Any(game => game.Players.Any(player => ids.Contains(player.PlayerId) && !player.HasLeft)))
+            {
+                return GameEngineResult.Rejected(GameEngineErrorCode.InvalidState, "A player is already assigned to an open match.");
+            }
+            return GameEngineResult.Accepted(await sessions.CreateAsync(roster, cancellationToken, settings));
         }
         catch (ArgumentException)
         {
             return GameEngineResult.Rejected(GameEngineErrorCode.InvalidAction, "The roster or match settings are invalid.");
         }
+        finally { creationGate.Release(); }
     }
 
     public async Task<GameEngineResult> GetStateAsync(Guid gameId, CancellationToken cancellationToken = default)

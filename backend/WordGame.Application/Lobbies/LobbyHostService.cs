@@ -52,7 +52,7 @@ public sealed class LobbyHostService(ILobbySessionStore lobbies, GameEngine engi
             throw new LobbyActionException("No categories are available for the selected difficulties.");
         }
 
-        var created = await engine.CreateAsync(lobby.Players, lobby.Settings.ForMatch(lobby.Players.Count));
+        var created = await engine.CreateExclusiveAsync(lobby.Players, lobby.Settings.ForMatch(lobby.Players.Count));
         if (!created.Succeeded)
         {
             throw new LobbyActionException("The match could not be created.");
