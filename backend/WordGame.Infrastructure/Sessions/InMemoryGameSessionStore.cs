@@ -2,11 +2,12 @@ using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 using WordGame.Application.Sessions;
+using WordGame.Application.Statistics;
 using WordGame.Domain;
 
 namespace WordGame.Infrastructure.Sessions;
 
-public sealed class InMemoryGameSessionStore(TimeProvider clock, SessionRetention retention) : IGameSessionStore
+public sealed class InMemoryGameSessionStore(TimeProvider clock, SessionRetention retention, IOnlineStatisticsStore? statistics = null) : IGameSessionStore
 {
     private readonly ConcurrentDictionary<Guid, SessionEntry> sessions = new();
 
@@ -99,6 +100,11 @@ public sealed class InMemoryGameSessionStore(TimeProvider clock, SessionRetentio
             var committed = draft.Copy(draft.UpdatedAt);
             var nextVersion = checked(entry.Version + 1);
             var result = committed.Snapshot(nextVersion);
+            // Persist before publishing completion. Failure leaves the active draft uncommitted and retryable.
+            if (statistics is not null && OnlineMatchHistory.From(result) is { } completed)
+            {
+                await statistics.RecordAsync(completed, cancellationToken);
+            }
             entry.Session = committed;
             entry.Version = nextVersion;
             entry.Publish(SessionChangeKind.Updated);
@@ -194,6 +200,10 @@ public sealed class InMemoryGameSessionStore(TimeProvider clock, SessionRetentio
                     {
                         draft.EnsureConsistent();
                         var nextVersion = checked(entry.Version + 1);
+                        if (statistics is not null && OnlineMatchHistory.From(draft.Snapshot(nextVersion)) is { } completed)
+                        {
+                            await statistics.RecordAsync(completed, cancellationToken);
+                        }
                         entry.Session = draft;
                         entry.Version = nextVersion;
                         entry.Publish(SessionChangeKind.Updated);

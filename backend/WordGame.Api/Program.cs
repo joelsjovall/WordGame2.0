@@ -11,11 +11,13 @@ using WordGame.Application.Games;
 using WordGame.Application.Lobbies;
 using WordGame.Application.Matchmaking;
 using WordGame.Application.Sessions;
+using WordGame.Application.Statistics;
 using WordGame.Application.Synchronization;
 using WordGame.Application.Words;
 using WordGame.Domain;
 using WordGame.Infrastructure.Categories;
 using WordGame.Infrastructure.Sessions;
+using WordGame.Infrastructure.Statistics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -60,6 +62,8 @@ builder.Services.AddSingleton(_ => new SessionRetention(
     builder.Configuration.GetValue("Sessions:CompletedRetention", TimeSpan.FromMinutes(10)),
     builder.Configuration.GetValue("Sessions:AbandonedRetention", TimeSpan.FromMinutes(5)),
     builder.Configuration.GetValue("Sessions:OnlineDisconnectedGrace", TimeSpan.FromSeconds(30))));
+builder.Services.AddSingleton<IOnlineStatisticsStore>(_ => new JsonOnlineStatisticsStore(
+    Path.GetFullPath(builder.Configuration["Statistics:Directory"] ?? "Data/OnlineHistory", builder.Environment.ContentRootPath)));
 builder.Services.AddSingleton<IGameSessionStore, InMemoryGameSessionStore>();
 builder.Services.AddSingleton(_ => new LobbyRules(builder.Configuration.GetValue("Sessions:LobbyLifetime", TimeSpan.FromMinutes(30)),
     // A lobby needs time to establish its first stream; game-session grace independently permits zero.
@@ -123,6 +127,7 @@ app.MapCategoryEndpoints();
 app.MapGameSynchronizationEndpoints();
 app.MapGameActionEndpoints();
 app.MapGuestEndpoints();
+app.MapOnlineStatisticsEndpoints();
 app.MapMatchmakingEndpoints();
 app.MapLobbyEndpoints();
 app.MapLobbyHostEndpoints();

@@ -30,6 +30,8 @@ Expired registry entries are removed when read or when another session is issued
 
 There are no persistent accounts, identity recovery after clearing cookies, or person-level bans. Anyone may intentionally start a new guest after resetting. See [lobby security](lobby-security.md) for rate limits, invitation behavior, origin checks, and the unverified V1 credential-rotation follow-up.
 
+Online statistics and completed match history persist separately from guest sessions. Expiry, reset, cookie loss, or a server restart prevents access under the old guest identity; a new guest starts with zero statistics. Old records remain stored but are not reassigned by display name or client-supplied player ID. Durable identity recovery requires later account/session work.
+
 ## Acceptance review
 
 | Criterion | Evidence |

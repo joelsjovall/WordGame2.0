@@ -65,6 +65,12 @@ GameStateResponse includes session status, revision, server time, public player 
 
 F034 implements POST /api/v1/matchmaking/searches, GET /api/v1/matchmaking/searches/{searchId}, and DELETE on that resource (204 when cancelled). GET /api/v1/matchmaking/status returns the caller's current search or idle. Identity comes from the verified guest session. MatchmakingResponse includes searchId, status, timestamps, a nullable matchId for a selected pair reservation, and a nullable gameId. F035 populates gameId when a pair is selected. POST on searches/{searchId}/accept or /decline accepts an empty JSON object; GET /api/v1/matchmaking/events streams current-state notifications. Ready means both accepted and gameplay is active; failed permits a fresh search. See [matchmaking queue](matchmaking-queue.md) for concurrency, cancellation conflicts, expiry, and ownership checks. These routes and DTOs are included in generated OpenAPI/client types.
 
+### Online statistics and history
+
+Authenticated `GET /api/v1/players/me/statistics` returns matchesPlayed, wins, losses, draws, winPercentage (wins / all played matches × 100, rounded to two decimals), and successfulBluffChallenges/failedBluffChallenges. Bluff challenges count the caller's completed calls: a failed bidder challenge is a successful call. Tied matches count as draws for both players; forfeits and expired reconnection windows count as wins/losses without changing scores. Unfinished/abandoned matches and Party matches are excluded.
+
+`GET /api/v1/players/me/history` returns the latest 50 completed Online matches, newest first, with completion time, reason, and both players' final scores/outcomes. Both routes use only the verified cookie identity and disable caching. No statistics-write endpoint exists. Records persist independently of active-session cleanup; see [guest identity limitations](guest-sessions.md).
+
 ## Errors
 
 Product errors use `application/problem+json`, with RFC 9457 fields type, title, status, detail/instance where applicable, plus traceId and optional errors:
