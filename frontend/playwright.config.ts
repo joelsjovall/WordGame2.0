@@ -18,8 +18,22 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'mobile-chromium', use: { ...devices['Pixel 5'] } },
+    {
+      name: 'chromium',
+      testIgnore: 'online-matchmaking.spec.ts',
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'mobile-chromium',
+      testIgnore: 'online-matchmaking.spec.ts',
+      use: { ...devices['Pixel 5'] },
+    },
+    // One shared FIFO queue: this journey runs both viewports sequentially to avoid matching parallel test players.
+    {
+      name: 'online-chromium',
+      testMatch: 'online-matchmaking.spec.ts',
+      use: { ...devices['Desktop Chrome'] },
+    },
   ],
   webServer: [
     {

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useLobby } from '../features/lobby/useLobby.ts'
-import { PartyGame } from '../features/game/PartyGame.tsx'
+import { GameView } from '../features/game/GameView.tsx'
 import { PartyResults } from '../features/game/PartyResults.tsx'
 import '../features/lobby/lobby.css'
 
@@ -28,7 +28,7 @@ function GameRoom({ id }: { id: string }) {
       ) : lobby.status === 'completed' ? (
         <PartyResults lobby={lobby} playerId={playerId} accept={accept} />
       ) : lobby.gameId ? (
-        <PartyGame key={lobby.gameId} id={lobby.gameId} playerId={playerId} />
+        <GameView key={lobby.gameId} id={lobby.gameId} playerId={playerId} />
       ) : (
         <p>Waiting for the match…</p>
       )}

@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, expect, test, vi } from 'vitest'
 import * as stateHook from './useGameState.ts'
-import { PartyGame } from './PartyGame.tsx'
+import { GameView } from './GameView.tsx'
 import { gamesApi } from '../../services/api/games.ts'
 import { gameSynchronization } from '../../services/gameSynchronization.ts'
 import { gameFixture as game } from '../../../tests/fixtures/game.ts'
@@ -19,7 +19,7 @@ test('recovery preserves the visible score but disables gameplay and intentional
   })
   const view = render(
     <MemoryRouter>
-      <PartyGame id={game.id} playerId="bob" />
+      <GameView id={game.id} playerId="bob" />
     </MemoryRouter>,
   )
   expect(screen.getByRole('button', { name: 'Place bid' })).toBeDisabled()
@@ -42,7 +42,7 @@ test('recovery preserves the visible score but disables gameplay and intentional
   vi.spyOn(gameSynchronization, 'refresh').mockResolvedValue(undefined)
   view.rerender(
     <MemoryRouter>
-      <PartyGame id={game.id} playerId="bob" />
+      <GameView id={game.id} playerId="bob" />
     </MemoryRouter>,
   )
   await userEvent
@@ -63,7 +63,7 @@ test('terminal sessions offer recovery guidance without loading forever and depa
   })
   const view = render(
     <MemoryRouter>
-      <PartyGame id={game.id} playerId="bob" />
+      <GameView id={game.id} playerId="bob" />
     </MemoryRouter>,
   )
   expect(screen.getByRole('link', { name: 'Back to homepage' })).toBeVisible()
@@ -82,7 +82,7 @@ test('terminal sessions offer recovery guidance without loading forever and depa
   })
   view.rerender(
     <MemoryRouter>
-      <PartyGame id={game.id} playerId="bob" />
+      <GameView id={game.id} playerId="bob" />
     </MemoryRouter>,
   )
   expect(

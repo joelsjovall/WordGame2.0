@@ -76,8 +76,9 @@ The planned backlog contains 57 issues across six milestones. Work proceeds one 
 - **Completed:** [F032, Refactor and test complete Party Mode flow (#34)](https://github.com/joelsjovall/WordGame2.0/issues/34), merged through PR #91 (merge commit `2bc95bf`). The Party milestone F023-F032 is merged; see [Party Mode review and beta handoff](party-mode-review.md).
 - **Completed:** [F033, Implement secure guest player identities and online sessions (#35)](https://github.com/joelsjovall/WordGame2.0/issues/35), merged through PR #92 (merge commit `c283528`). See [shared guest sessions](guest-sessions.md).
 - **Completed:** [F034, Implement online matchmaking queue (#36)](https://github.com/joelsjovall/WordGame2.0/issues/36), merged through PR #93 (merge commit `c47da3e`).
-- **Active:** [F035, Implement automatic online match creation (#37)](https://github.com/joelsjovall/WordGame2.0/issues/37): shared-engine games, SSE match notifications, acceptance/decline, timeout cleanup, and cross-mode creation guards. See [matchmaking queue](matchmaking-queue.md).
-- **Current local state (2026-11-20):** Working on `feature/F035-online-match-creation`; follow the current Git workflow in `AGENTS.md`.
+- **Completed:** [F035, Implement automatic online match creation (#37)](https://github.com/joelsjovall/WordGame2.0/issues/37), merged through PR #94 (merge commit `23028d6`).
+- **Active:** [F036, Build online matchmaking frontend (#38)](https://github.com/joelsjovall/WordGame2.0/issues/38): `/online` provides live search, cancellation, opponent preview, acceptance, recovery, and navigation to `/online/games/:gameId` using the shared gameplay view. Further Online lifecycle work remains later issues.
+- **Current local state (2026-11-20):** Working on `feature/F036-online-matchmaking-ui`; follow the current Git workflow in `AGENTS.md`.
 - **Outstanding security follow-up:** A database credential was previously exposed in the public V1 repository. Never reuse or reproduce it. Rotation must be verified; this handoff provides no evidence that rotation has occurred.
 
 Update this section as issues are completed or the handoff state changes.

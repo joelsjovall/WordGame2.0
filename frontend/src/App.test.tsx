@@ -20,7 +20,7 @@ describe('application routes', () => {
       screen.getByText('A multiplayer word-bidding and bluffing game.'),
     ).toBeVisible()
     expect(
-      screen.getByText('Party Mode and Online Mode are coming soon.'),
+      screen.getByText('Play with friends or find a new rival.'),
     ).toBeVisible()
   })
 

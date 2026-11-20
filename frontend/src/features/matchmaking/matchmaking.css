@@ -1,0 +1,217 @@
+.online-page {
+  --online-ink: #193e36;
+  --online-green: #205f4e;
+  max-width: 68rem;
+  color: var(--online-ink);
+  padding-top: 1.25rem;
+}
+.online-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: inherit;
+  font-weight: 650;
+}
+.online-heading {
+  max-width: 44rem;
+  margin: 2rem 0;
+}
+.online-heading h1 {
+  font-size: clamp(2.5rem, 7vw, 4.5rem);
+  letter-spacing: -0.045em;
+  margin: 0.65rem 0;
+}
+.online-heading .eyebrow,
+.online-tag {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+.online-layout {
+  display: grid;
+  gap: 1.5rem;
+  align-items: start;
+}
+.online-card {
+  padding: clamp(1.3rem, 4vw, 2.5rem);
+  border: 1px solid #cbd9cf;
+  border-radius: 1.5rem;
+  background: #fffefa;
+  min-width: 0;
+  box-shadow: 0 10px 30px #193e3608;
+}
+.online-card h2 {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  line-height: 1.2;
+  margin: 0.7rem 0 1rem;
+}
+.online-card p {
+  color: #456056;
+}
+.online-card form {
+  display: grid;
+  gap: 0.85rem;
+}
+.online-card label {
+  font-weight: 700;
+}
+.online-card input {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0.85rem;
+  border: 1px solid #809a8b;
+  border-radius: 0.65rem;
+  font: inherit;
+  background: white;
+  color: inherit;
+}
+.online-card button,
+.home-online {
+  min-height: 48px;
+  padding: 0.85rem 1.1rem;
+  border: 1px solid #809a8b;
+  border-radius: 0.65rem;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+  background: transparent;
+  color: inherit;
+}
+.online-card button.online-primary,
+.home-online {
+  background: #205f4e;
+  color: #fff;
+  border-color: #205f4e;
+}
+.home-online {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+.online-card button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.online-page :focus-visible {
+  outline: 3px solid #d58a2f;
+  outline-offset: 4px;
+}
+.online-card .online-note {
+  font-size: 0.85rem;
+  margin-bottom: 0;
+}
+.online-guide {
+  border-radius: 1.5rem;
+  background: #eaf0e5;
+  padding: 1.5rem;
+  min-width: 0;
+}
+.online-guide h2 {
+  font-size: 1.7rem;
+  line-height: 1.25;
+}
+.online-guide ol {
+  padding-left: 1.25rem;
+}
+.online-guide li {
+  margin: 1.25rem 0;
+  padding-left: 0.35rem;
+}
+.online-guide li span {
+  display: block;
+  line-height: 1.6;
+  margin-top: 0.25rem;
+  color: #456056;
+}
+.online-guide a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  color: inherit;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.online-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.online-actions button {
+  flex: 1 1 9rem;
+}
+.online-clock {
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+.online-opponent {
+  display: grid;
+  justify-items: center;
+  gap: 0.65rem;
+  text-align: center;
+  background: #edf3ea;
+  padding: 1.5rem;
+  border-radius: 1rem;
+}
+.online-opponent strong {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: 1.4rem;
+}
+.online-opponent > span:last-child {
+  font-size: 0.85rem;
+}
+.online-avatar {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #205f4e;
+  color: white;
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+.online-search-animation {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  margin: 1rem auto 2rem;
+  position: relative;
+  font-weight: 800;
+  font-size: 1.4rem;
+}
+.online-search-animation::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 3px solid #d5e3d6;
+  border-top-color: #205f4e;
+  border-radius: 50%;
+  animation: online-search 1.5s linear infinite;
+}
+.online-error {
+  color: #8d2825;
+  background: #fff0ea;
+  padding: 1rem;
+  border-radius: 0.65rem;
+  overflow-wrap: anywhere;
+}
+@keyframes online-search {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (min-width: 48rem) {
+  .online-layout {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .online-search-animation::before {
+    animation: none;
+  }
+}
