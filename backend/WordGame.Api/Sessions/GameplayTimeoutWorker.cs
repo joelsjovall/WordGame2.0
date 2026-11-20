@@ -44,6 +44,9 @@ public sealed class GameplayTimeoutWorker : BackgroundService
         { Status: RoundStatus.Challenge, Challenge: { Outcome: ChallengeOutcome.Pending } challenge } &&
                 clock.GetUtcNow() >= challenge.Deadline,
             (session, token) => challenges.ResolveAsync(session.Id, session.Version, token), stoppingToken),
+        RunAsync("Round progression", session => session.Game.CurrentRound?.Status == RoundStatus.Completed &&
+            clock.GetUtcNow() >= session.UpdatedAt.AddSeconds(3),
+            (session, token) => engine.NextRoundAsync(session.Id, session.Game.CurrentRound!.Id, session.Version, token), stoppingToken),
         RunAsync("Online presence", session => session.Game.Settings.Format == MatchFormat.Online &&
             session.Players.Any(player => !player.HasLeft && player.ConnectionCount == 0 && player.DisconnectedAt is { } at &&
                 clock.GetUtcNow() - at >= retention.OnlineDisconnectedGrace),

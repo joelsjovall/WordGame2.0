@@ -4,6 +4,9 @@ namespace WordGame.Api.Errors;
 
 internal static class ApiProblems
 {
+    internal static IResult Result(HttpContext context, int status, string title) =>
+        TypedResults.Json(Create(context, status, title), statusCode: status, contentType: "application/problem+json");
+
     internal static ApiProblemDetails Create(
         HttpContext context, int status, string title, IDictionary<string, string[]>? errors = null) => new()
         {

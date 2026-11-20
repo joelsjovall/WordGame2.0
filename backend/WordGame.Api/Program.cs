@@ -50,7 +50,6 @@ builder.Services.AddSingleton<IMatchmakingQueueStore, InMemoryMatchmakingQueueSt
 builder.Services.AddSingleton<IMatchmakingPolicy, FifoDuelPolicy>();
 builder.Services.AddSingleton(_ => new MatchmakingRules(
     builder.Configuration.GetValue("Matchmaking:SearchLifetime", TimeSpan.FromMinutes(2)),
-    builder.Configuration.GetValue("Matchmaking:ReservationLifetime", TimeSpan.FromMinutes(1)),
     builder.Configuration.GetValue("Matchmaking:TerminalRetention", TimeSpan.FromMinutes(10)),
     builder.Configuration.GetValue("Matchmaking:AcceptanceTimeout",
         builder.Configuration.GetValue("Matchmaking:ReservationLifetime", TimeSpan.FromSeconds(30)))));

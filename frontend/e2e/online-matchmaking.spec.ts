@@ -54,7 +54,7 @@ async function clearPendingSearch(context: BrowserContext) {
 test('Online players cancel, restore, decline, and enter the same game on desktop and mobile', async ({
   browser,
 }, testInfo) => {
-  test.setTimeout(60000)
+  test.setTimeout(120000)
   for (const width of [1280, 390]) {
     const options = {
       baseURL: frontendUrl,
@@ -242,9 +242,62 @@ test('Online players cancel, restore, decline, and enter the same game on deskto
       }
       expect(fresh.players.every((player) => player.score === 0)).toBe(true)
       expect(fresh.round.number).toBe(1)
-      await alice
-        .getByRole('button', { name: 'Forfeit Match', exact: true })
-        .click()
+      for (let round = 1; round <= 6; round++) {
+        const bidder = round % 2 === 1 ? alice : bob
+        const caller = round % 2 === 1 ? bob : alice
+        await bidder
+          .getByRole('button', { name: /European Capitals.*easy/i })
+          .click()
+        await bidder.getByLabel('Your bid').fill('1')
+        await bidder
+          .getByRole('button', { name: 'Place bid', exact: true })
+          .click()
+        await caller
+          .getByRole('button', { name: 'Call bluff', exact: true })
+          .click()
+        await bidder.getByLabel('Your word').fill('Stockholm')
+        await bidder
+          .getByRole('button', { name: 'Submit word', exact: true })
+          .click()
+        if (round < 6) {
+          await expect(
+            bidder.getByRole('heading', {
+              name: 'Round complete',
+              exact: true,
+            }),
+          ).toBeVisible()
+        }
+      }
+      await expect(
+        alice.getByRole('heading', { name: 'You won', exact: true }),
+      ).toBeVisible()
+      await expect(
+        bob.getByRole('heading', { name: 'You won', exact: true }),
+      ).toBeVisible()
+      for (const player of [alice, bob]) {
+        const statisticsResponse = await player.request.get(
+          `${backendUrl}/api/v1/players/me/statistics`,
+        )
+        expect(statisticsResponse.ok()).toBe(true)
+        const statistics = (await statisticsResponse.json()) as {
+          matchesPlayed: number
+          draws: number
+          failedBluffChallenges: number
+        }
+        expect(statistics.matchesPlayed).toBe(2)
+        expect(statistics.draws).toBe(1)
+        expect(statistics.failedBluffChallenges).toBeGreaterThanOrEqual(3)
+        const historyResponse = await player.request.get(
+          `${backendUrl}/api/v1/players/me/history`,
+        )
+        const history = (await historyResponse.json()) as {
+          items: { matchId: string; reason: string }[]
+        }
+        expect(history.items).toHaveLength(2)
+        expect(history.items).toContainEqual(
+          expect.objectContaining({ matchId: freshId, reason: 'completed' }),
+        )
+      }
       await bob
         .getByRole('button', { name: 'Request Rematch', exact: true })
         .click()

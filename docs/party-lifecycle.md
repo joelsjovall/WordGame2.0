@@ -27,7 +27,7 @@ Invalid requests return 400, unauthenticated calls 401, unavailable/nonmember ga
 
 The frontend automatically transitions from `/lobbies/{lobbyId}` to `/lobbies/{lobbyId}/game`. That screen keeps the lobby stream for membership/lifecycle and uses the existing game state/SSE synchronization service for turns, timers, scores and action results. Feature components delegate networking to API services. Controls reflect the active player and phase; backend guards remain authoritative. Countdown/challenge clocks are display estimates only.
 
-PartyLifecycleWorker checks playing lobbies once per second. It invokes the existing guarded NextRound operation three seconds after an intermediate round result, using its round ID and revision. It copies completed match standings into the lobby's immutable lastResult. An abandoned or missing game instead produces an ended match without invented scores. Online integration can continue using the same engine; there is no second Party rules implementation.
+The shared GameplayTimeoutWorker invokes the guarded NextRound operation for both modes three seconds after an intermediate round result, using its round ID and revision. PartyLifecycleWorker checks playing lobbies once per second and copies completed match standings into the lobby's immutable lastResult. An abandoned or missing game instead produces an ended match without invented scores; no separate Party gameplay rules are maintained.
 
 ## Results, rematch, and declining
 

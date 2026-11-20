@@ -37,20 +37,18 @@ public sealed class MatchmakingConflictException(string message) : Exception(mes
 
 public sealed class MatchmakingRules
 {
-    public MatchmakingRules(TimeSpan? searchLifetime = null, TimeSpan? reservationLifetime = null, TimeSpan? terminalRetention = null,
+    public MatchmakingRules(TimeSpan? searchLifetime = null, TimeSpan? terminalRetention = null,
         TimeSpan? acceptanceTimeout = null)
     {
         SearchLifetime = searchLifetime ?? TimeSpan.FromMinutes(2);
-        ReservationLifetime = reservationLifetime ?? TimeSpan.FromMinutes(1);
         TerminalRetention = terminalRetention ?? TimeSpan.FromMinutes(10);
-        AcceptanceTimeout = acceptanceTimeout ?? reservationLifetime ?? TimeSpan.FromSeconds(30);
-        if (SearchLifetime <= TimeSpan.Zero || ReservationLifetime <= TimeSpan.Zero || TerminalRetention <= TimeSpan.Zero || AcceptanceTimeout <= TimeSpan.Zero)
+        AcceptanceTimeout = acceptanceTimeout ?? TimeSpan.FromSeconds(30);
+        if (SearchLifetime <= TimeSpan.Zero || TerminalRetention <= TimeSpan.Zero || AcceptanceTimeout <= TimeSpan.Zero)
         {
             throw new ArgumentOutOfRangeException(nameof(searchLifetime), "Matchmaking lifetimes must be positive.");
         }
     }
     public TimeSpan SearchLifetime { get; }
-    public TimeSpan ReservationLifetime { get; }
     public TimeSpan TerminalRetention { get; }
     public TimeSpan AcceptanceTimeout { get; }
 }

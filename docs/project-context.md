@@ -82,8 +82,9 @@ The planned backlog contains 57 issues across six milestones. Work proceeds one 
 - **Completed:** [F038, Online statistics and match history (#40)](https://github.com/joelsjovall/WordGame2.0/issues/40), merged through PR #97 (merge commit `681c571`).
 - **Completed:** [F039, Online rematch and return-to-queue flow (#41)](https://github.com/joelsjovall/WordGame2.0/issues/41), merged through PR #98 (merge commit `58fbcd1`).
 - **Completed:** [F040, Optional ranking decision (#42)](https://github.com/joelsjovall/WordGame2.0/issues/42), merged through PR #99 (merge commit `7bc0ba4`). Ranking is postponed beyond launch; see `docs/architecture.md`.
-- **Active:** [F041, Online security and abuse protection (#43)](https://github.com/joelsjovall/WordGame2.0/issues/43): shared mutation/read/gameplay limits, bounded inputs, safe rejection logs, and security integration coverage implemented locally; final review and commit approval pending.
-- **Current local state (2026-11-20):** Working on `feature/F041-online-security`; preserve local work and follow the current session's Git authorization.
+- **Completed:** [F041, Online security and abuse protection (#43)](https://github.com/joelsjovall/WordGame2.0/issues/43), merged through PR #100 (merge commit `2e65456`).
+- **Active:** [F042, Complete Online flow review (#44)](https://github.com/joelsjovall/WordGame2.0/issues/44): shared round progression fixes full Online completion; unused reservation state removed, API errors consolidated, and desktop/mobile coverage now completes six rounds and checks persistent statistics/history. Final review and commit approval pending.
+- **Current local state (2026-11-20):** Working on `feature/F042-online-flow-review`; preserve local work and follow the current session's Git authorization. Online milestone review is the final issue before UI/UX polish (F043-F052); ranking remains deferred, identities/games remain in memory, and statistics require a durable history directory.
 - **Outstanding security follow-up:** A database credential was previously exposed in the public V1 repository. Never reuse or reproduce it. Rotation must be verified; this handoff provides no evidence that rotation has occurred.
 
 Update this section as issues are completed or the handoff state changes.
