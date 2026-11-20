@@ -1,11 +1,11 @@
 .lobby-card {
   display: grid;
-  gap: 0.75rem;
+  gap: var(--space-3);
   margin: 1.5rem 0;
   padding: clamp(1rem, 4vw, 2rem);
-  background: white;
-  border: 1px solid #cbd3e0;
-  border-radius: 0.75rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
   min-width: 0;
 }
 .lobby-card h2,
@@ -18,41 +18,37 @@
 .lobby-card input,
 .lobby-card button {
   font: inherit;
-  min-height: 2.75rem;
-  border: 1px solid #8291ab;
-  border-radius: 0.4rem;
+  min-height: var(--control-height);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-control);
   padding: 0.7rem;
   width: 100%;
   min-width: 0;
 }
 .lobby-card button {
-  background: #244fb3;
-  color: white;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
   cursor: pointer;
 }
-.lobby-card button:disabled {
-  opacity: 0.65;
-  cursor: wait;
-}
 .lobby-card input:read-only {
-  background: #f5f7fb;
+  background: var(--color-page);
 }
 .lobby-card :focus-visible {
-  outline: 3px solid #244fb3;
+  outline: 3px solid var(--color-primary);
   outline-offset: 3px;
 }
 .lobby-card [role='alert'] {
-  color: #9b2020;
+  color: var(--color-error);
 }
 .lobby-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: var(--space-3);
   flex-wrap: wrap;
 }
 .lobby-actions button {
   flex: 1 1 12rem;
   font: inherit;
-  min-height: 2.75rem;
+  min-height: var(--control-height);
   padding: 0.7rem;
 }
 .lobby-players li {
@@ -60,7 +56,7 @@
 }
 .lobby-players button {
   font: inherit;
-  min-height: 2.75rem;
+  min-height: var(--control-height);
   padding: 0.5rem 0.75rem;
   margin-left: 0.5rem;
 }
@@ -69,7 +65,7 @@
 }
 .lobby-card fieldset {
   display: grid;
-  gap: 0.75rem;
+  gap: var(--space-3);
   border: 0;
   padding: 0;
   min-width: 0;
@@ -77,14 +73,14 @@
 .lobby-card .lobby-choice {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 .lobby-choice input {
   width: auto;
 }
 .lobby-start {
   font: inherit;
-  min-height: 2.75rem;
+  min-height: var(--control-height);
   padding: 0.7rem 1.5rem;
   cursor: pointer;
 }

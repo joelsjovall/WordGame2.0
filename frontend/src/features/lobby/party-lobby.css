@@ -1,8 +1,8 @@
 .party-lobby {
-  --party-ink: #193e36;
-  --party-muted: #52655e;
-  --party-green: #205f4e;
-  --party-line: #d8e0d7;
+  --party-ink: var(--color-ink);
+  --party-muted: var(--color-muted);
+  --party-green: var(--color-primary);
+  --party-line: var(--color-line);
   max-width: 76rem;
   padding: clamp(1.25rem, 4vw, 3rem);
   color: var(--party-ink);
@@ -10,7 +10,7 @@
 .party-back {
   display: inline-flex;
   align-items: center;
-  min-height: 2.75rem;
+  min-height: var(--control-height);
   color: var(--party-ink);
   text-decoration: none;
   font-weight: 700;
@@ -20,7 +20,7 @@
   flex-wrap: wrap;
   align-items: start;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--space-4);
   margin: 2rem 0;
 }
 .party-eyebrow {
@@ -46,19 +46,19 @@
   gap: 0.5rem;
   padding: 0.55rem 0.85rem;
   border: 1px solid var(--party-line);
-  border-radius: 2rem;
+  border-radius: var(--radius-pill);
   font-size: 0.85rem;
-  background: #fff;
+  background: var(--color-surface);
   margin: 0;
 }
 .party-connection span {
   width: 0.5rem;
   height: 0.5rem;
-  border-radius: 50%;
-  background: #926322;
+  border-radius: var(--radius-pill);
+  background: var(--color-warning);
 }
 .party-connection.is-live span {
-  background: #27765c;
+  background: var(--color-success);
 }
 .party-grid,
 .party-main {
@@ -74,9 +74,9 @@
 .party-lobby .party-invite {
   padding: clamp(1.1rem, 3vw, 1.8rem);
   border: 1px solid var(--party-line);
-  border-radius: 1.1rem;
-  background: #fff;
-  box-shadow: 0 5px 20px #193e3606;
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
   margin: 0;
 }
 .party-lobby h2 {
@@ -85,43 +85,39 @@
   letter-spacing: -0.02em;
 }
 .party-lobby .party-invite {
-  background: #f5f7ed;
+  background: var(--color-subtle);
 }
 .party-code-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.75rem;
+  gap: var(--space-3);
   align-items: center;
 }
 .party-lobby .party-code {
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   color: var(--party-ink);
   font-size: clamp(1.4rem, 4vw, 2.2rem);
   letter-spacing: 0.12em;
   padding: 0.55rem 0.7rem;
-  background: #fff;
+  background: var(--color-surface);
   font-weight: 750;
 }
 .party-lobby button,
 .party-lobby input {
   font: inherit;
-  min-height: 2.75rem;
-  border-radius: 0.55rem;
-  border: 1px solid #a6b9ac;
+  min-height: var(--control-height);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-line);
 }
 .party-lobby button {
   background: var(--party-green);
-  color: #fff;
+  color: var(--color-on-primary);
   cursor: pointer;
   font-weight: 650;
   padding: 0.75rem 1rem;
 }
-.party-lobby button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
 .party-lobby :focus-visible {
-  outline: 3px solid #bd6a22;
+  outline: 3px solid var(--color-focus);
   outline-offset: 3px;
 }
 .party-lobby .party-invite label {
@@ -135,7 +131,7 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--space-4);
   flex-wrap: wrap;
 }
 .party-section-heading h2 {
@@ -150,17 +146,17 @@
   list-style: none;
   padding: 0;
   display: grid;
-  gap: 0.75rem;
+  gap: var(--space-3);
   margin: 1.25rem 0 0;
 }
 .party-player-list li {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
   padding: 0.9rem;
   margin: 0;
   border: 1px solid var(--party-line);
-  border-radius: 0.75rem;
+  border-radius: var(--radius-control);
   min-width: 0;
 }
 .party-avatar {
@@ -168,8 +164,8 @@
   place-items: center;
   flex: 0 0 2.5rem;
   height: 2.5rem;
-  background: #e8eee3;
-  border-radius: 0.7rem;
+  background: var(--color-subtle);
+  border-radius: var(--radius-control);
   font-weight: 750;
 }
 .party-player-info {
@@ -185,23 +181,23 @@
 .party-host-badge {
   display: inline-flex;
   padding: 0.15rem 0.35rem;
-  border-radius: 1rem;
-  background: #fff3da;
+  border-radius: var(--radius-card);
+  background: var(--color-warning-soft);
   font-size: 0.7rem;
   font-weight: 650;
-  color: #795323;
+  color: var(--color-warning);
 }
 .party-player-status {
   color: var(--party-muted);
   font-size: 0.78rem;
 }
 .party-player-status.is-ready {
-  color: #216149;
+  color: var(--color-success);
   font-weight: 650;
 }
 .party-player-list button {
-  background: #fff;
-  color: #6f4537;
+  background: var(--color-surface);
+  color: var(--color-error);
   font-size: 0.75rem;
   padding: 0.5rem 0.65rem;
   margin: 0;
@@ -225,12 +221,12 @@
 }
 .party-lobby .party-leave,
 .party-lobby .party-ready.is-ready {
-  background: #fff;
+  background: var(--color-surface);
   color: var(--party-ink);
 }
 .party-lobby .lobby-card {
   margin: 0;
-  box-shadow: none;
+  box-shadow: var(--shadow-card);
 }
 .party-lobby .party-host {
   border-top: 4px solid var(--party-green);
@@ -241,7 +237,7 @@
   border-radius: 0;
 }
 .party-host input[type='number'] {
-  background: #fafbf7;
+  background: var(--color-surface);
   color: var(--party-ink);
 }
 .party-lobby .lobby-choice {
@@ -255,10 +251,10 @@
   height: 1.2rem;
 }
 .party-lobby .lobby-choice {
-  min-height: 2.75rem;
+  min-height: var(--control-height);
   padding: 0.4rem 0.6rem;
   border: 1px solid var(--party-line);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-control);
 }
 .party-start-area {
   margin-top: 1.25rem;
@@ -275,22 +271,22 @@
 .party-settings-summary p {
   margin: 0;
   padding: 0.8rem;
-  background: #f5f7f1;
-  border-radius: 0.5rem;
+  background: var(--color-page);
+  border-radius: var(--radius-control);
   font-size: 0.9rem;
   overflow-wrap: anywhere;
 }
 .party-error {
-  background: #fff0e8;
-  border: 1px solid #e7bca5;
+  background: var(--color-error-soft);
+  border: 1px solid var(--color-error);
   padding: 1rem;
-  border-radius: 0.75rem;
-  color: #793b23;
+  border-radius: var(--radius-control);
+  color: var(--color-error);
   overflow-wrap: anywhere;
 }
 .party-countdown {
   text-align: center;
-  background: #edf4e8;
+  background: var(--color-success-soft);
 }
 .party-countdown [role='status'] {
   font-size: 1.3rem;
@@ -312,13 +308,13 @@
 .party-skeleton span {
   display: block;
   height: 3.5rem;
-  background: #edf1e9;
-  border-radius: 0.65rem;
+  background: var(--color-subtle);
+  border-radius: var(--radius-control);
 }
 @media (min-width: 48rem) {
   .party-grid {
     grid-template-columns: minmax(0, 1.25fr) minmax(18rem, 1fr);
-    gap: 1.5rem;
+    gap: var(--space-5);
   }
 }
 @media (max-width: 24rem) {

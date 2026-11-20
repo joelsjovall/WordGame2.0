@@ -1,0 +1,160 @@
+button,
+.wg-button,
+input,
+select,
+textarea {
+  font: inherit;
+  min-height: var(--control-height);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-control);
+  padding: var(--space-3) var(--space-4);
+}
+button,
+.wg-button {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+:root .wg-button[data-variant='primary'] {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+:root .wg-button[data-variant='secondary'] {
+  background: var(--color-secondary);
+  color: var(--color-on-secondary);
+}
+:root .wg-button[data-variant='danger'] {
+  background: var(--color-error);
+  color: var(--color-on-primary);
+}
+:root button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+:root button[aria-busy='true'] {
+  cursor: progress;
+}
+:root button:not(:disabled):active,
+:root button:not(:disabled):hover:active,
+:root .wg-button:active,
+:root .wg-button:hover:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+@media (hover: hover) {
+  :root .wg-button[data-variant='primary']:not(:disabled):hover {
+    background: var(--color-primary-hover);
+  }
+  :root button:not(:disabled):hover,
+  :root .wg-button:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-raised);
+  }
+}
+:root :is(button, a, input, textarea, select, summary):focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 4px;
+}
+input,
+select,
+textarea {
+  color: var(--color-ink);
+  background: var(--color-surface);
+  max-width: 100%;
+}
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: var(--color-primary);
+  min-width: 1.25rem;
+  min-height: 1.25rem;
+}
+:root input[aria-invalid='true'] {
+  border: 2px solid var(--color-error);
+}
+.wg-card,
+dialog {
+  padding: clamp(var(--space-4), 4vw, var(--space-6));
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-card);
+  min-width: 0;
+}
+dialog {
+  width: min(32rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+}
+dialog::backdrop {
+  background: var(--color-backdrop);
+}
+.wg-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border-radius: var(--radius-pill);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  background: var(--color-subtle);
+  color: var(--color-primary);
+}
+.wg-badge[data-tone='success'] {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+.wg-badge[data-tone='warning'] {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+.wg-badge[data-tone='error'] {
+  background: var(--color-error-soft);
+  color: var(--color-error);
+}
+.wg-spinner {
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: wg-spin 1s linear infinite;
+}
+.wg-icon {
+  width: 1.25em;
+  height: 1.25em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+@keyframes wg-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  :root button,
+  :root .wg-button {
+    transform: none;
+  }
+}
