@@ -60,6 +60,22 @@ Completed Online matches are persisted as immutable JSON records through `IOnlin
 
 Storage implementations must remain separate from gameplay rules.
 
+## Optional ranking decision (F040)
+
+**Decision: postpone ranked mode beyond the initial public release.** Keep one casual FIFO queue. Current guest identities cannot recover progression after expiry, reset, cookie loss, or restart; persistent match records alone do not solve that. We also have no population measurements demonstrating that separate queues can sustain acceptable waits. Ranking would add integrity, balancing, and operational work before the complete Online release flow is validated.
+
+Revisit after the Online review/release tests pass, persistent identities support recovery and revocation across restarts, and measured concurrent players, queue waits, and match completion rates justify a competitive queue. Set measurable queue-wait/population targets from that evidence before enabling it; do not assume launch traffic. Require protection against identity resets, repeated-opponent boosting, and deliberately abandoned matches.
+
+Future implementation requirements, not enabled behavior:
+
+- **Identity:** a durable server-owned player ID linked to a recoverable identity, independent of display name and transient guest-session ID. Casual guests remain supported; ranked participation requires the recoverable identity. Never transfer ratings by matching names.
+- **Rating choice:** prefer simple Elo for a first implementation: update = K × (actual score − expected score), with actual score 1 for a win, 0 for a loss, and 0.5 for a draw. Both updates use pre-match ratings. Glicko-2 additionally models rating uncertainty and volatility, useful for newcomers/inactivity but requiring more state and calibration. Start with Elo unless observed results justify that complexity. References: [FIDE rating calculation](https://handbook.fide.com/chapter/B022024), [Glickman's Glicko-2 specification](https://www.glicko.net/glicko/glicko2.pdf); chess-specific parameters are not adopted automatically.
+- **Initial/provisional policy:** proposed baseline 1000, K = 32, first 10 rated matches marked provisional. Calibrate these values and the expected-score formula/rounding with simulations before activation; store a policy version. Show rating plus a provisional indicator and rated-match count on profiles; defer cosmetic rank tiers.
+- **Outcomes:** an authoritative forfeit or expired reconnection window is a rated loss/win, without extra penalties. An unstarted/cancelled/no-winner abandoned match changes neither rating. Draw updates use 0.5, so they can raise or lower ratings depending on the opponent. Define and test any future abuse policy separately.
+- **Casual separation/matching:** explicitly tag future results casual/ranked; treat all existing history and rematches as casual, with no retroactive rating updates. Keep the shared gameplay engine. A future `IMatchmakingPolicy` implementation can consider rating and widen acceptable differences with waiting time; enable a separate ranked queue only after population targets are met. Preserve casual FIFO behavior.
+- **Durability/security:** use an Application rating-storage interface with a transactional Infrastructure implementation (SQLite is a suitable single-instance candidate). Store player ID, rating, provisional/rated-match count, policy version, and update time; retain an audit ledger containing match ID, both pre/post ratings, and outcome. Atomically update both players and ledger; unique (match ID, player ID) keys prevent retries/replays from applying a second update. Only verified server outcomes may write ratings; clients receive read-only profile data. Add backup/recovery and authorization checks.
+- **Verification gate:** before launch of ranked play, test expected-score calculations, wins/losses/draws, provisional boundaries, forfeits, rating persistence/restarts, duplicate/concurrent completion, transaction rollback, authorization, and unchanged casual flows. No ranking calculations, persistence schema, UI, or tests are introduced by this deferral.
+
 ## Security
 
 - Players use securely issued guest identities.

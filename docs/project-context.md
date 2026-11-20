@@ -80,8 +80,9 @@ The planned backlog contains 57 issues across six milestones. Work proceeds one 
 - **Completed:** [F036, Build online matchmaking frontend (#38)](https://github.com/joelsjovall/WordGame2.0/issues/38), merged through PR #95 (merge commit `ba39753`).
 - **Completed:** [F037, Online disconnections and forfeits (#39)](https://github.com/joelsjovall/WordGame2.0/issues/39), merged through PR #96 (merge commit `1fb7039`).
 - **Completed:** [F038, Online statistics and match history (#40)](https://github.com/joelsjovall/WordGame2.0/issues/40), merged through PR #97 (merge commit `681c571`).
-- **Active:** [F039, Online rematch and return-to-queue flow (#41)](https://github.com/joelsjovall/WordGame2.0/issues/41): server-owned rematch negotiation, result-screen controls, and fresh-game/queue transitions implemented locally; final verification and commit approval pending.
-- **Current local state (2026-11-20):** Working on `feature/F039-online-rematches`; preserve local work and follow the current session's Git authorization.
+- **Completed:** [F039, Online rematch and return-to-queue flow (#41)](https://github.com/joelsjovall/WordGame2.0/issues/41), merged through PR #98 (merge commit `58fbcd1`).
+- **Active:** [F040, Optional ranking decision (#42)](https://github.com/joelsjovall/WordGame2.0/issues/42): postpone ranking beyond initial release; rationale, future requirements, and revisit gates recorded in `docs/architecture.md`. Awaiting commit approval.
+- **Current local state (2026-11-20):** Working on `docs/F040-ranking-decision`; preserve local work and follow the current session's Git authorization.
 - **Outstanding security follow-up:** A database credential was previously exposed in the public V1 repository. Never reuse or reproduce it. Rotation must be verified; this handoff provides no evidence that rotation has occurred.
 
 Update this section as issues are completed or the handoff state changes.
