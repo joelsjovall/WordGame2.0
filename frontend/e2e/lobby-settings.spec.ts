@@ -6,7 +6,7 @@ test('host controls synchronize across players and freeze into a valid match', a
   browser,
 }) => {
   await page.goto('/')
-  await page.getByRole('link', { name: 'Create a private lobby' }).click()
+  await page.getByRole('link', { name: 'Play with Friends' }).click()
   await page.getByLabel('Your display name').fill('Host')
   await page.getByRole('button', { name: 'Create lobby', exact: true }).click()
   await expect(

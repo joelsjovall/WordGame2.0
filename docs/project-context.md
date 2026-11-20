@@ -84,8 +84,9 @@ The planned backlog contains 57 issues across six milestones. Work proceeds one 
 - **Completed:** [F040, Optional ranking decision (#42)](https://github.com/joelsjovall/WordGame2.0/issues/42), merged through PR #99 (merge commit `7bc0ba4`). Ranking is postponed beyond launch; see `docs/architecture.md`.
 - **Completed:** [F041, Online security and abuse protection (#43)](https://github.com/joelsjovall/WordGame2.0/issues/43), merged through PR #100 (merge commit `2e65456`).
 - **Completed:** [F042, Complete Online flow review (#44)](https://github.com/joelsjovall/WordGame2.0/issues/44), merged through PR #101 (merge commit `ef493b3`). Online milestone F033-F042 is merged, with optional ranking explicitly deferred.
-- **Active:** [F043, Visual identity and design system (#45)](https://github.com/joelsjovall/WordGame2.0/issues/45): shared tokens, accessible controls, and migrated feature styling implemented locally; see [design system](design-system.md). Final review and commit approval pending.
-- **Current local state (2026-11-20):** Working on `feature/F043-design-system`; preserve local work and follow the current session's Git authorization. UI/UX polish (F043-F052) is underway; identities/games remain in memory, and statistics require a durable history directory.
+- **Completed:** [F043, Visual identity and design system (#45)](https://github.com/joelsjovall/WordGame2.0/issues/45), merged through PR #102 (merge commit `d8c4158`); see [design system](design-system.md).
+- **Active:** [F044, Homepage and mode selection (#46)](https://github.com/joelsjovall/WordGame2.0/issues/46): responsive wordmark/hero, distinct Party/Online entry cards, and How to Play implemented locally with navigation/accessibility tests. Final review and commit approval pending.
+- **Current local state (2026-11-20):** Working on `feature/F044-homepage`; preserve local work and follow the current session's Git authorization. UI/UX polish (F043-F052) is underway; identities/games remain in memory, and statistics require a durable history directory.
 - **Outstanding security follow-up:** A database credential was previously exposed in the public V1 repository. Never reuse or reproduce it. Rotation must be verified; this handoff provides no evidence that rotation has occurred.
 
 Update this section as issues are completed or the handoff state changes.
