@@ -2,7 +2,7 @@ using WordGame.Application.Matchmaking;
 
 namespace WordGame.Api.Sessions;
 
-public sealed class MatchmakingWorker(MatchmakingService matchmaking, TimeProvider clock, IConfiguration configuration,
+public sealed class MatchmakingWorker(MatchmakingService matchmaking, OnlineRematchService rematches, TimeProvider clock, IConfiguration configuration,
     ILogger<MatchmakingWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -14,7 +14,7 @@ public sealed class MatchmakingWorker(MatchmakingService matchmaking, TimeProvid
         {
             while (await timer.WaitForNextTickAsync(stoppingToken))
             {
-                try { await matchmaking.CleanupAsync(stoppingToken); }
+                try { await matchmaking.CleanupAsync(stoppingToken); await rematches.CleanupAsync(stoppingToken); }
                 catch (Exception exception) when (exception is not OperationCanceledException)
                 { logger.LogError(exception, "Matchmaking cleanup failed; a later sweep will retry."); }
             }

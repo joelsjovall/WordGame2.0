@@ -55,6 +55,7 @@ builder.Services.AddSingleton(_ => new MatchmakingRules(
     builder.Configuration.GetValue("Matchmaking:AcceptanceTimeout",
         builder.Configuration.GetValue("Matchmaking:ReservationLifetime", TimeSpan.FromSeconds(30)))));
 builder.Services.AddSingleton<OnlineMatchLifecycle>();
+builder.Services.AddSingleton<OnlineRematchService>();
 builder.Services.AddSingleton<MatchmakingService>();
 builder.Services.AddHostedService<MatchmakingWorker>();
 builder.Services.AddSingleton(_ => new SessionRetention(
@@ -128,6 +129,7 @@ app.MapGameSynchronizationEndpoints();
 app.MapGameActionEndpoints();
 app.MapGuestEndpoints();
 app.MapOnlineStatisticsEndpoints();
+app.MapOnlineRematchEndpoints();
 app.MapMatchmakingEndpoints();
 app.MapLobbyEndpoints();
 app.MapLobbyHostEndpoints();
