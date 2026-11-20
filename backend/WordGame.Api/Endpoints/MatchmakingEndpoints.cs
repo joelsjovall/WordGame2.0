@@ -11,21 +11,25 @@ internal static class MatchmakingEndpoints
 {
     internal static void MapMatchmakingEndpoints(this WebApplication app)
     {
-        var group = app.MapGroup("/api/v1/matchmaking").RequireAuthorization().WithTags("Matchmaking");
+        var group = app.MapGroup("/api/v1/matchmaking").RequireAuthorization().WithTags("Matchmaking")
+            .RequireRateLimiting(LobbyRateLimiting.MatchmakingRead);
         group.MapPost("/searches", JoinAsync).AddEndpointFilter<SameOriginWriteFilter>()
             .RequireRateLimiting(LobbyRateLimiting.Matchmaking).WithName("JoinMatchmaking")
             .Produces<MatchmakingResponse>().Produces(400).Produces(401).Produces(403).Produces(409).Produces(429);
-        group.MapGet("/status", StatusAsync).WithName("GetMatchmakingStatus").Produces<MatchmakingResponse>().Produces(401);
+        group.MapGet("/status", StatusAsync).WithName("GetMatchmakingStatus").Produces<MatchmakingResponse>().Produces(401).Produces(429);
         group.MapGet("/events", EventsAsync).WithName("WatchMatchmaking")
-            .Produces<MatchmakingResponse>(200, "text/event-stream").Produces(401);
+            .Produces<MatchmakingResponse>(200, "text/event-stream").Produces(401).Produces(429);
         group.MapGet("/searches/{searchId:guid}", SearchAsync).WithName("GetMatchmakingSearch")
-            .Produces<MatchmakingResponse>().Produces(401).Produces(404);
+            .Produces<MatchmakingResponse>().Produces(401).Produces(404).Produces(429);
         group.MapDelete("/searches/{searchId:guid}", CancelAsync).AddEndpointFilter<SameOriginWriteFilter>()
-            .WithName("CancelMatchmaking").Produces(204).Produces(401).Produces(403).Produces(404).Produces(409);
+            .RequireRateLimiting(LobbyRateLimiting.Matchmaking)
+            .WithName("CancelMatchmaking").Produces(204).Produces(401).Produces(403).Produces(404).Produces(409).Produces(429);
         group.MapPost("/searches/{searchId:guid}/accept", AcceptAsync).AddEndpointFilter<SameOriginWriteFilter>()
-            .WithName("AcceptOnlineMatch").Produces<MatchmakingResponse>().Produces(400).Produces(401).Produces(403).Produces(404).Produces(409);
+            .RequireRateLimiting(LobbyRateLimiting.Matchmaking)
+            .WithName("AcceptOnlineMatch").Produces<MatchmakingResponse>().Produces(400).Produces(401).Produces(403).Produces(404).Produces(409).Produces(429);
         group.MapPost("/searches/{searchId:guid}/decline", DeclineAsync).AddEndpointFilter<SameOriginWriteFilter>()
-            .WithName("DeclineOnlineMatch").Produces<MatchmakingResponse>().Produces(400).Produces(401).Produces(403).Produces(404).Produces(409);
+            .RequireRateLimiting(LobbyRateLimiting.Matchmaking)
+            .WithName("DeclineOnlineMatch").Produces<MatchmakingResponse>().Produces(400).Produces(401).Produces(403).Produces(404).Produces(409).Produces(429);
     }
 
     private static IResult EventsAsync(HttpContext context, IMatchmakingQueueStore queue, MatchmakingService matchmaking,

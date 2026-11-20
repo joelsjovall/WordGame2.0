@@ -11,8 +11,9 @@ internal static class GameActionEndpoints
 {
     internal static void MapGameActionEndpoints(this WebApplication app) =>
         app.MapPost("/api/v1/games/{gameId:guid}/actions", ActAsync).RequireAuthorization()
+            .RequireRateLimiting(LobbyRateLimiting.Gameplay)
             .AddEndpointFilter<SameOriginWriteFilter>().WithTags("Games").WithName("SubmitGameAction")
-            .Produces<GameActionResponse>().Produces(400).Produces(401).Produces(403).Produces(404).Produces(409);
+            .Produces<GameActionResponse>().Produces(400).Produces(401).Produces(403).Produces(404).Produces(409).Produces(429);
 
     private static async Task<IResult> ActAsync(Guid gameId, GameActionRequest request, HttpContext context,
         GameEventService events, GameEngine engine, CancellationToken cancellationToken)
@@ -59,6 +60,8 @@ internal static class GameActionEndpoints
             GameEngineErrorCode.PlayerNotInGame or GameEngineErrorCode.PlayerUnavailable => 403,
             _ => 409
         };
+        context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("WordGame.Security")
+            .LogWarning("Gameplay action rejected with code {Code}", result.Error.Code);
         return Problem(context, status, result.Error.Message);
     }
     private static IResult Problem(HttpContext context, int status, string title) =>

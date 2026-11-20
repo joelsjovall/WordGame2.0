@@ -10,6 +10,8 @@ internal static class LobbyRateLimiting
     internal const string Join = "lobby-join";
     internal const string Guest = "guest-session";
     internal const string Matchmaking = "matchmaking-join";
+    internal const string MatchmakingRead = "matchmaking-read";
+    internal const string Gameplay = "gameplay-actions";
 
     internal static void AddLobbyRateLimiting(this WebApplicationBuilder builder)
     {
@@ -18,6 +20,9 @@ internal static class LobbyRateLimiting
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
             options.OnRejected = async (context, cancellationToken) =>
             {
+                context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("WordGame.Security")
+                    .LogWarning("Rate limit exceeded for endpoint {EndpointName}",
+                        context.HttpContext.GetEndpoint()?.Metadata.GetMetadata<Microsoft.AspNetCore.Routing.IEndpointNameMetadata>()?.EndpointName ?? "unknown");
                 if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
                 {
                     context.HttpContext.Response.Headers.RetryAfter =
@@ -30,6 +35,8 @@ internal static class LobbyRateLimiting
             AddPolicy(Join, "JoinPermitsPerMinute", 30);
             AddPolicy(Guest, "GuestPermitsPerMinute", 60);
             AddPolicy(Matchmaking, "MatchmakingPermitsPerMinute", 30);
+            AddPolicy(MatchmakingRead, "MatchmakingReadPermitsPerMinute", 300);
+            AddPolicy(Gameplay, "GameplayPermitsPerMinute", 240);
 
             void AddPolicy(string policy, string setting, int defaultPermits)
             {

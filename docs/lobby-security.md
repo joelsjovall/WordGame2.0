@@ -23,10 +23,21 @@ The API uses the [built-in ASP.NET Core rate limiter](https://learn.microsoft.co
 | POST `/api/v1/lobbies` | `CreatePermitsPerMinute` | 20 |
 | POST `/api/v1/lobbies/join` | `JoinPermitsPerMinute` | 30 |
 | POST `/api/v1/guests` | `GuestPermitsPerMinute` | 60 |
+| Matchmaking join/cancel/accept/decline and Online rematch writes (shared budget) | `MatchmakingPermitsPerMinute` | 30 |
+| Matchmaking reads, SSE opening attempts, and Online rematch reads (shared budget) | `MatchmakingReadPermitsPerMinute` | 300 |
+| Game action submissions, across both modes (shared budget) | `GameplayPermitsPerMinute` | 240 |
 
 All configured limits must be positive. Rejections return 429 problem JSON with `Retry-After`. Valid, invalid, and missing-code requests consume the join budget. Limits use the connection IP (normalized to IPv6), not cookies, submitted IDs, code values, or caller-supplied forwarding headers, so changing identities or invitations does not reset the budget. Unknown connection IPs share one fallback partition. Authentication rejects anonymous protected requests before they reach the endpoint limiter.
 
 Limits are local to the backend instance and reset on restart. Shared networks share a budget. A fixed window permits bursts around its boundary and is not distributed denial-of-service protection. The application does not trust forwarded headers; behind a reverse proxy, configure trusted proxy handling deliberately before relying on client-IP fairness. Do not trust arbitrary `X-Forwarded-For` values. Playwright's isolated test backend raises all three budgets to 1000 to accommodate parallel loopback clients; production defaults remain unchanged.
+
+## Online abuse review (F041)
+
+Queue reads/cancellation/acceptance/decline verify the server-issued guest session and search ownership; rematches additionally require membership of a completed Online game. Game state/SSE/actions require roster membership, and the shared engine checks turns, revisions, action IDs, deadlines, and permissions. Clients cannot set actor IDs, scores, winners, or completion status through request fields. Existing completion/history guards prevent repeated outcomes and statistics updates. Public DTOs exclude credential session IDs, revocation tokens, and cookies.
+
+Display names retain the 32-character/control-character rules above. The shared Application layer rejects submitted words longer than 256 characters and category IDs longer than 128 before validation/provider work. Rate-limit warnings contain only the static endpoint name; rejected gameplay warnings contain only the engine error code. Neither includes names, submitted words, request bodies, cookies, or credential IDs.
+
+IP limits reduce queue churn and simple automation; they do not identify distributed bots, deliberate guest resets, or human-assisted cheating. Shared NATs also share a budget. Keep the single casual queue and existing identity/replay checks; monitor rate-limit/rejection counts before adding CAPTCHA, durable bans, or bot-specific infrastructure. Public category responses expose metadata rather than accepted answers. Production still needs trusted proxy configuration and upstream connection/body/traffic limits; untrusted forwarding headers must never choose a limiter partition. In-memory budgets reset on restart and are not shared across backend instances.
 
 ## Invitation review
 

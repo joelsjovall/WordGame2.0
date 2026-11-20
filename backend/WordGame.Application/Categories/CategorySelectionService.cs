@@ -14,9 +14,9 @@ public sealed class CategorySelectionService(ICategoryProvider provider, Categor
     public async Task<GameEngineResult> SelectAsync(Guid gameId, Guid playerId, string categoryId,
         PlayerActionContext context, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(categoryId))
+        if (string.IsNullOrWhiteSpace(categoryId) || categoryId.Length > 128)
         {
-            return GameEngineResult.Rejected(GameEngineErrorCode.InvalidAction, "A category ID is required.");
+            return GameEngineResult.Rejected(GameEngineErrorCode.InvalidAction, "A category ID of at most 128 characters is required.");
         }
 
         var definition = await ResolveAsync(categoryId.Trim(), cancellationToken);
