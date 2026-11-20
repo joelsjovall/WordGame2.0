@@ -2,10 +2,11 @@ using WordGame.Domain;
 
 namespace WordGame.Application.Matchmaking;
 
-public enum MatchmakingStatus { Idle, Searching, Matched, Cancelled, Expired }
+public enum MatchmakingStatus { Idle, Searching, Matched, Ready, Failed, Cancelled, Expired }
 
 public sealed record MatchmakingSearch(Guid Id, Player Player, Guid CredentialSessionId, MatchmakingStatus Status,
-    DateTimeOffset CreatedAt, DateTimeOffset ExpiresAt, DateTimeOffset UpdatedAt, Guid? MatchId = null);
+    DateTimeOffset CreatedAt, DateTimeOffset ExpiresAt, DateTimeOffset UpdatedAt, Guid? MatchId = null,
+    Guid? GameId = null, bool HasAccepted = false);
 
 public sealed class MatchmakingQueueState
 {
@@ -18,6 +19,7 @@ public sealed class MatchmakingQueueState
 public interface IMatchmakingQueueStore
 {
     Task<T> ExecuteAsync<T>(Func<MatchmakingQueueState, Task<T>> transition, CancellationToken cancellationToken = default);
+    IAsyncEnumerable<MatchmakingSearch?> WatchAsync(Guid playerId, CancellationToken cancellationToken = default);
 }
 
 public interface IMatchmakingPolicy
@@ -35,12 +37,14 @@ public sealed class MatchmakingConflictException(string message) : Exception(mes
 
 public sealed class MatchmakingRules
 {
-    public MatchmakingRules(TimeSpan? searchLifetime = null, TimeSpan? reservationLifetime = null, TimeSpan? terminalRetention = null)
+    public MatchmakingRules(TimeSpan? searchLifetime = null, TimeSpan? reservationLifetime = null, TimeSpan? terminalRetention = null,
+        TimeSpan? acceptanceTimeout = null)
     {
         SearchLifetime = searchLifetime ?? TimeSpan.FromMinutes(2);
         ReservationLifetime = reservationLifetime ?? TimeSpan.FromMinutes(1);
         TerminalRetention = terminalRetention ?? TimeSpan.FromMinutes(10);
-        if (SearchLifetime <= TimeSpan.Zero || ReservationLifetime <= TimeSpan.Zero || TerminalRetention <= TimeSpan.Zero)
+        AcceptanceTimeout = acceptanceTimeout ?? reservationLifetime ?? TimeSpan.FromSeconds(30);
+        if (SearchLifetime <= TimeSpan.Zero || ReservationLifetime <= TimeSpan.Zero || TerminalRetention <= TimeSpan.Zero || AcceptanceTimeout <= TimeSpan.Zero)
         {
             throw new ArgumentOutOfRangeException(nameof(searchLifetime), "Matchmaking lifetimes must be positive.");
         }
@@ -48,4 +52,5 @@ public sealed class MatchmakingRules
     public TimeSpan SearchLifetime { get; }
     public TimeSpan ReservationLifetime { get; }
     public TimeSpan TerminalRetention { get; }
+    public TimeSpan AcceptanceTimeout { get; }
 }

@@ -44,6 +44,20 @@ public sealed class InMemoryGameSessionStore(TimeProvider clock, SessionRetentio
     public Task<SessionSnapshot> UpdateAsync(Guid sessionId, Action<GameSession> update, CancellationToken cancellationToken = default) =>
         UpdateCoreAsync(sessionId, update, null, cancellationToken);
 
+    public async Task<IReadOnlyList<SessionSnapshot>> GetOpenAsync(CancellationToken cancellationToken = default)
+    {
+        var open = new List<SessionSnapshot>();
+        foreach (var id in sessions.Keys.ToArray())
+        {
+            var snapshot = await GetAsync(id, cancellationToken);
+            if (snapshot?.Status is SessionStatus.Waiting or SessionStatus.Starting or SessionStatus.Active)
+            {
+                open.Add(snapshot);
+            }
+        }
+        return open.AsReadOnly();
+    }
+
     public async Task<IReadOnlyList<SessionSnapshot>> GetActiveAsync(CancellationToken cancellationToken = default)
     {
         var active = new List<SessionSnapshot>();

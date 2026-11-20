@@ -7,6 +7,7 @@ public interface IGameSessionStore
     Task<SessionSnapshot> CreateAsync(IEnumerable<Player> players, CancellationToken cancellationToken = default, MatchSettings? settings = null);
     Task<SessionSnapshot?> GetAsync(Guid sessionId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<SessionSnapshot>> GetActiveAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SessionSnapshot>> GetOpenAsync(CancellationToken cancellationToken = default) => GetActiveAsync(cancellationToken);
 
     // Synchronous trusted backend work. Successful actions commit atomically; failures roll back.
     Task<SessionSnapshot> UpdateAsync(

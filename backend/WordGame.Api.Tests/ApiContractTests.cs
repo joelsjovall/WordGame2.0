@@ -79,7 +79,10 @@ public sealed class ApiContractTests
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var paths = document.RootElement.GetProperty("paths");
-        Assert.Equal(20, paths.EnumerateObject().Count());
+        Assert.Equal(23, paths.EnumerateObject().Count());
+        Assert.True(paths.TryGetProperty("/api/v1/matchmaking/events", out _));
+        Assert.True(paths.TryGetProperty("/api/v1/matchmaking/searches/{searchId}/accept", out _));
+        Assert.True(paths.TryGetProperty("/api/v1/matchmaking/searches/{searchId}/decline", out _));
         Assert.True(paths.TryGetProperty("/api/v1/matchmaking/searches", out _));
         Assert.True(paths.TryGetProperty("/api/v1/matchmaking/searches/{searchId}", out _));
         Assert.True(paths.TryGetProperty("/api/v1/matchmaking/status", out _));

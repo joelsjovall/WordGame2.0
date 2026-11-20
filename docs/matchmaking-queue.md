@@ -1,6 +1,6 @@
 # Online matchmaking queue
 
-F034 (#36) adds authenticated FIFO opponent selection for 1v1. It creates a short-lived pair reservation, not a game. F035 owns game creation, acceptance/decline, notifications, and entry into gameplay through the shared engine. No Online UI is added in this issue.
+F034 adds FIFO selection; F035 creates one shared-engine Online game per pair and starts it after both players accept. The Online UI remains later work.
 
 ## API
 
@@ -12,8 +12,11 @@ All routes require the existing verified guest cookie. Identity and session IDs 
 | GET `/api/v1/matchmaking/status` | Returns the caller's latest search or `idle` when none exists |
 | GET `/api/v1/matchmaking/searches/{searchId}` | Returns the owned search; unknown/other-player searches return 404 |
 | DELETE `/api/v1/matchmaking/searches/{searchId}` | Cancels a searching entry (204); terminal cancellations are idempotent; a matched reservation returns 409 |
+| GET `/api/v1/matchmaking/events` | Credentialed SSE snapshots named `matchmaking`, including initial state and heartbeats |
+| POST `/api/v1/matchmaking/searches/{searchId}/accept` | JSON `{}`; idempotently accepts, starts once both accept |
+| POST `/api/v1/matchmaking/searches/{searchId}/decline` | JSON `{}`; cancels both pending assignments and abandons the game |
 
-The resource routes align with F009's versioned search specification. The additional status route represents `idle` without requiring a known search ID. A response contains nullable `searchId`, `createdAt`, `expiresAt`, `matchId`, and `gameId`, plus `status`. `matchId` identifies a selected group; it is never usable as a game ID. `gameId` remains null until F035 integrates game creation. No opponent credentials, private session IDs, or unrelated searches are returned.
+Responses include IDs, timestamps, status, and the caller's `hasAccepted`. `matched` includes a shared game ID and acceptance deadline; `ready` means active gameplay and has no deadline. `failed` permits a fresh search. Opponent credentials and search resources remain private.
 
 Names use the same backend validation as Party lobbies: trimmed, nonblank, at most 32 characters, without control characters. Name collisions between unrelated queue users are not identity collisions. A duplicate join returns the same searching/matched entry without extending its deadline or changing its FIFO position. A different name conflicts until the current search is cancelled or expires. Unknown JSON fields, including actor IDs, are rejected.
 
@@ -25,23 +28,24 @@ POST and DELETE apply the existing same-origin protection. Joining also uses a p
 
 `MatchmakingService` owns validation and transitions in Application. Infrastructure's in-memory queue store serializes callbacks with one semaphore, covering eligibility reads, duplicate checks, FIFO selection, cancellation, and reservation updates. Callers receive immutable search records. Active participation is checked against the shared game session store for both modes; a player who has intentionally left a game is no longer a participant for this check.
 
-Cancellation racing with a join has one of two outcomes: cancellation wins and the opponent remains searching, or selection wins and cancellation returns 409. DELETE never silently dissolves an already selected pair. Acceptance/decline behavior belongs to F035; until then an unused reservation expires.
+Cancellation racing with selection either wins or returns 409. Use decline for pending matches; decline/timeout invalidates both assignments without silent requeueing. Both players receive match-found and ready SSE updates. Reconnection retrieves current state; guest reset closes subscriptions.
 
-Joining/status/cancellation and the existing session-cleanup worker prune expired, revoked-session, and now-active-game entries. If one member of a reservation becomes ineligible, both sides become expired and can explicitly search again. Queued eligibility is checked at queue-operation time; entering a Party match afterward invalidates the reservation on the next operation/sweep. F035 must recheck eligibility when committing an actual game. This issue does not allocate games or claim an atomic transaction between independent future game-creation workflows.
+Live Party and Online creation use `GameEngine.CreateExclusiveAsync`, serializing roster checks against waiting, starting, and active games. General engine setup retains independent-session semantics. Online games use fixed six-round settings and cannot play until accepted by both players. Creation/start failures abandon partial games and mark both assignments failed. Accepted games use existing disconnect rules.
 
 ## Expiration and storage
 
 | Setting | Default |
 | --- | --- |
 | `Matchmaking:SearchLifetime` | 2 minutes |
-| `Matchmaking:ReservationLifetime` | 1 minute |
+| `Matchmaking:AcceptanceTimeout` | 30 seconds |
+| `Matchmaking:CleanupInterval` | 1 second |
 | `Matchmaking:TerminalRetention` | 10 minutes |
 
-All durations must be positive. Expiry uses server time and is absolute; polling does not renew it. Revoking/resetting a guest session makes its entries ineligible. Searching entries leave the FIFO immediately when pruned. Cancelled/expired records remain briefly for status recovery, then are physically removed. Cleanup uses the existing `Sessions:CleanupInterval` worker (one minute by default); incoming operations also prune before acting. A fresh search has a new ID, so cancelling an older resource cannot affect it.
+Durations must be positive; polling does not renew deadlines. The matchmaking worker reconciles expiry without client polling. Terminal records are retained briefly, then removed; new searches have new IDs. The earlier reservation-lifetime option remains compatible, but game acceptance uses `AcceptanceTimeout`.
 
 The queue is process-local, matching the supported single-backend architecture. Restarts lose searches and reservations. Eligibility currently scans detached active-game snapshots; a player index can replace that query if measured scale warrants it. Distributing queue state or persisting it requires a future implementation of the storage boundary.
 
-## Acceptance review and verification
+## F034 baseline verification
 
 | Criterion | Evidence |
 | --- | --- |
@@ -55,6 +59,6 @@ The queue is process-local, matching the supported single-backend architecture. 
 | Remove expired entries | Search/reservation expiry, revoked sessions, FIFO removal, terminal retention cleanup |
 | Automated coverage | Eight matchmaking HTTP cases plus rate-limit security coverage and existing backend regressions |
 
-All nine queue criteria are implemented. Tests also verify FIFO with delayed policy selection, both game formats' active-player exclusion, display-name/actor validation, ownership privacy, and same-origin cancellation. Actual Online game creation and acceptance remain F035, as specified in that issue.
+The original F034 queue review above predates game creation. F035 additionally verifies acceptance/SSE delivery, timeout/decline races, initialization/start rollback, and exclusive cross-mode game creation.
 
 Verification passed: 454 backend tests, 73 frontend tests, 12 Party joining/lifecycle browser cases, OpenAPI generated-type consistency, frontend build/lint/formatting, backend solution formatting, and Git diff checks.

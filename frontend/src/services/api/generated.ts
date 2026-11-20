@@ -178,6 +178,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/matchmaking/events': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['WatchMatchmaking']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/matchmaking/searches/{searchId}': {
     parameters: {
       query?: never
@@ -189,6 +205,38 @@ export interface paths {
     put?: never
     post?: never
     delete: operations['CancelMatchmaking']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/matchmaking/searches/{searchId}/accept': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post: operations['AcceptOnlineMatch']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/v1/matchmaking/searches/{searchId}/decline': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post: operations['DeclineOnlineMatch']
+    delete?: never
     options?: never
     head?: never
     patch?: never
@@ -338,7 +386,13 @@ export interface components {
     ApiMatchFormat: 'party' | 'online'
     /** @enum {unknown} */
     ApiMatchmakingStatus:
-      'idle' | 'searching' | 'matched' | 'cancelled' | 'expired'
+      | 'idle'
+      | 'searching'
+      | 'matched'
+      | 'ready'
+      | 'failed'
+      | 'cancelled'
+      | 'expired'
     ApiProblemDetails: {
       type?: null | string
       title?: null | string
@@ -550,6 +604,7 @@ export interface components {
       challengeSeconds: number
       allowedDifficulties: components['schemas']['ApiCategoryDifficulty'][]
     }
+    MatchAcceptanceRequest: Record<string, never>
     MatchmakingResponse: {
       /** Format: uuid */
       searchId: null | string
@@ -562,6 +617,7 @@ export interface components {
       matchId: null | string
       /** Format: uuid */
       gameId: null | string
+      hasAccepted: boolean
     }
     MatchResultResponse: {
       /** Format: uuid */
@@ -1177,6 +1233,33 @@ export interface operations {
       }
     }
   }
+  WatchMatchmaking: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'text/event-stream': components['schemas']['MatchmakingResponse']
+        }
+      }
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
   GetMatchmakingSearch: {
     parameters: {
       query?: never
@@ -1226,6 +1309,128 @@ export interface operations {
     responses: {
       /** @description No Content */
       204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  AcceptOnlineMatch: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        searchId: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['MatchAcceptanceRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['MatchmakingResponse']
+        }
+      }
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  DeclineOnlineMatch: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        searchId: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['MatchAcceptanceRequest']
+      }
+    }
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['MatchmakingResponse']
+        }
+      }
+      /** @description Bad Request */
+      400: {
         headers: {
           [name: string]: unknown
         }
