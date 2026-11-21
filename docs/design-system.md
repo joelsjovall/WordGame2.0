@@ -28,6 +28,14 @@ Browser checks cover responsive layouts, contrast pairs, keyboard focus, native 
 
 Gameplay feedback follows authoritative state: phase/round entry, bids, bluff calls, word results, changed scores, and final winners use short opacity/transform effects. The challenge countdown briefly emphasizes each of its final ten seconds; the warning color and underline remain without motion. Winner stars animate once for 440ms; other effects take 140–220ms. Existing loading and matchmaking indicators are reused. No action or server timer waits for an animation, and reduced motion removes all effects while preserving text/status feedback. Mobile browser checks include reduced motion and Chromium CPU throttling; physical-device smoothness remains part of release validation.
 
+## Optional game audio
+
+The global footer supplies mute/unmute and volume controls. Sounds default to muted at 35% volume; preferences are saved under `wordgame.audio.v1` in local storage when available. Each tab/refresh requires an explicit Enable sounds click before creating/resuming Web Audio, even when an unmuted preference was saved. Unsupported or blocked audio leaves gameplay fully usable. Hidden tabs stop current sounds and drop new ones.
+
+`src/services/gameAudio.ts` synthesizes original short sine/triangle cues for categories, bids, bluff calls, accepted/invalid/duplicate words, a one-time final-five-second warning, round completion, and winner-only victory. Source/licensing: these tones were authored for WordGame 2.0 in its source code; no third-party recordings, samples, or audio assets are distributed. No background music or audio dependency is included. All game information remains available visually.
+
+Server-state transitions trigger one prioritized cue; reconnect snapshots do not replay missed events. Event IDs prevent duplicate cues, new cues replace active voices, volume/mute changes stop current playback, and effects never delay actions. Chromium tests exercise Web Audio; Windows WebKit lacks that API and verifies the fallback. Physical-device listening/volume comfort remains release validation.
+
 ## Mobile viewport and packaging
 
 The viewport permits zoom, opts into safe-area layout, and requests content resizing for interactive widgets where supported. Body padding consumes `safe-area-inset-*`; inputs use at least 16px text. Pages remain naturally scrollable without fixed-screen locks. Challenge entry observes [VisualViewport](https://developer.mozilla.org/en-US/docs/Web/API/VisualViewport) resize/focus events and, in a short visible viewport, brings the timer, progress, field, and submit action into a compact sticky group. Word entry disables autocorrect/capitalization and supplies a Send key hint; Enter uses the same form submission. Zoom/orientation changes do not reset game state. See [viewport metadata](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/meta/name/viewport) for browser-dependent widget behavior.

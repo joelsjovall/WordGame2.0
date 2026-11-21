@@ -41,6 +41,7 @@ export function ChallengePanel({
                 deadline={challenge.deadline}
                 serverTime={state.serverTime}
                 showUrgency
+                soundId={challenge.id}
               />
             </strong>{' '}
             seconds

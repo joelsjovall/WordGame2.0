@@ -13,6 +13,7 @@ import { gameFixture as game } from '../../../tests/fixtures/game.ts'
 import type { GameState } from '../../services/api/games.ts'
 import { PlayerScoreboard } from './PlayerScoreboard.tsx'
 import { ServerCountdown } from './ServerCountdown.tsx'
+import { gameAudio } from '../../services/gameAudio.ts'
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -51,6 +52,7 @@ test('score emphasis restarts only for changed scores, not presence updates', ()
 })
 
 test('urgency uses the server deadline and stops at zero without triggering actions', () => {
+  const play = vi.spyOn(gameAudio, 'play').mockImplementation(() => {})
   vi.useFakeTimers()
   const now = vi.spyOn(performance, 'now').mockReturnValue(0)
   const view = render(
@@ -58,6 +60,7 @@ test('urgency uses the server deadline and stops at zero without triggering acti
       deadline="2026-11-19T12:00:11Z"
       serverTime={game.serverTime}
       showUrgency
+      soundId="challenge-warning"
     />,
   )
   expect(view.container.firstChild).toHaveAttribute('data-urgent', 'false')
@@ -65,10 +68,18 @@ test('urgency uses the server deadline and stops at zero without triggering acti
   act(() => vi.advanceTimersByTime(1000))
   expect(view.container.firstChild).toHaveAttribute('data-urgent', 'true')
   expect(screen.getByText('10')).toBeVisible()
+  expect(play).not.toHaveBeenCalled()
+  now.mockReturnValue(6000)
+  act(() => vi.advanceTimersByTime(5000))
+  expect(play).toHaveBeenCalledExactlyOnceWith(
+    'challenge-warning/warning',
+    'warning',
+  )
   now.mockReturnValue(12000)
-  act(() => vi.advanceTimersByTime(11000))
+  act(() => vi.advanceTimersByTime(6000))
   expect(screen.getByText('0')).toBeVisible()
   expect(view.container.firstChild).toHaveAttribute('data-urgent', 'false')
+  expect(play).toHaveBeenCalledTimes(1)
 })
 test('invalid bids cannot be sent but calling an opponent bluff stays available', async () => {
   const send = vi.fn()

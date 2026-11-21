@@ -22,6 +22,7 @@ export default defineConfig({
       name: 'mobile-webkit',
       testMatch: [
         'mobile-layout.spec.ts',
+        'audio-settings.spec.ts',
         'lobby-creation.spec.ts',
         'lobby-joining.spec.ts',
         'party-lifecycle.spec.ts',

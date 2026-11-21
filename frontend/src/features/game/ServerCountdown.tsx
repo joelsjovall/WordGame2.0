@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react'
+import { gameAudio } from '../../services/gameAudio.ts'
 
 export function ServerCountdown({
   deadline,
   serverTime,
   showUrgency = false,
+  soundId,
 }: {
   deadline: string
   serverTime: string
   showUrgency?: boolean
+  soundId?: string
 }) {
   const [remaining, setRemaining] = useState(() =>
     Math.max(0, Date.parse(deadline) - Date.parse(serverTime)),
@@ -22,6 +25,10 @@ export function ServerCountdown({
     return () => clearInterval(timer)
   }, [deadline, serverTime])
   const seconds = Math.ceil(remaining / 1000)
+  useEffect(() => {
+    if (soundId && seconds > 0 && seconds <= 5)
+      gameAudio.play(`${soundId}/warning`, 'warning')
+  }, [seconds, soundId])
   return (
     <span
       className="game-countdown"

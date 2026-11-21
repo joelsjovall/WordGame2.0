@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { observeAudio } from './support/audio.ts'
 
 async function noOverflow(page: Page) {
   expect(
@@ -46,7 +47,20 @@ test('word entry keeps timer and submit reachable when the visible viewport shri
     await session.send('Emulation.setCPUThrottlingRate', { rate: 4 })
   }
   await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await observeAudio(page)
   await page.goto('/lobbies/new')
+  const audioSupported = await page.evaluate(
+    () => typeof AudioContext !== 'undefined',
+  )
+  await page.getByRole('button', { name: 'Enable sounds' }).click()
+  if (audioSupported)
+    await expect(
+      page.getByRole('button', { name: 'Mute sounds' }),
+    ).toBeVisible()
+  else
+    await expect(
+      page.getByRole('complementary', { name: 'Game audio settings' }),
+    ).toContainText('Audio is unavailable or blocked')
   await page
     .getByLabel('Your display name')
     .fill('Host with a long display name')
@@ -90,6 +104,10 @@ test('word entry keeps timer and submit reachable when the visible viewport shri
       'animation-name',
       'game-emphasis',
     )
+    if (audioSupported)
+      await expect
+        .poll(() => page.evaluate(() => window.audioProbe.voices))
+        .toBeGreaterThanOrEqual(4)
     await guest.getByRole('button', { name: 'Call bluff', exact: true }).click()
     await expect(
       page.getByText('Bluff called · Time to prove it'),
