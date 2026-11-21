@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import { Button } from '../../components/ui.tsx'
+import { HowToPlay } from '../../components/HowToPlay.tsx'
 import { useGameState } from './useGameState.ts'
 import { useGameActions } from './useGameActions.ts'
 import { GameControls } from './GameControls.tsx'
@@ -22,6 +23,7 @@ export function GameView({ id, playerId }: { id: string; playerId: string }) {
   return (
     <div className="game-shell">
       {state ? <GameHeader state={state} /> : <h1>Match started</h1>}
+      <HowToPlay />
       <div className="game-connection">
         <GameConnectionStatus connection={connection} />
       </div>

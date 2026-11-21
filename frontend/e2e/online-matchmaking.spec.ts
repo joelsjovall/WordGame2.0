@@ -165,6 +165,16 @@ test('Online players cancel, restore, decline, and enter the same game on deskto
         .getByRole('button', { name: /European Capitals.*easy/i })
         .click()
       await alice.getByLabel('Your bid').fill('1')
+      const matchUrl = alice.url()
+      await alice
+        .getByRole('button', { name: 'How to Play', exact: true })
+        .click()
+      await expect(
+        alice.getByRole('dialog', { name: 'How to Play' }),
+      ).toContainText('six rounds')
+      await alice.getByRole('button', { name: 'Close instructions' }).click()
+      await expect(alice).toHaveURL(matchUrl)
+      await expect(alice.getByLabel('Your bid')).toHaveValue('1')
       await alice
         .locator('.game-shell')
         .screenshot({ path: testInfo.outputPath(`bidding-${width}.png`) })

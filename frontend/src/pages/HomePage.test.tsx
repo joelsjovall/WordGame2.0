@@ -35,10 +35,7 @@ test('mode descriptions and instructions explain the game without a request', ()
   expect(screen.getByText('Online Mode')).toBeVisible()
   expect(screen.getByText('2–4 players')).toBeVisible()
   expect(screen.getByText('1 vs 1')).toBeVisible()
-  expect(screen.getByRole('link', { name: 'How to Play' })).toHaveAttribute(
-    'href',
-    '#how-to-play',
-  )
+  expect(screen.getByRole('button', { name: 'How to Play' })).toBeVisible()
   expect(screen.getByRole('heading', { name: 'How to Play' })).toBeVisible()
   expect(screen.getByText('Beat the clock')).toBeVisible()
 })
