@@ -9,9 +9,11 @@ import { PlayerScoreboard } from './PlayerScoreboard.tsx'
 import { OnlineOutcome } from './OnlineOutcome.tsx'
 import { OnlineContinue } from './OnlineContinue.tsx'
 import './game.css'
+import { useGameAudio } from './useGameAudio.ts'
 
 export function GameView({ id, playerId }: { id: string; playerId: string }) {
   const { state, connection, error: syncError } = useGameState(id)
+  useGameAudio(state, playerId, connection === 'connected')
   const hasLeft =
     state?.players.find((player) => player.id === playerId)?.hasLeft === true
   const canAct =

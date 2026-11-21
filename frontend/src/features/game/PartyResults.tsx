@@ -1,4 +1,6 @@
 import { useNavigate } from 'react-router'
+import { useEffect } from 'react'
+import { gameAudio } from '../../services/gameAudio.ts'
 import { lobbiesApi, type Lobby } from '../../services/api/lobbies.ts'
 import { useLobbyActions } from '../lobby/useLobbyActions.ts'
 import { MatchStandings } from './MatchStandings.tsx'
@@ -16,6 +18,11 @@ export function PartyResults({
 }) {
   const navigate = useNavigate()
   const { act, error, busy } = useLobbyActions(lobby.id, accept)
+  const result = lobby.lastResult
+  useEffect(() => {
+    if (result?.winnerIds.includes(playerId))
+      gameAudio.play(`${result.gameId}/victory`, 'victory')
+  }, [result, playerId])
   return (
     <Card className="game-results">
       <h1>Match results</h1>
