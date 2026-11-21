@@ -123,7 +123,7 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
       - name: Install Chromium, WebKit, and system dependencies
-        run: npm exec playwright install --with-deps chromium webkit
+        run: npm exec -- playwright install --with-deps chromium webkit
       - name: Run desktop and mobile browser tests
         run: npm run test:e2e -- --reporter=list,html,junit
         env:
