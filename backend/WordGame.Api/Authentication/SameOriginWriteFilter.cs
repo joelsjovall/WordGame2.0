@@ -14,7 +14,9 @@ internal sealed class SameOriginWriteFilter(IHostEnvironment environment, IConfi
             return await next(context);
         }
 
-        var sameOrigin = $"{request.Scheme}://{request.Host}";
+        // Render terminates HTTPS before forwarding to Kestrel, so Request.Scheme is HTTP there.
+        var sameOrigin = configuration["Public:Origin"] ?? configuration["RENDER_EXTERNAL_URL"]
+            ?? $"{request.Scheme}://{request.Host}";
         var allowed = environment.IsDevelopment()
             ? configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [] : [];
         if (origins.Count != 1 || origins[0] is not { } origin ||

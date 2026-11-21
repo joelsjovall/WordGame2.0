@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using WordGame.Api.Contracts.V1;
 using WordGame.Api.Tests.Fixtures;
@@ -13,6 +14,22 @@ namespace WordGame.Api.Tests;
 
 public sealed class GuestSessionTests
 {
+    [Fact]
+    public async Task ProductionProxyAcceptsConfiguredHttpsOriginOnly()
+    {
+        using var root = new WordGameApiFactory();
+        using var factory = root.WithWebHostBuilder(builder => builder.ConfigureAppConfiguration((_, config) =>
+            config.AddInMemoryCollection(new Dictionary<string, string?> { ["Public:Origin"] = "https://wordgame.example" })));
+        using var client = factory.CreateClient(new() { BaseAddress = new Uri("http://internal-host") });
+        client.DefaultRequestHeaders.Add("Origin", "https://wordgame.example");
+        using var accepted = await client.PostAsJsonAsync("/api/v1/guests", new CreateGuestRequest());
+        Assert.Equal(HttpStatusCode.OK, accepted.StatusCode);
+        client.DefaultRequestHeaders.Remove("Origin");
+        client.DefaultRequestHeaders.Add("Origin", "https://foreign.example");
+        using var rejected = await client.PostAsJsonAsync("/api/v1/guests", new CreateGuestRequest());
+        Assert.Equal(HttpStatusCode.Forbidden, rejected.StatusCode);
+    }
+
     [Fact]
     public async Task ServerExpiryRejectsAnOtherwiseProtectedCookieAndBootstrapDoesNotRenewItsPlayerId()
     {

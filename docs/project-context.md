@@ -93,8 +93,8 @@ The planned backlog contains 57 issues across six milestones. Work proceeds one 
 - **Completed:** [F049, How to Play and player onboarding (#51)](https://github.com/joelsjovall/WordGame2.0/issues/51), merged through PR #108 (merge commit `4110430`).
 - **Merged, manual follow-up pending:** [F050, Accessibility and inclusive gameplay (#52)](https://github.com/joelsjovall/WordGame2.0/issues/52), PR #109 (merge commit `9f205dc`). Human screen-reader and timing review remains required before closure; see the design system.
 - **Completed:** [F051, Frontend architecture review and cleanup (#53)](https://github.com/joelsjovall/WordGame2.0/issues/53), merged through PR #110 (merge commit `4a82dc5`).
-- **Active:** [F052, Final visual QA and UX polish (#54)](https://github.com/joelsjovall/WordGame2.0/issues/54): browser review and targeted clarity fixes; usability testing with unfamiliar players remains pending.
-- **Current local state (2026-11-21):** Working on `feature/F052-visual-qa`. Stop after creating the PR; the owner checks CI and merges. UI/UX polish (F043-F052) is underway; identities/games remain in memory, and statistics require a durable history directory.
+- **Merged, manual follow-up pending:** [F052, Final visual QA and UX polish (#54)](https://github.com/joelsjovall/WordGame2.0/issues/54), PR #111. Usability testing with unfamiliar players remains pending.
+- **Active:** [F053, Configure production hosting and deployment (#55)](https://github.com/joelsjovall/WordGame2.0/issues/55): free Render and Neon preparation. Live deployment and verification require owner accounts. See [deployment](deployment.md).
 - **Outstanding security follow-up:** A database credential was previously exposed in the public V1 repository. Never reuse or reproduce it. Rotation must be verified; this handoff provides no evidence that rotation has occurred.
 
 Update this section as issues are completed or the handoff state changes.

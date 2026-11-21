@@ -56,7 +56,7 @@ Categories and accepted answers are initially loaded from local JSON datasets.
 
 Active game sessions are initially stored in memory in a single backend instance. This introduces a known limitation: active matches are lost when the backend restarts.
 
-Completed Online matches are persisted as immutable JSON records through `IOnlineStatisticsStore`; statistics are derived from those records. Each match ID is recorded once, before completion is published. SQLite was considered, but per-match files avoid a new dependency and schema infrastructure for the initial single-instance deployment. History reads currently scan the records; move to indexed storage when volume requires it. Active sessions and guest identity recovery remain in memory.
+Completed Online matches are persisted through `IOnlineStatisticsStore`; statistics are derived from those records. Each match ID is recorded once, before completion is published. Development uses immutable local JSON records. Free hosting uses PostgreSQL for durable records because the web container has no persistent disk. Active sessions and guest identity recovery remain in memory; a restart loses active matches and access to previous guest statistics, even though match records survive. See [deployment](deployment.md).
 
 Storage implementations must remain separate from gameplay rules.
 
