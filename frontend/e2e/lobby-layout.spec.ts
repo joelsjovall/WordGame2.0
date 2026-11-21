@@ -63,7 +63,6 @@ for (const width of [360, 768, 1280]) {
       await guest
         .getByRole('button', { name: 'Join lobby', exact: true })
         .click()
-      await guest.getByRole('link', { name: 'Open lobby settings' }).click()
       await expect(
         guest.getByRole('region', { name: 'Match settings' }),
       ).toBeVisible()

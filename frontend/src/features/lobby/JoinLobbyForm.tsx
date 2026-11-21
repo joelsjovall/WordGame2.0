@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { apiErrorMessage } from '../../services/api/client.ts'
-import { lobbiesApi, type Lobby } from '../../services/api/lobbies.ts'
-import { InvitationPanel } from './InvitationPanel.tsx'
+import { lobbiesApi } from '../../services/api/lobbies.ts'
 import './lobby.css'
 
 export type LobbyInvitation = { lobbyId: string; lobbyCode: string }
@@ -14,7 +13,7 @@ export function JoinLobbyForm({
 }) {
   const [code, setCode] = useState(invitation?.lobbyCode ?? '')
   const [name, setName] = useState('')
-  const [lobby, setLobby] = useState<Lobby | null>(null)
+  const navigate = useNavigate()
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const pending = useRef<AbortController | null>(null)
@@ -36,7 +35,8 @@ export function JoinLobbyForm({
         },
         controller.signal,
       )
-      if (!controller.signal.aborted) setLobby(joined)
+      if (!controller.signal.aborted)
+        void navigate(`/lobbies/${joined.id}`, { replace: true })
     } catch (failure) {
       if (!controller.signal.aborted) setError(apiErrorMessage(failure))
     } finally {
@@ -44,31 +44,6 @@ export function JoinLobbyForm({
       if (!controller.signal.aborted) setBusy(false)
     }
   }
-
-  if (lobby)
-    return (
-      <>
-        <h1>You joined the lobby</h1>
-        <p>
-          Lobby code: <strong>{lobby.lobbyCode}</strong>
-        </p>
-        <p>
-          {lobby.players.length} of {lobby.maximumPlayers} players
-        </p>
-        <ul className="lobby-players" aria-label="Lobby players">
-          {lobby.players.map((player) => (
-            <li key={player.id}>
-              {player.displayName}
-              {player.id === lobby.hostPlayerId ? ' (host)' : ''}
-            </li>
-          ))}
-        </ul>
-        <InvitationPanel lobby={lobby} />
-        <Link to={`/lobbies/${lobby.id}`}>Open lobby settings</Link>
-        <p>Send the invitation to friends to bring them into the lobby.</p>
-        <Link to="/">Back to homepage</Link>
-      </>
-    )
 
   return (
     <>
