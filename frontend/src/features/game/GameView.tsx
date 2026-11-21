@@ -30,7 +30,9 @@ export function GameView({ id, playerId }: { id: string; playerId: string }) {
       )}
       {!state &&
         (connection === 'connecting' || connection === 'recovering') && (
-          <p role="status">Loading game...</p>
+          <p role="status">
+            <span className="wg-spinner" aria-hidden="true" /> Loading game...
+          </p>
         )}
       {state && (
         <>
@@ -61,13 +63,19 @@ export function GameView({ id, playerId }: { id: string; playerId: string }) {
               <Link to="/">Back to homepage</Link>
             </p>
           ) : (
-            <GameControls
-              key={`${state.round?.id ?? ''}/${state.round?.status ?? ''}/${state.round?.highestBid?.wordCount ?? ''}`}
-              state={state}
-              playerId={playerId}
-              busy={busy || !canAct}
-              send={(command) => void send(command)}
-            />
+            <div
+              key={`${state.round?.id}/${state.round?.status}`}
+              className="game-stage"
+              data-phase={state.round?.status}
+            >
+              <GameControls
+                key={`${state.round?.id ?? ''}/${state.round?.status ?? ''}/${state.round?.highestBid?.wordCount ?? ''}`}
+                state={state}
+                playerId={playerId}
+                busy={busy || !canAct}
+                send={(command) => void send(command)}
+              />
+            </div>
           )}
           {!hasLeft && state.status === 'active' && (
             <footer className="game-exit">

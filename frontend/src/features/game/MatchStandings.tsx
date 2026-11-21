@@ -10,7 +10,7 @@ export function MatchStandings({
       {standings.map((standing) => (
         <li key={standing.playerId} data-winner={standing.rank === 1}>
           <span className="game-rank" aria-hidden="true">
-            {standing.rank}
+            {standing.rank === 1 ? '★' : standing.rank}
           </span>
           <span>
             {standing.displayName}: <strong>{standing.score} points</strong>{' '}
