@@ -108,7 +108,16 @@ test('word entry keeps timer and submit reachable when the visible viewport shri
       'game-arrive',
     )
     await page.getByLabel('Your bid').fill('2')
+    // Audit the start of the real entry animation, not just its settled state.
+    const stage = page.locator('.game-stage')
+    await stage.evaluate((element) => {
+      element.style.animation = 'none'
+      element.getBoundingClientRect()
+      element.style.animation = 'game-arrive 60s paused'
+    })
+    await expect(stage).toHaveCSS('opacity', '1')
     await checkAccessibility(page)
+    await stage.evaluate((element) => element.style.removeProperty('animation'))
     const matchUrl = page.url()
     await page.getByRole('button', { name: 'How to Play', exact: true }).click()
     await page.getByRole('button', { name: 'Close instructions' }).click()
