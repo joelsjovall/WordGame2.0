@@ -11,9 +11,11 @@ import { OnlineOutcome } from './OnlineOutcome.tsx'
 import { OnlineContinue } from './OnlineContinue.tsx'
 import './game.css'
 import { useGameAudio } from './useGameAudio.ts'
+import { useGameFocus } from './useGameFocus.ts'
 
 export function GameView({ id, playerId }: { id: string; playerId: string }) {
   const { state, connection, error: syncError } = useGameState(id)
+  const focus = useGameFocus(state)
   useGameAudio(state, playerId, connection === 'connected')
   const hasLeft =
     state?.players.find((player) => player.id === playerId)?.hasLeft === true
@@ -21,7 +23,7 @@ export function GameView({ id, playerId }: { id: string; playerId: string }) {
     state?.status === 'active' && connection === 'connected' && !hasLeft
   const { error, busy, send } = useGameActions(id, state?.version, canAct)
   return (
-    <div className="game-shell">
+    <div className="game-shell" {...focus}>
       {state ? <GameHeader state={state} /> : <h1>Match started</h1>}
       <HowToPlay />
       <div className="game-connection">

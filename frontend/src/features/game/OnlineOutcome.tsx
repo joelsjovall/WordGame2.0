@@ -16,7 +16,9 @@ export function OnlineOutcome({
       ?.displayName ?? 'Your opponent'
   return (
     <Card className="game-results game-panel" aria-label="Online match outcome">
-      <h2>{result.winnerIds.includes(playerId) ? 'You won' : 'Match over'}</h2>
+      <h2 aria-live="polite" aria-atomic="true">
+        {result.winnerIds.includes(playerId) ? 'You won' : 'Match over'}
+      </h2>
       {result.reason === 'forfeit' && <p>{departed} forfeited the match.</p>}
       {result.reason === 'reconnectionExpired' && (
         <p>{departed} did not reconnect in time.</p>

@@ -24,6 +24,7 @@ export default defineConfig({
         'mobile-layout.spec.ts',
         'audio-settings.spec.ts',
         'onboarding.spec.ts',
+        'accessibility.spec.ts',
         'lobby-creation.spec.ts',
         'lobby-joining.spec.ts',
         'party-lifecycle.spec.ts',

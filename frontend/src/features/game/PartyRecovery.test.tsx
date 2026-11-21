@@ -27,9 +27,9 @@ test('recovery preserves the visible score but disables gameplay and intentional
   expect(screen.getByLabelText('Match scores')).toHaveTextContent(
     'Host: 0 points',
   )
-  expect(screen.getByRole('status')).toHaveTextContent(
-    'Timers continue on the server.',
-  )
+  expect(
+    screen.getByRole('status', { name: 'Game connection' }),
+  ).toHaveTextContent('Timers continue on the server.')
   hook.mockReturnValue({
     state: game,
     connection: 'connected',

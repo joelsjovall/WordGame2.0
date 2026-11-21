@@ -17,7 +17,7 @@ export function MatchmakingPanel({
     return (
       <section className="online-card" aria-busy={connection !== 'stopped'}>
         <h2>Getting you ready</h2>
-        <p role="status">
+        <p role="status" aria-label="Matchmaking feedback">
           {connection === 'stopped'
             ? 'Return home to start a new guest session.'
             : 'Connecting to Online Mode…'}
@@ -44,7 +44,7 @@ export function MatchmakingPanel({
           <div className="online-search-animation" aria-hidden="true">
             <span>W</span>
           </div>
-          <h2 aria-live="polite">Finding your next rival</h2>
+          <h2>Finding your next rival</h2>
           <p>
             Looking for another word lover. Your match starts when you both
             accept.
@@ -66,24 +66,26 @@ export function MatchmakingPanel({
       ) : state.status === 'ready' ? (
         <>
           <h2>Let’s play</h2>
-          <p role="status">Opening your match…</p>
+          <p role="status" aria-label="Matchmaking feedback">
+            Opening your match…
+          </p>
         </>
       ) : (
         <>
           <p className="online-tag">No account. Just words.</p>
           <h2>Find your match</h2>
           {state.status === 'expired' && (
-            <p role="status">
+            <p role="status" aria-label="Matchmaking feedback">
               Your search or match invitation expired. You can search again.
             </p>
           )}
           {state.status === 'cancelled' && (
-            <p role="status">
+            <p role="status" aria-label="Matchmaking feedback">
               Matchmaking cancelled. Play again whenever you’re ready.
             </p>
           )}
           {state.status === 'failed' && (
-            <p role="status">
+            <p role="status" aria-label="Matchmaking feedback">
               We couldn’t create that match. Please search again.
             </p>
           )}

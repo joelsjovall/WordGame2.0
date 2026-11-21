@@ -112,9 +112,9 @@ test.each(['expired', 'cancelled', 'failed'] as const)(
     const current = model({ state: { ...searching, status } })
     vi.spyOn(matchmakingHook, 'useMatchmaking').mockReturnValue(current)
     render(<Page />)
-    expect(screen.getByRole('status')).toHaveTextContent(
-      status === 'failed' ? 'couldn’t create' : status,
-    )
+    expect(
+      screen.getByRole('status', { name: 'Matchmaking feedback' }),
+    ).toHaveTextContent(status === 'failed' ? 'couldn’t create' : status)
     expect(current.join).not.toHaveBeenCalled()
     const user = userEvent.setup()
     await user.type(screen.getByLabelText('Your display name'), 'Alice')
@@ -149,7 +149,9 @@ test('initial loading and terminal session errors have clear recovery navigation
     .spyOn(matchmakingHook, 'useMatchmaking')
     .mockReturnValue(model({ state: null, connection: 'connecting' }))
   const view = render(<Page />)
-  expect(screen.getByRole('status')).toHaveTextContent('Connecting')
+  expect(
+    screen.getByRole('status', { name: 'Matchmaking feedback' }),
+  ).toHaveTextContent('Connecting')
   hook.mockReturnValue(
     model({
       state: null,

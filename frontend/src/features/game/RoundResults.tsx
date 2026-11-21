@@ -11,7 +11,7 @@ export function RoundResults({ state }: { state: GameState }) {
       <Badge tone="success">Points awarded</Badge>
       <h2>Round complete</h2>
       {result && (
-        <p>
+        <p role="status">
           {winner} wins the round. {result.acceptedWordCount} of{' '}
           {result.requiredWordCount} words accepted.
         </p>

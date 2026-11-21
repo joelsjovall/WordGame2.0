@@ -27,6 +27,22 @@ export function OnlineModePage() {
         </h1>
         <p>Meet a new opponent. Bid boldly. Call their bluff.</p>
       </header>
+      <p
+        className="sr-only"
+        role="status"
+        aria-label="Matchmaking status"
+        aria-atomic="true"
+      >
+        {state?.status === 'matched'
+          ? `Match found with ${matchmaking.opponent || 'another player'}. Accept or decline before the invitation expires.`
+          : state?.status === 'searching'
+            ? 'Searching for an opponent. You can cancel the search.'
+            : state?.status === 'ready'
+              ? 'Both players accepted. Opening your match.'
+              : !state && matchmaking.connection !== 'stopped'
+                ? 'Connecting to Online Mode.'
+                : ''}
+      </p>
       {(matchmaking.error || matchmaking.actionError) && (
         <p className="online-error" role="alert">
           {matchmaking.error || matchmaking.actionError}
