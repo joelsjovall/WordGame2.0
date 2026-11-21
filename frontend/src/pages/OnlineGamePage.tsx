@@ -30,7 +30,7 @@ function OnlineGame({ id }: { id: string }) {
     }
   }, [])
   return (
-    <main className="page online-page">
+    <main className="page online-page game-page">
       <Link className="online-back" to="/">
         ← WordGame
       </Link>

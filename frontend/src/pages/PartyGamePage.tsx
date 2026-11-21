@@ -17,7 +17,7 @@ function GameRoom({ id }: { id: string }) {
       void navigate(`/lobbies/${id}`, { replace: true })
   }, [lobby?.status, id, navigate, unavailable])
   return (
-    <main className="page">
+    <main className="page game-page">
       {error && <p role="alert">{error}</p>}
       {!lobby || unavailable ? (
         <>

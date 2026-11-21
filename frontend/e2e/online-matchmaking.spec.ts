@@ -162,12 +162,31 @@ test('Online players cancel, restore, decline, and enter the same game on deskto
         .click()
       await alice.getByLabel('Your bid').fill('1')
       await alice
+        .locator('.game-shell')
+        .screenshot({ path: testInfo.outputPath(`bidding-${width}.png`) })
+      await alice
         .getByRole('button', { name: 'Place bid', exact: true })
         .click()
       await expect(
         bob.getByRole('button', { name: 'Call bluff', exact: true }),
       ).toBeEnabled()
       await bob.getByRole('button', { name: 'Call bluff', exact: true }).click()
+      await expect(
+        alice.getByRole('timer', { name: 'Challenge time remaining' }),
+      ).toContainText('seconds')
+      await expect(
+        alice.getByRole('progressbar', { name: 'Accepted word progress' }),
+      ).toHaveAttribute('value', '0')
+      await alice.getByLabel('Your word').fill('Not a capital')
+      await alice
+        .getByRole('button', { name: 'Submit word', exact: true })
+        .click()
+      await expect(alice.getByLabel('Submitted words')).toContainText(
+        'rejected',
+      )
+      await alice
+        .locator('.game-shell')
+        .screenshot({ path: testInfo.outputPath(`challenge-${width}.png`) })
       await alice.getByLabel('Your word').fill('Stockholm')
       await alice
         .getByRole('button', { name: 'Submit word', exact: true })

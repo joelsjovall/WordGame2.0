@@ -84,9 +84,9 @@ test('refresh and a network interruption restore the same identity, score, round
     ).toBeVisible()
     expect((await state(page, lobby.gameId)).round?.id).toBe(before.round?.id)
     await page.context().setOffline(true)
-    await expect(page.getByRole('status')).toContainText(
-      'Reconnecting to match',
-    )
+    await expect(
+      page.getByRole('status', { name: 'Game connection' }),
+    ).toContainText('Reconnecting to match')
     await expect(guest.getByLabel('Match scores')).toContainText(
       'Reconnecting',
       { timeout: 10000 },
