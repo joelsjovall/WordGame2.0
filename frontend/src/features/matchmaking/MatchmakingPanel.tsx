@@ -46,8 +46,8 @@ export function MatchmakingPanel({
           </div>
           <h2>Finding your next rival</h2>
           <p>
-            Looking for another word lover. Your match starts when you both
-            accept.
+            Looking for another player. You can cancel while you wait. Both
+            players must accept before the match starts.
           </p>
           {state.createdAt && (
             <p className="online-clock">

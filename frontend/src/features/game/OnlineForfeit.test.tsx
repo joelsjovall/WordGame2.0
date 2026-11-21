@@ -13,6 +13,35 @@ const online = {
   ...gameFixture,
   match: { ...gameFixture.match, format: 'online' as const },
 }
+test('tied Online results clearly announce a shared victory', async () => {
+  const { OnlineOutcome } = await import('./OnlineOutcome.tsx')
+  render(
+    <OnlineOutcome
+      playerId="bob"
+      state={{
+        ...online,
+        status: 'completed',
+        result: {
+          gameId: online.id,
+          format: 'online',
+          completedRoundCount: 6,
+          isTie: true,
+          winnerIds: ['bob', 'host'],
+          reason: 'completed',
+          forfeitedPlayerId: null,
+          standings: [
+            { playerId: 'bob', displayName: 'Bob', score: 60, rank: 1 },
+            { playerId: 'host', displayName: 'Host', score: 60, rank: 1 },
+          ],
+        },
+      }}
+    />,
+  )
+  expect(screen.getByRole('heading', { name: 'Shared victory' })).toBeVisible()
+  expect(screen.getByLabelText('Final standings')).toHaveTextContent(
+    'Bob: 60 points',
+  )
+})
 afterEach(() => vi.restoreAllMocks())
 
 test('Online uses the explicit forfeit command and disables it while recovering', async () => {
