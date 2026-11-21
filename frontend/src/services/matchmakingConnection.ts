@@ -1,4 +1,4 @@
-import { ApiError } from './api/client.ts'
+import { ApiError, apiErrorMessage } from './api/client.ts'
 import { apiBaseUrl } from './api/config.ts'
 import { gamesApi } from './api/games.ts'
 import { guestsApi } from './api/guests.ts'
@@ -87,10 +87,7 @@ export function connectMatchmaking(
     } else {
       publish({
         connection: 'recovering',
-        error:
-          error instanceof ApiError
-            ? error.message
-            : 'Connection interrupted. Reconnecting…',
+        error: apiErrorMessage(error, 'Connection interrupted. Reconnecting…'),
       })
       recovery.schedule()
     }
@@ -207,10 +204,10 @@ export function connectMatchmaking(
         failure(error)
       else {
         publish({
-          actionError:
-            error instanceof ApiError
-              ? error.message
-              : 'Unable to send your request. Check your connection and try again.',
+          actionError: apiErrorMessage(
+            error,
+            'Unable to send your request. Check your connection and try again.',
+          ),
         })
         await refresh()
       }

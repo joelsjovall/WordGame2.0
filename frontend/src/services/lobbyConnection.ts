@@ -1,4 +1,4 @@
-import { ApiError } from './api/client.ts'
+import { ApiError, apiErrorMessage } from './api/client.ts'
 import { apiBaseUrl } from './api/config.ts'
 import { guestsApi } from './api/guests.ts'
 import { lobbiesApi, type Lobby } from './api/lobbies.ts'
@@ -48,9 +48,10 @@ export function connectLobby(id: string, callbacks: Callbacks) {
         const message =
           failure instanceof ApiError && failure.status === 404
             ? 'This lobby is no longer available. Ask the host for a new invitation.'
-            : failure instanceof ApiError
-              ? failure.message
-              : 'Unable to load the lobby. Retrying your connection…'
+            : apiErrorMessage(
+                failure,
+                'Unable to load the lobby. Retrying your connection…',
+              )
         if (
           failure instanceof ApiError &&
           [401, 403, 404].includes(failure.status)

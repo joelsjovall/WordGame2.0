@@ -1,4 +1,12 @@
-import { useId, type ComponentProps } from 'react'
+import { useId, type ComponentProps, type ReactNode } from 'react'
+
+export function LoadingStatus({ children }: { children: ReactNode }) {
+  return (
+    <p role="status">
+      <span className="wg-spinner" aria-hidden="true" /> {children}
+    </p>
+  )
+}
 
 export function Button({
   variant = 'primary',

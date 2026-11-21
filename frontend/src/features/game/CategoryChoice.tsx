@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { categoriesApi } from '../../services/api/categories.ts'
 import type { GameState } from '../../services/api/games.ts'
 import type { components } from '../../services/api/generated.ts'
-import { Button, Card } from '../../components/ui.tsx'
+import { Button, Card, LoadingStatus } from '../../components/ui.tsx'
 
 export function CategoryChoice({
   allowed,
@@ -40,12 +40,7 @@ export function CategoryChoice({
   return (
     <Card className="game-panel">
       <h2>Choose a category</h2>
-      {loading && (
-        <p role="status">
-          <span className="wg-spinner" aria-hidden="true" /> Loading
-          categories...
-        </p>
-      )}
+      {loading && <LoadingStatus>Loading categories...</LoadingStatus>}
       {error && (
         <div role="alert">
           <p>{error}</p>
