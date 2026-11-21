@@ -11,4 +11,10 @@ docs
 **/.env*
 !frontend/.env.example
 **/appsettings.Local.json
+**/appsettings.Production.json
+**/appsettings.*.local.json
+**/*.pem
+**/*.pfx
+**/*.key
+**/.secrets
 **/Data/OnlineHistory

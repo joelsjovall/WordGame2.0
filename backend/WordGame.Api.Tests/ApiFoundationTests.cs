@@ -1,9 +1,11 @@
+using System.Collections.Concurrent;
 using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Logging;
 using WordGame.Api.Tests.Fixtures;
 using WordGame.Application.Categories;
 using WordGame.Application.Games;
@@ -169,6 +171,26 @@ public sealed class ApiFoundationTests
     }
 
     [Fact]
+    public async Task ProductionLogsDoNotIncludeUnhandledExceptionDetails()
+    {
+        using var captured = new ExceptionLog();
+        using var factory = new WordGameApiFactory("Production").WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureLogging(logging => logging.AddProvider(captured));
+            builder.ConfigureServices(services =>
+                services.AddSingleton<HealthCheckService, ThrowingHealthCheckService>());
+        });
+        using var client = factory.CreateClient();
+
+        using var response = await client.GetAsync("/health");
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        Assert.Contains(captured.Messages, message => message.Contains("InvalidOperationException", StringComparison.Ordinal));
+        Assert.DoesNotContain(captured.Messages, message => message.Contains("test-private-exception-detail", StringComparison.Ordinal));
+        Assert.DoesNotContain(captured.Exceptions, exception => exception is not null);
+    }
+
+    [Fact]
     public async Task UnknownRoute_ReturnsNotFound()
     {
         using var factory = new WordGameApiFactory("Production");
@@ -185,5 +207,22 @@ public sealed class ApiFoundationTests
             Func<HealthCheckRegistration, bool>? predicate,
             CancellationToken cancellationToken = default) =>
             throw new InvalidOperationException("test-private-exception-detail");
+    }
+
+    private sealed class ExceptionLog : ILoggerProvider, ILogger
+    {
+        internal readonly ConcurrentBag<string> Messages = [];
+        internal readonly ConcurrentBag<Exception?> Exceptions = [];
+        public ILogger CreateLogger(string categoryName) => categoryName == "WordGame.Api.Errors.GlobalExceptionHandler"
+            ? this : Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(LogLevel logLevel) => true;
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        {
+            Messages.Add(formatter(state, exception));
+            Exceptions.Add(exception);
+        }
+        public void Dispose() { }
     }
 }
