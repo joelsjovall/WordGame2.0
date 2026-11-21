@@ -1,0 +1,14 @@
+.git
+.github
+docs
+**/bin
+**/obj
+**/node_modules
+**/dist
+**/TestResults
+**/test-results
+**/playwright-report
+**/.env*
+!frontend/.env.example
+**/appsettings.Local.json
+**/Data/OnlineHistory

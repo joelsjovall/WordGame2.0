@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Npgsql;
 using WordGame.Api.Authentication;
 using WordGame.Api.Endpoints;
 using WordGame.Api.Errors;
@@ -62,8 +63,26 @@ builder.Services.AddSingleton(_ => new SessionRetention(
     builder.Configuration.GetValue("Sessions:CompletedRetention", TimeSpan.FromMinutes(10)),
     builder.Configuration.GetValue("Sessions:AbandonedRetention", TimeSpan.FromMinutes(5)),
     builder.Configuration.GetValue("Sessions:OnlineDisconnectedGrace", TimeSpan.FromSeconds(30))));
-builder.Services.AddSingleton<IOnlineStatisticsStore>(_ => new JsonOnlineStatisticsStore(
-    Path.GetFullPath(builder.Configuration["Statistics:Directory"] ?? "Data/OnlineHistory", builder.Environment.ContentRootPath)));
+var statisticsConnection = builder.Configuration.GetConnectionString("Statistics");
+if (builder.Environment.IsProduction() && !string.IsNullOrEmpty(builder.Configuration["RENDER_EXTERNAL_URL"])
+    && string.IsNullOrWhiteSpace(statisticsConnection))
+{
+    throw new InvalidOperationException("Production requires ConnectionStrings:Statistics for durable match history.");
+}
+if (!string.IsNullOrWhiteSpace(statisticsConnection))
+{
+    var connection = new NpgsqlConnectionStringBuilder(statisticsConnection)
+    {
+        SslMode = SslMode.VerifyFull
+    };
+    builder.Services.AddSingleton(NpgsqlDataSource.Create(connection.ConnectionString));
+    builder.Services.AddSingleton<IOnlineStatisticsStore, PostgresOnlineStatisticsStore>();
+}
+else
+{
+    builder.Services.AddSingleton<IOnlineStatisticsStore>(_ => new JsonOnlineStatisticsStore(
+        Path.GetFullPath(builder.Configuration["Statistics:Directory"] ?? "Data/OnlineHistory", builder.Environment.ContentRootPath)));
+}
 builder.Services.AddSingleton<IGameSessionStore, InMemoryGameSessionStore>();
 builder.Services.AddSingleton(_ => new LobbyRules(builder.Configuration.GetValue("Sessions:LobbyLifetime", TimeSpan.FromMinutes(30)),
     // A lobby needs time to establish its first stream; game-session grace independently permits zero.
@@ -108,6 +127,8 @@ var app = builder.Build();
 _ = app.Services.GetRequiredService<ICategoryProvider>();
 
 app.UseExceptionHandler();
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.UseStatusCodePages(async context =>
 {
     if (context.HttpContext.Request.Path.StartsWithSegments("/api"))
@@ -143,6 +164,8 @@ app.UseAuthorization();
 app.UseRateLimiter();
 
 app.MapHealthChecks("/health");
+app.MapFallback("/api/{**path}", () => Results.NotFound());
+app.MapFallbackToFile("index.html");
 
 app.Run();
 
