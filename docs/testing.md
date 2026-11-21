@@ -44,11 +44,11 @@ Colocate feature/component tests as `src/**/*.test.tsx`; use `tests/**/*.test.ts
 ## Browser tests
 
 ```sh
-npm exec playwright install chromium
+npm exec playwright install chromium webkit
 npm run test:e2e
 ```
 
-On Linux CI, install browser system dependencies with `npm exec playwright install --with-deps chromium`. Browser downloads and package restores need internet access; test execution uses local resources.
+On Linux CI, install browser system dependencies with `npm exec playwright install --with-deps chromium webkit`. Browser downloads and package restores need internet access; test execution uses local resources. Mobile WebKit covers entry/lobby/Party flows; the Online WebKit journey depends on the Chromium Online journey so both cannot cross-match through the shared FIFO queue. Responsive tests also exercise landscape, 200% text size, and contracted-viewport word entry. OS keyboard/device limitations are recorded in [design system](design-system.md).
 
 Playwright owns dedicated servers at `http://127.0.0.1:5175` (Vite) and `http://127.0.0.1:5085` (API), waits for readiness, and stops them afterward. Leave those ports free; existing servers are deliberately not reused. The API loads repository JSON datasets and uses in-memory sessions. Configuration fixes the local API URL and development CORS origins without reading production credentials.
 

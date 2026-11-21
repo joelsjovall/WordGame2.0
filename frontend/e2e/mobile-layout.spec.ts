@@ -1,0 +1,107 @@
+import { expect, test, type Page } from '@playwright/test'
+
+async function noOverflow(page: Page) {
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth + 1,
+    ),
+  ).toBe(true)
+}
+
+test('major entry pages reflow in portrait, landscape and at 200% text size', async ({
+  page,
+}) => {
+  for (const viewport of [
+    { width: 320, height: 640 },
+    { width: 844, height: 390 },
+  ]) {
+    await page.setViewportSize(viewport)
+    for (const path of [
+      '/',
+      '/lobbies/new',
+      '/join',
+      '/online',
+      '/not-a-page',
+    ]) {
+      await page.goto(path)
+      await expect(page.locator('main')).toBeVisible()
+      await noOverflow(page)
+      await page.evaluate(() => {
+        document.documentElement.style.fontSize = '200%'
+      })
+      await noOverflow(page)
+    }
+  }
+})
+
+test('word entry keeps timer and submit reachable when the visible viewport shrinks', async ({
+  page,
+  browser,
+}, testInfo) => {
+  test.setTimeout(45000)
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/lobbies/new')
+  await page
+    .getByLabel('Your display name')
+    .fill('Host with a long display name')
+  await page.getByRole('button', { name: 'Create lobby', exact: true }).click()
+  const invitation = await page.getByLabel('Invitation link').inputValue()
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+  })
+  try {
+    const guest = await context.newPage()
+    await guest.goto(invitation)
+    await guest.getByLabel('Your display name').fill('Bob')
+    await guest.getByRole('button', { name: 'Join lobby', exact: true }).click()
+    await guest.getByRole('link', { name: 'Open lobby settings' }).click()
+    await expect(
+      page
+        .getByLabel('Lobby players')
+        .getByRole('listitem')
+        .filter({ hasText: 'Bob' }),
+    ).toContainText('Connected; Not ready')
+    await page.getByRole('button', { name: 'Ready', exact: true }).click()
+    await expect(
+      guest
+        .getByLabel('Lobby players')
+        .getByRole('listitem')
+        .filter({ hasText: 'Host with a long display name' }),
+    ).toContainText('Connected; Ready')
+    await guest.getByRole('button', { name: 'Ready', exact: true }).click()
+    await page.getByRole('button', { name: 'Start match', exact: true }).click()
+    await page.getByRole('button', { name: /European Capitals.*easy/i }).click()
+    await page.getByLabel('Your bid').fill('1')
+    await page.getByRole('button', { name: 'Place bid', exact: true }).click()
+    await guest.getByRole('button', { name: 'Call bluff', exact: true }).click()
+    await page.getByLabel('Your word').focus()
+    // Browser automation does not open the native OS keyboard. Exercise its viewport contraction explicitly.
+    await page.setViewportSize({ width: 390, height: 320 })
+    await expect(page.locator('.game-challenge-entry')).toHaveAttribute(
+      'data-compact',
+      'true',
+    )
+    await expect(page.getByRole('timer')).toBeInViewport({ ratio: 1 })
+    const input = page.getByLabel('Your word')
+    await expect(input).toBeInViewport({ ratio: 1 })
+    await input.fill('Stockholm')
+    await expect(
+      page.getByRole('button', { name: 'Submit word', exact: true }),
+    ).toBeInViewport({ ratio: 1 })
+    await noOverflow(page)
+    await page.screenshot({
+      path: testInfo.outputPath('compact-word-entry.png'),
+    })
+    await input.press('Enter')
+    await expect(
+      page.getByRole('heading', { name: 'Round complete', exact: true }),
+    ).toBeVisible()
+    await page.setViewportSize({ width: 844, height: 390 })
+    await noOverflow(page)
+    await page.setViewportSize({ width: 390, height: 844 })
+    await expect(page.getByLabel('Match scores')).toContainText('points')
+    await noOverflow(page)
+  } finally {
+    await context.close()
+  }
+})
