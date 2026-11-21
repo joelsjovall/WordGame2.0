@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { checkAccessibility } from './support/accessibility.ts'
 
-test('entry pages, rule dialog, waiting lobby and matchmaking pass accessibility checks', async ({
+test('entry pages, rule dialog and waiting lobby pass accessibility checks', async ({
   page,
 }) => {
   for (const path of ['/', '/join', '/lobbies/new', '/online']) {
@@ -12,6 +12,9 @@ test('entry pages, rule dialog, waiting lobby and matchmaking pass accessibility
     await checkAccessibility(page)
   }
   await page.goto('/')
+  await expect(
+    page.getByRole('heading', { name: 'WordGame 2.0', exact: true }),
+  ).toBeVisible()
   await page.keyboard.press('Tab')
   const skip = page.getByRole('link', { name: 'Skip to main content' })
   await expect(skip).toBeFocused()
@@ -36,12 +39,4 @@ test('entry pages, rule dialog, waiting lobby and matchmaking pass accessibility
   ).toBe(true)
   await checkAccessibility(page)
   await page.getByRole('button', { name: 'Leave lobby', exact: true }).click()
-  await page.goto('/online')
-  await page.getByLabel('Your display name').fill('Accessibility player')
-  await page.getByRole('button', { name: 'Play Online', exact: true }).click()
-  await expect(
-    page.getByRole('button', { name: 'Cancel Search' }),
-  ).toBeVisible()
-  await checkAccessibility(page)
-  await page.getByRole('button', { name: 'Cancel Search' }).click()
 })

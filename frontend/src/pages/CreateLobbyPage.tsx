@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { ApiError } from '../services/api/client.ts'
+import { apiErrorMessage } from '../services/api/client.ts'
 import { lobbiesApi } from '../services/api/lobbies.ts'
 import '../features/lobby/lobby.css'
 
@@ -28,9 +28,10 @@ export function CreateLobbyPage() {
     } catch (failure) {
       if (!controller.signal.aborted)
         setError(
-          failure instanceof ApiError
-            ? failure.message
-            : 'Unable to create the lobby. Please try again.',
+          apiErrorMessage(
+            failure,
+            'Unable to create the lobby. Please try again.',
+          ),
         )
     } finally {
       pending.current = null

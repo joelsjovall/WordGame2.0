@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { Button } from '../../components/ui.tsx'
+import { Button, LoadingStatus } from '../../components/ui.tsx'
 import { HowToPlay } from '../../components/HowToPlay.tsx'
 import { useGameState } from './useGameState.ts'
 import { useGameActions } from './useGameActions.ts'
@@ -36,9 +36,7 @@ export function GameView({ id, playerId }: { id: string; playerId: string }) {
       )}
       {!state &&
         (connection === 'connecting' || connection === 'recovering') && (
-          <p role="status">
-            <span className="wg-spinner" aria-hidden="true" /> Loading game...
-          </p>
+          <LoadingStatus>Loading game...</LoadingStatus>
         )}
       {state && (
         <>

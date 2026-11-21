@@ -1,8 +1,31 @@
 import assert from 'node:assert/strict'
 import { test } from 'vitest'
-import { ApiError, createApiClient } from '../src/services/api/client.ts'
+import {
+  ApiError,
+  apiErrorMessage,
+  createApiClient,
+} from '../src/services/api/client.ts'
 import { createCategoriesApi } from '../src/services/api/categories.ts'
 import { createGamesApi } from '../src/services/api/games.ts'
+
+test('action errors preserve API titles and use safe contextual network fallbacks', () => {
+  assert.equal(
+    apiErrorMessage(
+      new ApiError(409, { title: 'The turn changed.' }),
+      'Try again.',
+    ),
+    'The turn changed.',
+  )
+  assert.equal(apiErrorMessage(new ApiError(404)), 'Request failed (404).')
+  assert.equal(
+    apiErrorMessage(new Error('Internal network details')),
+    'Unable to reach the server. Please try again.',
+  )
+  assert.equal(
+    apiErrorMessage(null, 'Unable to create the lobby. Please try again.'),
+    'Unable to create the lobby. Please try again.',
+  )
+})
 
 test('game state fallback includes credentials, disables caching, and preserves cancellation', async () => {
   const controller = new AbortController()

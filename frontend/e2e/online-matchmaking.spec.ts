@@ -89,6 +89,7 @@ test('Online players cancel, restore, decline, and enter the same game on deskto
         alice.getByRole('heading', { name: 'Finding your next rival' }),
       ).toBeVisible()
       await expect(alice.getByText(/Search time:/)).toBeVisible()
+      if (width === 390) await checkAccessibility(alice)
       await alice.getByRole('button', { name: 'Cancel Search' }).click()
       await expect(alice.getByText(/Matchmaking cancelled/)).toBeVisible()
       await join(alice, 'Alice')

@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
-import { ApiError } from '../../services/api/client.ts'
-import { lobbiesApi } from '../../services/api/lobbies.ts'
-import type { components } from '../../services/api/generated.ts'
+import { apiErrorMessage } from '../../services/api/client.ts'
+import { lobbiesApi, type Lobby } from '../../services/api/lobbies.ts'
 import { InvitationPanel } from './InvitationPanel.tsx'
 import './lobby.css'
 
-type Lobby = components['schemas']['LobbyResponse']
 export type LobbyInvitation = { lobbyId: string; lobbyCode: string }
 
 export function JoinLobbyForm({
@@ -40,12 +38,7 @@ export function JoinLobbyForm({
       )
       if (!controller.signal.aborted) setLobby(joined)
     } catch (failure) {
-      if (!controller.signal.aborted)
-        setError(
-          failure instanceof ApiError
-            ? failure.message
-            : 'Unable to reach the server. Please try again.',
-        )
+      if (!controller.signal.aborted) setError(apiErrorMessage(failure))
     } finally {
       if (pending.current === controller) pending.current = null
       if (!controller.signal.aborted) setBusy(false)

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { ApiError } from '../../services/api/client.ts'
+import { apiErrorMessage } from '../../services/api/client.ts'
 import { lobbiesApi, type Lobby } from '../../services/api/lobbies.ts'
 
 export function useLobbyActions(id: string, accept: (lobby: Lobby) => void) {
@@ -15,11 +15,7 @@ export function useLobbyActions(id: string, accept: (lobby: Lobby) => void) {
       accept(await operation())
       after?.()
     } catch (failure) {
-      setError(
-        failure instanceof ApiError
-          ? failure.message
-          : 'Unable to reach the server. Please try again.',
-      )
+      setError(apiErrorMessage(failure))
       try {
         accept(await lobbiesApi.get(id))
       } catch {

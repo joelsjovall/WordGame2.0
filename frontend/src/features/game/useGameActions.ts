@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { gamesApi } from '../../services/api/games.ts'
-import { ApiError } from '../../services/api/client.ts'
+import { apiErrorMessage } from '../../services/api/client.ts'
 import { gameSynchronization } from '../../services/gameSynchronization.ts'
 import type { GameCommand } from './gameTypes.ts'
 
@@ -26,9 +26,10 @@ export function useGameActions(
       await gameSynchronization.refresh(id)
     } catch (failure) {
       setError(
-        failure instanceof ApiError
-          ? failure.message
-          : 'Unable to submit the action. Please try again.',
+        apiErrorMessage(
+          failure,
+          'Unable to submit the action. Please try again.',
+        ),
       )
       // Refresh failures have their own synchronization state; retain the original action error.
       await gameSynchronization.refresh(id).catch(() => {})

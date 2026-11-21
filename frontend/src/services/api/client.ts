@@ -16,6 +16,13 @@ export class ApiError extends Error {
   }
 }
 
+export function apiErrorMessage(
+  failure: unknown,
+  fallback = 'Unable to reach the server. Please try again.',
+) {
+  return failure instanceof ApiError ? failure.message : fallback
+}
+
 function readProblem(value: unknown): Partial<ProblemDetails> | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value))
     return undefined

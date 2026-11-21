@@ -34,7 +34,7 @@ function show() {
     </MemoryRouter>,
   )
 }
-test('request waits for the opponent and acceptance navigates to a fresh match', async () => {
+test('request waits for the opponent and a restored ready rematch opens the fresh match', async () => {
   const get = vi.spyOn(rematchesApi, 'get').mockResolvedValue(idle)
   const respond = vi.spyOn(rematchesApi, 'respond').mockResolvedValue({
     ...idle,
@@ -51,7 +51,7 @@ test('request waits for the opponent and acceptance navigates to a fresh match',
     screen.queryByRole('button', { name: 'Accept Rematch' }),
   ).not.toBeInTheDocument()
   get.mockResolvedValue({ ...idle, status: 'ready', gameId: 'fresh' })
-  // A source SSE revision causes a fresh authoritative negotiation read.
+  // Restoring the result page retrieves the current server negotiation.
   view.unmount()
   show()
   expect(await screen.findByText('Fresh match')).toBeInTheDocument()
@@ -100,7 +100,9 @@ test('Find New Opponent declines negotiation before joining the queue', async ()
   expect(await screen.findByText('Queue page')).toBeInTheDocument()
 })
 test('errors retain a retry path without claiming success', async () => {
-  vi.spyOn(rematchesApi, 'get').mockRejectedValue(new Error('offline'))
+  vi.spyOn(rematchesApi, 'get')
+    .mockRejectedValueOnce(new Error('offline'))
+    .mockResolvedValue(idle)
   show()
   expect(await screen.findByRole('alert')).toHaveTextContent(
     'Unable to load rematch options',
@@ -109,4 +111,25 @@ test('errors retain a retry path without claiming success', async () => {
   expect(
     screen.getByRole('button', { name: 'Find New Opponent' }),
   ).toBeEnabled()
+  await userEvent.setup().click(screen.getByRole('button', { name: 'Retry' }))
+  expect(
+    await screen.findByRole('button', { name: 'Request Rematch' }),
+  ).toBeEnabled()
+})
+
+test('a ready rematch wins a race with finding a new opponent', async () => {
+  vi.spyOn(rematchesApi, 'get').mockResolvedValue(idle)
+  vi.spyOn(rematchesApi, 'respond').mockResolvedValue({
+    ...idle,
+    status: 'ready',
+    gameId: 'fresh',
+  })
+  const join = vi.spyOn(matchmakingApi, 'join')
+  show()
+  await screen.findByRole('button', { name: 'Request Rematch' })
+  await userEvent
+    .setup()
+    .click(screen.getByRole('button', { name: 'Find New Opponent' }))
+  expect(await screen.findByText('Fresh match')).toBeInTheDocument()
+  expect(join).not.toHaveBeenCalled()
 })
