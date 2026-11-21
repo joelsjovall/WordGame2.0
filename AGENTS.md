@@ -31,6 +31,7 @@
 - Reuse information already established in the current session.
 - Do not repeatedly investigate resolved questions.
 - Avoid exploring unrelated features or speculative improvements.
+- Create PRs and stop immediately. Never wait for CI checks, poll PR status, or auto-merge.
 
 ### Planning and Execution
 
