@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import { Badge, Card } from '../components/ui.tsx'
+import { HowToPlay } from '../components/HowToPlay.tsx'
 import './home.css'
 
 export function HomePage() {
@@ -14,9 +15,7 @@ export function HomePage() {
             WordGame <span>2.0</span>
           </h1>
         </div>
-        <a href="#how-to-play">
-          How to Play <HomeArrow down />
-        </a>
+        <HowToPlay />
       </header>
       <section className="home-hero" aria-label="A game of words and nerve">
         <div>
@@ -140,10 +139,10 @@ export function HomePage() {
   )
 }
 
-function HomeArrow({ down = false }: { down?: boolean }) {
+function HomeArrow() {
   return (
     <svg className="wg-icon" viewBox="0 0 24 24" aria-hidden="true">
-      <path d={down ? 'M6 6l12 12M6 18h12V6' : 'M6 18 18 6M6 6h12v12'} />
+      <path d="M6 18 18 6M6 6h12v12" />
     </svg>
   )
 }

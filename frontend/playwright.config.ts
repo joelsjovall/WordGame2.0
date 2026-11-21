@@ -23,6 +23,7 @@ export default defineConfig({
       testMatch: [
         'mobile-layout.spec.ts',
         'audio-settings.spec.ts',
+        'onboarding.spec.ts',
         'lobby-creation.spec.ts',
         'lobby-joining.spec.ts',
         'party-lifecycle.spec.ts',

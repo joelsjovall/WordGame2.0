@@ -37,14 +37,6 @@
   font: 700 1.5rem var(--font-display);
   transform: rotate(-6deg);
 }
-.home-bar > a {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--control-height);
-  font-size: var(--text-sm);
-  font-weight: 650;
-  white-space: nowrap;
-}
 .home-hero {
   display: grid;
   gap: var(--space-6);

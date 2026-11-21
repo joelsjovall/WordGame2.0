@@ -96,6 +96,11 @@ test('word entry keeps timer and submit reachable when the visible viewport shri
       'game-arrive',
     )
     await page.getByLabel('Your bid').fill('2')
+    const matchUrl = page.url()
+    await page.getByRole('button', { name: 'How to Play', exact: true }).click()
+    await page.getByRole('button', { name: 'Close instructions' }).click()
+    await expect(page.getByLabel('Your bid')).toHaveValue('2')
+    await expect(page).toHaveURL(matchUrl)
     await page.getByRole('button', { name: 'Place bid', exact: true }).click()
     await expect(guest.locator('.game-bid')).toContainText(
       'Highest bid: 2 words',
@@ -108,7 +113,12 @@ test('word entry keeps timer and submit reachable when the visible viewport shri
       await expect
         .poll(() => page.evaluate(() => window.audioProbe.voices))
         .toBeGreaterThanOrEqual(4)
+    await page.getByRole('button', { name: 'How to Play', exact: true }).click()
     await guest.getByRole('button', { name: 'Call bluff', exact: true }).click()
+    await expect(
+      page.getByRole('dialog', { name: 'How to Play' }),
+    ).toBeVisible()
+    await page.getByRole('button', { name: 'Close instructions' }).click()
     await expect(
       page.getByText('Bluff called · Time to prove it'),
     ).toBeVisible()

@@ -1,0 +1,27 @@
+.how-to-play {
+  width: min(44rem, calc(100% - 2rem));
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+.how-to-play-heading,
+.how-to-play-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.how-to-play-heading {
+  justify-content: space-between;
+}
+.how-to-play-steps {
+  padding-inline-start: var(--space-5);
+}
+.how-to-play-example {
+  padding: var(--space-3);
+  background: var(--color-subtle);
+  border-inline-start: 3px solid var(--color-primary);
+  border-radius: var(--radius-control);
+}
+.how-to-play-example p {
+  margin-block: var(--space-2);
+}

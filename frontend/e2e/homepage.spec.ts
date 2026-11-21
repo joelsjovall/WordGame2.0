@@ -33,13 +33,14 @@ for (const width of [360, 768, 1280]) {
       path: testInfo.outputPath(`homepage-${width}.png`),
       fullPage: true,
     })
-    const instructions = page.getByRole('link', { name: 'How to Play' })
+    const instructions = page.getByRole('button', { name: 'How to Play' })
     await instructions.focus()
     await page.keyboard.press('Enter')
-    await expect(page).toHaveURL(/#how-to-play$/)
-    await expect(
-      page.getByRole('heading', { name: 'How to Play' }),
-    ).toBeInViewport()
+    const rules = page.getByRole('dialog', { name: 'How to Play' })
+    await expect(rules).toBeVisible()
+    expect(homeRequests).toEqual([])
+    await page.keyboard.press('Escape')
+    await expect(rules).not.toBeVisible()
     const friends = page.getByRole('link', {
       name: 'Play with Friends',
       exact: true,
@@ -65,6 +66,9 @@ test('homepage remains usable with reduced motion and an unavailable backend', a
   await page.route(/\/api\/v1\//, (route) => route.abort())
   await page.goto('/')
   await expect(page.locator('.home-hero')).toHaveCSS('animation-name', 'none')
+  await page.getByRole('button', { name: 'How to Play' }).click()
+  await expect(page.getByRole('dialog', { name: 'How to Play' })).toBeVisible()
+  await page.getByRole('button', { name: 'Close instructions' }).click()
   await expect(
     page.getByRole('link', { name: 'Play with Friends', exact: true }),
   ).toBeEnabled()
