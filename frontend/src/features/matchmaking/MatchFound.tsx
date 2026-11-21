@@ -16,7 +16,7 @@ export function MatchFound({
   return (
     <>
       <p className="online-tag">Your next rival</p>
-      <h2 aria-live="polite">Match found!</h2>
+      <h2>Match found!</h2>
       <div className="online-opponent">
         <span className="online-avatar" aria-hidden="true">
           {Array.from(opponent)[0]?.toUpperCase() ?? '?'}
@@ -29,7 +29,7 @@ export function MatchFound({
           Time to accept: <SearchTimer timestamp={state.expiresAt} countdown />
         </p>
       )}
-      <p>
+      <p role="status">
         {state.hasAccepted
           ? 'You accepted. Waiting for your opponent…'
           : 'Ready to put your words to the test?'}

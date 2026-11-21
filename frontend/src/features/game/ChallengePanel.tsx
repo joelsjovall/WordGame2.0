@@ -76,9 +76,14 @@ export function ChallengePanel({
               autoCorrect="off"
               enterKeyHint="send"
               spellCheck={false}
+              aria-describedby="challenge-word-help"
               value={word}
               onChange={(event) => setWord(event.target.value)}
             />
+            <p id="challenge-word-help" className="sr-only">
+              Submit one answer at a time. Each different accepted answer counts
+              once.
+            </p>
             <Button type="submit" busy={busy} disabled={busy || !word.trim()}>
               Submit word
             </Button>
@@ -91,11 +96,7 @@ export function ChallengePanel({
       {challenge.submissions.length === 0 && (
         <p className="game-hint">No words submitted yet.</p>
       )}
-      <ul
-        className="game-words"
-        aria-label="Submitted words"
-        aria-live="polite"
-      >
+      <ul className="game-words" aria-label="Submitted words">
         {challenge.submissions.map((submission, index) => (
           <li key={index} data-status={submission.status}>
             <span>{submission.text}</span>
@@ -107,6 +108,15 @@ export function ChallengePanel({
           </li>
         ))}
       </ul>
+      <p
+        className="sr-only"
+        role="status"
+        aria-label="Word submission feedback"
+        aria-atomic="true"
+      >
+        {challenge.submissions.length > 0 &&
+          `Answer ${challenge.submissions.length}: ${challenge.submissions.at(-1)!.text}, ${challenge.submissions.at(-1)!.status}. ${challenge.acceptedWordCount} of ${challenge.requiredWordCount} accepted.`}
+      </p>
     </Card>
   )
 }

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { gameAudio } from '../../services/gameAudio.ts'
 import { lobbiesApi, type Lobby } from '../../services/api/lobbies.ts'
 import { useLobbyActions } from '../lobby/useLobbyActions.ts'
@@ -19,16 +19,22 @@ export function PartyResults({
   const navigate = useNavigate()
   const { act, error, busy } = useLobbyActions(lobby.id, accept)
   const result = lobby.lastResult
+  const heading = useRef<HTMLHeadingElement>(null)
+  useEffect(() => {
+    if (document.activeElement === document.body) heading.current?.focus()
+  }, [])
   useEffect(() => {
     if (result?.winnerIds.includes(playerId))
       gameAudio.play(`${result.gameId}/victory`, 'victory')
   }, [result, playerId])
   return (
     <Card className="game-results">
-      <h1>Match results</h1>
+      <h1 ref={heading} tabIndex={-1}>
+        Match results
+      </h1>
       {lobby.lastResult ? (
         <>
-          <h2>
+          <h2 aria-live="polite" aria-atomic="true">
             {lobby.lastResult.isTie ? 'Shared victory' : 'Winner'}:{' '}
             {lobby.lastResult.standings
               .filter((standing) => standing.rank === 1)

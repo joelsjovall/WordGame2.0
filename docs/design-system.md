@@ -16,7 +16,7 @@ Direction: a friendly tabletop word game, with warm paper surfaces, evergreen in
 
 Buttons have primary/secondary/danger variants, explicit disabled treatment, visible pressed/hover movement, and a 3px keyboard-focus outline. `busy` disables activation, retains the accessible name, exposes `aria-busy`, and adds a decorative spinner; use visible progress wording too. Form errors need text linked with `aria-describedby` and `aria-invalid`; placeholder text is not a label. Badges supplement text rather than conveying meaning by color alone.
 
-Use native `dialog.showModal()` for modal focus containment/inert background and Escape behavior. Supply an accessible heading/name, an explicit close button, and restore focus to the invoker. Never replace native dialog with a visually positioned div. No production dialog flow is introduced by this foundation issue.
+Use native `dialog.showModal()` for modal focus containment/inert background and Escape behavior. Supply an accessible heading/name, an explicit close button, and restore focus to the invoker. Never replace native dialog with a visually positioned div. How to Play uses this pattern on the homepage and during gameplay.
 
 Layouts start at 320px, remain single-column on phones, and may use two columns from 48rem (tablet). Use 64rem for additional desktop space only where needed; the existing 24rem rule handles very narrow invitation rows. CSS custom properties cannot be substituted into media-query conditions, so keep these documented values literal. Test at 360, 768, and 1280px with long names, zoom/reflow, and keyboard navigation.
 
@@ -26,7 +26,24 @@ Icons use inline SVG, a 24-unit view box, 2-unit rounded strokes, `currentColor`
 
 Browser checks cover responsive layouts, contrast pairs, keyboard focus, native dialog dismissal, touch size, and reduced motion. Component tests cover busy-action guarding and labelled error descriptions. Later UI issues can extend screens using this foundation.
 
-Gameplay feedback follows authoritative state: phase/round entry, bids, bluff calls, word results, changed scores, and final winners use short opacity/transform effects. The challenge countdown briefly emphasizes each of its final ten seconds; the warning color and underline remain without motion. Winner stars animate once for 440ms; other effects take 140–220ms. Existing loading and matchmaking indicators are reused. No action or server timer waits for an animation, and reduced motion removes all effects while preserving text/status feedback. Mobile browser checks include reduced motion and Chromium CPU throttling; physical-device smoothness remains part of release validation.
+Gameplay feedback follows authoritative state: phase/round entry, bids, bluff calls, word results, changed scores, and final winners use short transform effects. Text stays fully opaque throughout entry animations to preserve contrast. The challenge countdown briefly emphasizes each of its final ten seconds; the warning color and underline remain without motion. Winner stars animate once for 440ms; other effects take 140–220ms. Existing loading and matchmaking indicators are reused. No action or server timer waits for an animation, and reduced motion removes all effects while preserving text/status feedback. Mobile browser checks include reduced motion and Chromium CPU throttling; physical-device smoothness remains part of release validation.
+
+## Accessibility audit (F050)
+
+Automated checks use `@axe-core/playwright` with WCAG 2 A/AA, 2.1 A/AA and 2.2 AA tags. Coverage includes homepage, join/create forms, How to Play, waiting lobby, matchmaking/search/match found, category selection, bidding, challenge and final Party results in desktop/mobile Chromium and iPhone-emulated WebKit. Existing contrast, reduced-motion, 200% text, compact keyboard viewport and touch-target checks remain in place. No axe rules are suppressed. Run `npm exec -- playwright test accessibility.spec.ts mobile-layout.spec.ts onboarding.spec.ts design-system.spec.ts party-lifecycle.spec.ts online-matchmaking.spec.ts` from `frontend`.
+
+Audit fixes: a visible-on-focus skip link and route focus recovery; focus recovery when a server transition removes a gameplay control; persistent round/turn and matchmaking announcements; concise accepted/rejected/duplicate feedback instead of rereading the whole answer list; labelled word-entry help; polite ten/five-second and expiry announcements instead of speaking every tick. Result text, statuses and urgency underline remain understandable with sound muted and motion disabled. Dialogs retain their native keyboard behavior and do not pause the server.
+
+**Manual validation status:** no human screen-reader or physical-device session has been performed for F050. Scripted keyboard/focus and accessibility-tree checks are automated evidence, not a listening test or a WCAG conformance certification. Before closing F050, record tester/date/browser/reader and pass/fail results for:
+
+1. NVDA with Firefox or Narrator with Edge: skip to content, join/create a lobby, edit settings and ready using keyboard only.
+2. Search, hear match found/opponent/acceptance status, and accept/decline without a mouse.
+3. Select a category, bid/call bluff, hear turn changes, and submit accepted, invalid and duplicate answers without losing input focus.
+4. Hear the remaining-time warnings and round/match outcome without repeated answer-history or every-second announcements.
+5. Open/close How to Play using keyboard and Escape; verify background controls are unavailable and focus returns. Repeat with VoiceOver/Safari.
+6. Check 200% text and real browser zoom, reduced motion, muted audio and touch interaction on a physical phone.
+
+**Known timing barriers:** Party hosts can select 5–300-second challenges before starting; Online challenges default to 30 seconds. Live challenges cannot be paused or extended individually. Online acceptance and reconnection windows are also fixed, and round summaries advance after three seconds (totals remain visible). These can disadvantage slower input or assistive technology users. The [WCAG timing criterion](https://www.w3.org/WAI/WCAG22/Understanding/timing-adjustable) has real-time/essential exceptions, but their applicability has not been independently assessed here. Manual timing/announcement review remains open; do not claim full WCAG 2.2 AA compliance or close F050 on axe results alone. See [Playwright's testing guidance](https://playwright.dev/docs/accessibility-testing) on automated coverage limits.
 
 ## Optional game audio
 

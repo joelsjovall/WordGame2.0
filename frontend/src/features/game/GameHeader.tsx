@@ -45,6 +45,19 @@ export function GameHeader({ state }: { state: GameState }) {
           </p>
         )}
       </div>
+      <p
+        className="sr-only"
+        role="status"
+        aria-label="Game turn"
+        aria-atomic="true"
+      >
+        Round {state.round?.number ?? 0}. {phase}.
+        {state.status === 'active' &&
+          state.round?.activePlayerId &&
+          state.round.status !== 'completed' &&
+          state.round.status !== 'cancelled' &&
+          ` ${state.players.find((player) => player.id === state.round?.activePlayerId)?.displayName ?? 'Another player'} is playing.`}
+      </p>
     </header>
   )
 }

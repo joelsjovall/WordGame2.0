@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { observeAudio } from './support/audio.ts'
+import { checkAccessibility } from './support/accessibility.ts'
 
 async function noOverflow(page: Page) {
   expect(
@@ -90,18 +91,39 @@ test('word entry keeps timer and submit reachable when the visible viewport shri
     ).toContainText('Connected; Ready')
     await guest.getByRole('button', { name: 'Ready', exact: true }).click()
     await page.getByRole('button', { name: 'Start match', exact: true }).click()
-    await page.getByRole('button', { name: /European Capitals.*easy/i }).click()
+    await expect(
+      page.getByRole('button', { name: /European Capitals.*easy/i }),
+    ).toBeVisible()
+    await checkAccessibility(page)
+    const category = page.getByRole('button', {
+      name: /European Capitals.*easy/i,
+    })
+    await category.focus()
+    await category.press('Enter')
+    await expect(
+      page.getByRole('heading', { name: 'Bidding', exact: true }),
+    ).toBeFocused()
     await expect(page.locator('.game-stage')).toHaveCSS(
       'animation-name',
       'game-arrive',
     )
     await page.getByLabel('Your bid').fill('2')
+    // Audit the start of the real entry animation, not just its settled state.
+    const stage = page.locator('.game-stage')
+    await stage.evaluate((element) => {
+      element.style.animation = 'none'
+      element.getBoundingClientRect()
+      element.style.animation = 'game-arrive 60s paused'
+    })
+    await expect(stage).toHaveCSS('opacity', '1')
+    await checkAccessibility(page)
+    await stage.evaluate((element) => element.style.removeProperty('animation'))
     const matchUrl = page.url()
     await page.getByRole('button', { name: 'How to Play', exact: true }).click()
     await page.getByRole('button', { name: 'Close instructions' }).click()
     await expect(page.getByLabel('Your bid')).toHaveValue('2')
     await expect(page).toHaveURL(matchUrl)
-    await page.getByRole('button', { name: 'Place bid', exact: true }).click()
+    await page.getByLabel('Your bid').press('Enter')
     await expect(guest.locator('.game-bid')).toContainText(
       'Highest bid: 2 words',
     )
@@ -114,7 +136,9 @@ test('word entry keeps timer and submit reachable when the visible viewport shri
         .poll(() => page.evaluate(() => window.audioProbe.voices))
         .toBeGreaterThanOrEqual(4)
     await page.getByRole('button', { name: 'How to Play', exact: true }).click()
-    await guest.getByRole('button', { name: 'Call bluff', exact: true }).click()
+    const bluff = guest.getByRole('button', { name: 'Call bluff', exact: true })
+    await bluff.focus()
+    await bluff.press('Enter')
     await expect(
       page.getByRole('dialog', { name: 'How to Play' }),
     ).toBeVisible()
@@ -122,6 +146,7 @@ test('word entry keeps timer and submit reachable when the visible viewport shri
     await expect(
       page.getByText('Bluff called · Time to prove it'),
     ).toBeVisible()
+    await checkAccessibility(page)
     await expect(page.locator('.game-bluff-called')).toHaveCSS(
       'animation-name',
       'game-emphasis',

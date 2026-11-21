@@ -36,6 +36,7 @@ describe('application routes', () => {
     ).toBeVisible()
 
     await user.click(screen.getByRole('link', { name: 'Back to homepage' }))
+    expect(document.getElementById('main-content')).toHaveFocus()
 
     expect(
       await screen.findByRole('heading', { name: 'WordGame 2.0' }),

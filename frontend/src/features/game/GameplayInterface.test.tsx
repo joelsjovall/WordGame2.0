@@ -68,9 +68,15 @@ test('urgency uses the server deadline and stops at zero without triggering acti
   act(() => vi.advanceTimersByTime(1000))
   expect(view.container.firstChild).toHaveAttribute('data-urgent', 'true')
   expect(screen.getByText('10')).toBeVisible()
+  expect(screen.getByRole('status')).toHaveTextContent(
+    '10 seconds or less remaining.',
+  )
   expect(play).not.toHaveBeenCalled()
   now.mockReturnValue(6000)
   act(() => vi.advanceTimersByTime(5000))
+  expect(screen.getByRole('status')).toHaveTextContent(
+    '5 seconds or less remaining.',
+  )
   expect(play).toHaveBeenCalledExactlyOnceWith(
     'challenge-warning/warning',
     'warning',
@@ -78,6 +84,7 @@ test('urgency uses the server deadline and stops at zero without triggering acti
   now.mockReturnValue(12000)
   act(() => vi.advanceTimersByTime(6000))
   expect(screen.getByText('0')).toBeVisible()
+  expect(screen.getByRole('status')).toHaveTextContent('Time is up.')
   expect(view.container.firstChild).toHaveAttribute('data-urgent', 'false')
   expect(play).toHaveBeenCalledTimes(1)
 })
@@ -129,6 +136,12 @@ test('challenge shows authoritative accepted/rejected words, progress and countd
   expect(screen.getByRole('progressbar')).toHaveAttribute('value', '1')
   expect(screen.getByText('1 of 3 words accepted')).toBeVisible()
   expect(
+    screen.getByRole('status', { name: 'Word submission feedback' }),
+  ).toHaveTextContent('Answer 2: Nope, rejected. 1 of 3 accepted.')
+  expect(screen.getByLabelText('Your word')).toHaveAccessibleDescription(
+    'Submit one answer at a time. Each different accepted answer counts once.',
+  )
+  expect(
     within(screen.getByLabelText('Submitted words')).getByText('rejected'),
   ).toBeVisible()
   expect(screen.getByRole('button', { name: 'Submit word' })).toBeDisabled()
@@ -148,6 +161,30 @@ test('challenge shows authoritative accepted/rejected words, progress and countd
   )
   expect(screen.getByLabelText('Your word')).toHaveValue('Paris')
   expect(screen.getByRole('button', { name: 'Submit word' })).toBeEnabled()
+  view.rerender(
+    <GameControls
+      state={{
+        ...state,
+        round: {
+          ...state.round!,
+          challenge: {
+            ...state.round!.challenge!,
+            submissions: [
+              ...state.round!.challenge!.submissions,
+              { text: 'Stockholm', status: 'duplicate' },
+            ],
+          },
+        },
+      }}
+      playerId="host"
+      busy={false}
+      send={vi.fn()}
+    />,
+  )
+  expect(
+    screen.getByRole('status', { name: 'Word submission feedback' }),
+  ).toHaveTextContent('Answer 3: Stockholm, duplicate. 1 of 3 accepted.')
+  expect(screen.getByLabelText('Your word')).toHaveFocus()
 })
 test('server updates replace phase, scores and active-player highlights', () => {
   const hook = vi.spyOn(stateHook, 'useGameState').mockReturnValue({
@@ -163,6 +200,7 @@ test('server updates replace phase, scores and active-player highlights', () => 
   )
   const scores = screen.getByLabelText('Match scores')
   expect(within(scores).getByText('Active turn · You')).toBeVisible()
+  screen.getByLabelText('Your bid').focus()
   hook.mockReturnValue({
     state: {
       ...game,
@@ -180,11 +218,29 @@ test('server updates replace phase, scores and active-player highlights', () => 
     </MemoryRouter>,
   )
   expect(screen.getByRole('heading', { name: 'Round complete' })).toBeVisible()
+  expect(screen.getByRole('heading', { name: 'Round complete' })).toHaveFocus()
+  expect(
+    screen.getByRole('status', { name: 'Game turn' }),
+  ).not.toHaveTextContent('is playing')
   expect(scores).toHaveTextContent('Host: 50 points')
   expect(within(scores).queryByText(/Active turn/)).not.toBeInTheDocument()
   expect(
     screen.queryByRole('button', { name: 'Place bid' }),
   ).not.toBeInTheDocument()
+  const help = screen.getByRole('button', { name: 'How to Play' })
+  help.focus()
+  hook.mockReturnValue({
+    state: game,
+    connection: 'connected',
+    error: null,
+    receivedAt: 2,
+  })
+  view.rerender(
+    <MemoryRouter>
+      <GameView id={game.id} playerId="bob" />
+    </MemoryRouter>,
+  )
+  expect(help).toHaveFocus()
 })
 test('a rejected server action stays visible even when the recovery read fails', async () => {
   vi.spyOn(stateHook, 'useGameState').mockReturnValue({

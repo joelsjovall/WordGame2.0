@@ -90,8 +90,9 @@ The planned backlog contains 57 issues across six milestones. Work proceeds one 
 - **Completed:** [F046, Mobile gameplay and responsive layouts (#48)](https://github.com/joelsjovall/WordGame2.0/issues/48), merged through PR #105 (merge commit `ac4b173`). Physical-device/native-keyboard checks remain release validation as documented in the design system.
 - **Completed:** [F047, Gameplay animations and interactive feedback (#49)](https://github.com/joelsjovall/WordGame2.0/issues/49), merged through PR #106 (merge commit `2e9d8c7`).
 - **Completed:** [F048, Game sound effects and audio settings (#50)](https://github.com/joelsjovall/WordGame2.0/issues/50), merged through PR #107 (merge commit `006a827`).
-- **Active:** [F049, How to Play and player onboarding (#51)](https://github.com/joelsjovall/WordGame2.0/issues/51): shared rules modal, examples, and a practice decision on the homepage and during both game modes.
-- **Current local state (2026-11-21):** Working on `feature/F049-player-onboarding`. Stop after creating the PR; the owner checks CI and merges. UI/UX polish (F043-F052) is underway; identities/games remain in memory, and statistics require a durable history directory.
+- **Completed:** [F049, How to Play and player onboarding (#51)](https://github.com/joelsjovall/WordGame2.0/issues/51), merged through PR #108 (merge commit `4110430`).
+- **Active:** [F050, Accessibility and inclusive gameplay (#52)](https://github.com/joelsjovall/WordGame2.0/issues/52): automated audits and keyboard/announcement fixes; human screen-reader and timing review remains required before closure (see the design system).
+- **Current local state (2026-11-21):** Working on `feature/F050-accessibility`. Stop after creating the PR; the owner checks CI and merges. UI/UX polish (F043-F052) is underway; identities/games remain in memory, and statistics require a durable history directory.
 - **Outstanding security follow-up:** A database credential was previously exposed in the public V1 repository. Never reuse or reproduce it. Rotation must be verified; this handoff provides no evidence that rotation has occurred.
 
 Update this section as issues are completed or the handoff state changes.

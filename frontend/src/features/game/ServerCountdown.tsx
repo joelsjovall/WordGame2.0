@@ -35,6 +35,22 @@ export function ServerCountdown({
       data-urgent={showUrgency && seconds > 0 && seconds <= 10}
     >
       <span key={seconds}>{seconds}</span>
+      {showUrgency && (
+        <span
+          className="sr-only"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {seconds === 0
+            ? 'Time is up.'
+            : seconds <= 5
+              ? '5 seconds or less remaining.'
+              : seconds <= 10
+                ? '10 seconds or less remaining.'
+                : ''}
+        </span>
+      )}
     </span>
   )
 }

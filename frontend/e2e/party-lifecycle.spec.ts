@@ -1,5 +1,6 @@
 import { expect, test, type Browser } from '@playwright/test'
 import { backendUrl } from './support/environment.ts'
+import { checkAccessibility } from './support/accessibility.ts'
 
 for (const playerCount of [2, 3, 4]) {
   test(`${playerCount} players complete a private match, rematch with fresh scores, and can decline by leaving`, async ({
@@ -165,6 +166,7 @@ for (const playerCount of [2, 3, 4]) {
           await expect(page.getByLabel('Final standings')).toContainText(
             'Host:',
           )
+          if (playerCount === 2 && match === 0) await checkAccessibility(page)
           const winner = page.locator(
             '.game-standings [data-winner="true"] .game-rank',
           )

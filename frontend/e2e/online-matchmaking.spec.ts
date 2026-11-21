@@ -1,5 +1,6 @@
 import { expect, test, type Page, type BrowserContext } from '@playwright/test'
 import { backendUrl, frontendUrl } from './support/environment.ts'
+import { checkAccessibility } from './support/accessibility.ts'
 
 async function join(page: Page, name: string) {
   await page.getByLabel('Your display name').fill(name)
@@ -129,6 +130,7 @@ test('Online players cancel, restore, decline, and enter the same game on deskto
       ).toBeVisible()
       await expect(alice.getByText('Bob', { exact: true })).toBeVisible()
       await noOverflow(alice)
+      if (width === 390) await checkAccessibility(alice)
       await alice.screenshot({
         path: testInfo.outputPath(`online-found-${width}.png`),
         fullPage: true,
@@ -165,6 +167,7 @@ test('Online players cancel, restore, decline, and enter the same game on deskto
         .getByRole('button', { name: /European Capitals.*easy/i })
         .click()
       await alice.getByLabel('Your bid').fill('1')
+      if (width === 390) await checkAccessibility(alice)
       const matchUrl = alice.url()
       await alice
         .getByRole('button', { name: 'How to Play', exact: true })
