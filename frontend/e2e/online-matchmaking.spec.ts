@@ -63,7 +63,11 @@ test('Online players cancel, restore, decline, and enter the same game on deskto
       hasTouch: width < 768,
     }
     const first = await browser.newContext(options)
-    const second = await browser.newContext(options)
+    const rivalBrowser =
+      browser.browserType().name() === 'webkit'
+        ? await browser.browserType().launch()
+        : null
+    const second = await (rivalBrowser ?? browser).newContext(options)
     try {
       const alice = await first.newPage()
       const bob = await second.newPage()
@@ -344,6 +348,7 @@ test('Online players cancel, restore, decline, and enter the same game on deskto
       await clearPendingSearch(second)
       await first.close()
       await second.close()
+      await rivalBrowser?.close()
     }
   }
 })

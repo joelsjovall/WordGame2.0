@@ -19,6 +19,16 @@ export default defineConfig({
   },
   projects: [
     {
+      name: 'mobile-webkit',
+      testMatch: [
+        'mobile-layout.spec.ts',
+        'lobby-creation.spec.ts',
+        'lobby-joining.spec.ts',
+        'party-lifecycle.spec.ts',
+      ],
+      use: { ...devices['iPhone 13'] },
+    },
+    {
       name: 'chromium',
       testIgnore: 'online-matchmaking.spec.ts',
       use: { ...devices['Desktop Chrome'] },
@@ -33,6 +43,12 @@ export default defineConfig({
       name: 'online-chromium',
       testMatch: 'online-matchmaking.spec.ts',
       use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'online-webkit',
+      testMatch: 'online-matchmaking.spec.ts',
+      dependencies: ['online-chromium'],
+      use: { ...devices['iPhone 13'] },
     },
   ],
   webServer: [

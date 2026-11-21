@@ -122,8 +122,8 @@ jobs:
           dotnet-quality: ga
       - name: Install frontend dependencies
         run: npm ci
-      - name: Install Chromium and system dependencies
-        run: npm exec playwright install --with-deps chromium
+      - name: Install Chromium, WebKit, and system dependencies
+        run: npm exec -- playwright install --with-deps chromium webkit
       - name: Run desktop and mobile browser tests
         run: npm run test:e2e -- --reporter=list,html,junit
         env:

@@ -54,7 +54,7 @@ test('challenge shows authoritative accepted/rejected words, progress and countd
       },
     },
   }
-  render(
+  const view = render(
     <GameControls state={state} playerId="host" busy={false} send={vi.fn()} />,
   )
   expect(screen.getByRole('timer')).toHaveTextContent('5')
@@ -67,6 +67,19 @@ test('challenge shows authoritative accepted/rejected words, progress and countd
   await userEvent.setup().type(screen.getByLabelText('Your word'), '   ')
   expect(screen.getByRole('button', { name: 'Submit word' })).toBeDisabled()
   expect(screen.getByLabelText('Your word')).toHaveAttribute('maxlength', '256')
+  view.rerender(
+    <GameControls state={state} playerId="host" busy send={vi.fn()} />,
+  )
+  expect(screen.getByLabelText('Your word')).toHaveFocus()
+  expect(screen.getByLabelText('Your word')).toBeEnabled()
+  await userEvent.setup().clear(screen.getByLabelText('Your word'))
+  await userEvent.setup().type(screen.getByLabelText('Your word'), 'Paris')
+  expect(screen.getByRole('button', { name: 'Submit word' })).toBeDisabled()
+  view.rerender(
+    <GameControls state={state} playerId="host" busy={false} send={vi.fn()} />,
+  )
+  expect(screen.getByLabelText('Your word')).toHaveValue('Paris')
+  expect(screen.getByRole('button', { name: 'Submit word' })).toBeEnabled()
 })
 test('server updates replace phase, scores and active-player highlights', () => {
   const hook = vi.spyOn(stateHook, 'useGameState').mockReturnValue({

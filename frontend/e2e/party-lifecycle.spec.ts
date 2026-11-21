@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Browser } from '@playwright/test'
 import { backendUrl } from './support/environment.ts'
 
 for (const playerCount of [2, 3, 4]) {
@@ -6,6 +6,19 @@ for (const playerCount of [2, 3, 4]) {
     page,
     browser,
   }) => {
+    test.setTimeout(60000)
+    const peerBrowsers: Browser[] = []
+    async function peerContext() {
+      // Independent devices do not share WebKit's per-process HTTP/1.1 connection pool.
+      const peer =
+        browser.browserType().name() === 'webkit'
+          ? await browser.browserType().launch()
+          : browser
+      if (peer !== browser) peerBrowsers.push(peer)
+      return peer.newContext({
+        viewport: page.viewportSize() ?? { width: 390, height: 844 },
+      })
+    }
     await page.goto('/lobbies/new')
     await page.getByLabel('Your display name').fill('Host')
     await page
@@ -13,9 +26,7 @@ for (const playerCount of [2, 3, 4]) {
       .click()
     const invitation = await page.getByLabel('Invitation link').inputValue()
     const lobbyId = page.url().split('/').at(-1)!
-    const context = await browser.newContext({
-      viewport: page.viewportSize() ?? { width: 390, height: 844 },
-    })
+    const context = await peerContext()
     try {
       const guest = await context.newPage()
       await guest.goto(invitation)
@@ -28,9 +39,7 @@ for (const playerCount of [2, 3, 4]) {
       const guests = [guest]
       try {
         for (const name of ['Carol', 'Dan'].slice(0, playerCount - 2)) {
-          const extra = await browser.newContext({
-            viewport: page.viewportSize() ?? { width: 390, height: 844 },
-          })
+          const extra = await peerContext()
           extraContexts.push(extra)
           const participant = await extra.newPage()
           guests.push(participant)
@@ -204,6 +213,7 @@ for (const playerCount of [2, 3, 4]) {
       }
     } finally {
       await context.close()
+      await Promise.all(peerBrowsers.map((peer) => peer.close()))
     }
   })
 }
