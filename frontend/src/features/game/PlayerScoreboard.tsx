@@ -26,7 +26,9 @@ export function PlayerScoreboard({
             <div>
               <p>
                 <strong>{player.displayName}</strong>:{' '}
-                <span className="game-score">{player.score} points</span>
+                <span key={player.score} className="game-score">
+                  {player.score} points
+                </span>
               </p>
               <p className="game-presence">
                 {player.hasLeft ? (

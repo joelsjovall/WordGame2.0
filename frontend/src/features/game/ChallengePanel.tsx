@@ -23,7 +23,9 @@ export function ChallengePanel({
       ?.displayName ?? 'Another player'
   return (
     <Card className="game-panel" aria-labelledby="challenge-title">
-      <p className="eyebrow">Time to prove it</p>
+      <p className="eyebrow game-bluff-called">
+        Bluff called · Time to prove it
+      </p>
       <h2 id="challenge-title">Word challenge</h2>
       <div ref={entry} className="game-challenge-entry" data-compact={compact}>
         <div className="game-challenge-summary">
@@ -38,6 +40,7 @@ export function ChallengePanel({
                 key={challenge.id}
                 deadline={challenge.deadline}
                 serverTime={state.serverTime}
+                showUrgency
               />
             </strong>{' '}
             seconds
@@ -75,7 +78,7 @@ export function ChallengePanel({
               value={word}
               onChange={(event) => setWord(event.target.value)}
             />
-            <Button type="submit" disabled={busy || !word.trim()}>
+            <Button type="submit" busy={busy} disabled={busy || !word.trim()}>
               Submit word
             </Button>
           </form>

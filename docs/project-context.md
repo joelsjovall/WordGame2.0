@@ -87,8 +87,9 @@ The planned backlog contains 57 issues across six milestones. Work proceeds one 
 - **Completed:** [F043, Visual identity and design system (#45)](https://github.com/joelsjovall/WordGame2.0/issues/45), merged through PR #102 (merge commit `d8c4158`); see [design system](design-system.md).
 - **Completed:** [F044, Homepage and mode selection (#46)](https://github.com/joelsjovall/WordGame2.0/issues/46), merged through PR #103 (merge commit `5c935e2`).
 - **Completed:** [F045, Gameplay interface (#47)](https://github.com/joelsjovall/WordGame2.0/issues/47), merged through PR #104 (merge commit `d1ec019`).
-- **Active:** [F046, Mobile gameplay and responsive layouts (#48)](https://github.com/joelsjovall/WordGame2.0/issues/48): safe areas, keyboard-aware challenge entry, responsive/zoom checks, and Chromium/WebKit gameplay coverage implemented; final verification pending. Physical-device/native-keyboard checks remain release validation as documented in the design system.
-- **Current local state (2026-11-21):** Working on `feature/F046-mobile-layouts`; follow the current authorized Git workflow. UI/UX polish (F043-F052) is underway; identities/games remain in memory, and statistics require a durable history directory.
+- **Completed:** [F046, Mobile gameplay and responsive layouts (#48)](https://github.com/joelsjovall/WordGame2.0/issues/48), merged through PR #105 (merge commit `ac4b173`). Physical-device/native-keyboard checks remain release validation as documented in the design system.
+- **Active:** [F047, Gameplay animations and interactive feedback (#49)](https://github.com/joelsjovall/WordGame2.0/issues/49): short server-state-driven effects and reduced-motion verification.
+- **Current local state (2026-11-21):** Working on `feature/F047-gameplay-feedback`. UI/UX polish (F043-F052) is underway; identities/games remain in memory, and statistics require a durable history directory.
 - **Outstanding security follow-up:** A database credential was previously exposed in the public V1 repository. Never reuse or reproduce it. Rotation must be verified; this handoff provides no evidence that rotation has occurred.
 
 Update this section as issues are completed or the handoff state changes.

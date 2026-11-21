@@ -274,6 +274,77 @@
 .game-results > h1 {
   font-size: clamp(2rem, 5vw, 3rem);
 }
+.game-stage {
+  min-width: 0;
+  animation: game-arrive var(--duration-normal) var(--ease-standard);
+}
+.game-shell .wg-spinner {
+  display: inline-block;
+  vertical-align: middle;
+}
+.game-bid {
+  animation: game-emphasis 220ms var(--ease-standard);
+}
+.game-category-confirmation {
+  color: var(--color-success);
+  font-weight: 650;
+}
+.game-stage[data-phase='categorySelection'] .wg-button {
+  animation: game-arrive 220ms var(--ease-standard);
+}
+.game-bluff-called {
+  border-left: 4px solid var(--color-secondary);
+  padding-left: var(--space-3);
+  animation: game-emphasis 220ms var(--ease-standard);
+}
+.game-countdown,
+.game-countdown > span,
+.game-score {
+  display: inline-block;
+}
+.game-countdown[data-urgent='true'] {
+  color: var(--color-secondary);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+.game-countdown[data-urgent='true'] > span {
+  animation: game-emphasis 140ms var(--ease-standard);
+}
+.game-words li[data-status='accepted'],
+.game-score,
+.game-round-scores strong {
+  animation: game-emphasis 220ms var(--ease-standard);
+}
+.game-words li:not([data-status='accepted']),
+.game-error {
+  animation: game-arrive 140ms var(--ease-standard);
+}
+.game-results {
+  animation: game-arrive 220ms var(--ease-standard);
+}
+.game-standings li[data-winner='true'] .game-rank {
+  animation: game-victory 440ms var(--ease-standard);
+}
+@keyframes game-arrive {
+  from {
+    opacity: 0.5;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes game-emphasis {
+  50% {
+    transform: scale(1.025);
+  }
+}
+@keyframes game-victory {
+  50% {
+    transform: rotate(-8deg) scale(1.12);
+  }
+}
 @media (min-width: 48rem) {
   .game-panel {
     padding: var(--space-6);

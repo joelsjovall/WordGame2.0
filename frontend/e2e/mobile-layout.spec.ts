@@ -37,9 +37,15 @@ test('major entry pages reflow in portrait, landscape and at 200% text size', as
 test('word entry keeps timer and submit reachable when the visible viewport shrinks', async ({
   page,
   browser,
+  browserName,
 }, testInfo) => {
   test.setTimeout(45000)
   await page.setViewportSize({ width: 390, height: 844 })
+  if (browserName === 'chromium') {
+    const session = await page.context().newCDPSession(page)
+    await session.send('Emulation.setCPUThrottlingRate', { rate: 4 })
+  }
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
   await page.goto('/lobbies/new')
   await page
     .getByLabel('Your display name')
@@ -71,9 +77,37 @@ test('word entry keeps timer and submit reachable when the visible viewport shri
     await guest.getByRole('button', { name: 'Ready', exact: true }).click()
     await page.getByRole('button', { name: 'Start match', exact: true }).click()
     await page.getByRole('button', { name: /European Capitals.*easy/i }).click()
-    await page.getByLabel('Your bid').fill('1')
+    await expect(page.locator('.game-stage')).toHaveCSS(
+      'animation-name',
+      'game-arrive',
+    )
+    await page.getByLabel('Your bid').fill('2')
     await page.getByRole('button', { name: 'Place bid', exact: true }).click()
+    await expect(guest.locator('.game-bid')).toContainText(
+      'Highest bid: 2 words',
+    )
+    await expect(page.locator('.game-bid')).toHaveCSS(
+      'animation-name',
+      'game-emphasis',
+    )
     await guest.getByRole('button', { name: 'Call bluff', exact: true }).click()
+    await expect(
+      page.getByText('Bluff called · Time to prove it'),
+    ).toBeVisible()
+    await expect(page.locator('.game-bluff-called')).toHaveCSS(
+      'animation-name',
+      'game-emphasis',
+    )
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await expect(page.locator('.game-stage')).toHaveCSS(
+      'animation-name',
+      'none',
+    )
+    await expect(page.locator('.game-bluff-called')).toHaveCSS(
+      'animation-name',
+      'none',
+    )
+    await page.emulateMedia({ reducedMotion: 'no-preference' })
     await page.getByLabel('Your word').focus()
     // Browser automation does not open the native OS keyboard. Exercise its viewport contraction explicitly.
     await page.setViewportSize({ width: 390, height: 320 })
@@ -92,6 +126,33 @@ test('word entry keeps timer and submit reachable when the visible viewport shri
     await page.screenshot({
       path: testInfo.outputPath('compact-word-entry.png'),
     })
+    await input.press('Enter')
+    const words = page.getByLabel('Submitted words')
+    await expect(words.getByText('accepted', { exact: true })).toBeVisible()
+    await expect(words.locator('[data-status="accepted"]')).toHaveCSS(
+      'animation-name',
+      'game-emphasis',
+    )
+    await input.fill('Stockholm')
+    await input.press('Enter')
+    await expect(words.getByText('duplicate', { exact: true })).toBeVisible()
+    await input.fill('Nope')
+    await input.press('Enter')
+    await expect(words.getByText('rejected', { exact: true })).toBeVisible()
+    await expect(words.locator('[data-status="rejected"]')).toHaveCSS(
+      'animation-name',
+      'game-arrive',
+    )
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await expect(words.locator('[data-status="accepted"]')).toHaveCSS(
+      'animation-name',
+      'none',
+    )
+    await expect(words.locator('[data-status="duplicate"]')).toHaveCSS(
+      'animation-name',
+      'none',
+    )
+    await input.fill('Paris')
     await input.press('Enter')
     await expect(
       page.getByRole('heading', { name: 'Round complete', exact: true }),

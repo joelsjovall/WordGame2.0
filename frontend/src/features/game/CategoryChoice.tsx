@@ -40,7 +40,12 @@ export function CategoryChoice({
   return (
     <Card className="game-panel">
       <h2>Choose a category</h2>
-      {loading && <p role="status">Loading categories...</p>}
+      {loading && (
+        <p role="status">
+          <span className="wg-spinner" aria-hidden="true" /> Loading
+          categories...
+        </p>
+      )}
       {error && (
         <div role="alert">
           <p>{error}</p>

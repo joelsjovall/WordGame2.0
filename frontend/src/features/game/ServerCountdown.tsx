@@ -3,9 +3,11 @@ import { useEffect, useState } from 'react'
 export function ServerCountdown({
   deadline,
   serverTime,
+  showUrgency = false,
 }: {
   deadline: string
   serverTime: string
+  showUrgency?: boolean
 }) {
   const [remaining, setRemaining] = useState(() =>
     Math.max(0, Date.parse(deadline) - Date.parse(serverTime)),
@@ -19,5 +21,13 @@ export function ServerCountdown({
     )
     return () => clearInterval(timer)
   }, [deadline, serverTime])
-  return <span>{Math.ceil(remaining / 1000)}</span>
+  const seconds = Math.ceil(remaining / 1000)
+  return (
+    <span
+      className="game-countdown"
+      data-urgent={showUrgency && seconds > 0 && seconds <= 10}
+    >
+      <span key={seconds}>{seconds}</span>
+    </span>
+  )
 }

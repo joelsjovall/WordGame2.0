@@ -165,6 +165,14 @@ for (const playerCount of [2, 3, 4]) {
           await expect(page.getByLabel('Final standings')).toContainText(
             'Host:',
           )
+          const winner = page.locator(
+            '.game-standings [data-winner="true"] .game-rank',
+          )
+          await page.emulateMedia({ reducedMotion: 'no-preference' })
+          await expect(winner).toHaveCSS('animation-name', 'game-victory')
+          await expect(winner).toHaveCSS('animation-duration', '0.44s')
+          await page.emulateMedia({ reducedMotion: 'reduce' })
+          await expect(winner).toHaveCSS('animation-name', 'none')
           await expect(
             page.getByRole('heading', { name: 'Winner: Host', exact: true }),
           ).toBeVisible()

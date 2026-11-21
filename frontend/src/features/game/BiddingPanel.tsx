@@ -20,7 +20,14 @@ export function BiddingPanel({ state, playerId, busy, send }: GamePanelProps) {
     <Card className="game-panel" aria-labelledby="bidding-title">
       <p className="eyebrow">Raise the stakes</p>
       <h2 id="bidding-title">Bidding</h2>
-      <div className="game-bid">
+      <p className="game-category-confirmation">
+        Category selected: {round.category?.name}
+      </p>
+      <div
+        className="game-bid"
+        key={round.highestBid?.wordCount}
+        aria-live="polite"
+      >
         <strong>{round.highestBid?.wordCount ?? '—'}</strong>
         <div>
           <p>
@@ -58,7 +65,7 @@ export function BiddingPanel({ state, playerId, busy, send }: GamePanelProps) {
                 round.highestBid.playerId !== playerId &&
                 ' Or challenge the highest bid.'}
             </p>
-            <Button type="submit" disabled={busy || !valid}>
+            <Button type="submit" busy={busy} disabled={busy || !valid}>
               Place bid
             </Button>
           </form>

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, expect, test, vi } from 'vitest'
@@ -11,8 +11,65 @@ import { ApiError } from '../../services/api/client.ts'
 import { gameSynchronization } from '../../services/gameSynchronization.ts'
 import { gameFixture as game } from '../../../tests/fixtures/game.ts'
 import type { GameState } from '../../services/api/games.ts'
+import { PlayerScoreboard } from './PlayerScoreboard.tsx'
+import { ServerCountdown } from './ServerCountdown.tsx'
 
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => {
+  vi.restoreAllMocks()
+  vi.useRealTimers()
+})
+
+test('score emphasis restarts only for changed scores, not presence updates', () => {
+  const view = render(<PlayerScoreboard state={game} playerId="host" />)
+  const scores = screen.getAllByText('0 points')
+  view.rerender(
+    <PlayerScoreboard
+      state={{
+        ...game,
+        players: game.players.map((player) => ({
+          ...player,
+          isConnected: false,
+        })),
+      }}
+      playerId="host"
+    />,
+  )
+  expect(screen.getAllByText('0 points')[0]).toBe(scores[0])
+  view.rerender(
+    <PlayerScoreboard
+      state={{
+        ...game,
+        players: game.players.map((player) =>
+          player.id === 'host' ? { ...player, score: 10 } : player,
+        ),
+      }}
+      playerId="host"
+    />,
+  )
+  expect(screen.getByText('10 points')).not.toBe(scores[0])
+  expect(screen.getByText('0 points')).toBe(scores[1])
+})
+
+test('urgency uses the server deadline and stops at zero without triggering actions', () => {
+  vi.useFakeTimers()
+  const now = vi.spyOn(performance, 'now').mockReturnValue(0)
+  const view = render(
+    <ServerCountdown
+      deadline="2026-11-19T12:00:11Z"
+      serverTime={game.serverTime}
+      showUrgency
+    />,
+  )
+  expect(view.container.firstChild).toHaveAttribute('data-urgent', 'false')
+  now.mockReturnValue(1000)
+  act(() => vi.advanceTimersByTime(1000))
+  expect(view.container.firstChild).toHaveAttribute('data-urgent', 'true')
+  expect(screen.getByText('10')).toBeVisible()
+  now.mockReturnValue(12000)
+  act(() => vi.advanceTimersByTime(11000))
+  expect(screen.getByText('0')).toBeVisible()
+  expect(view.container.firstChild).toHaveAttribute('data-urgent', 'false')
+})
 test('invalid bids cannot be sent but calling an opponent bluff stays available', async () => {
   const send = vi.fn()
   render(<GameControls state={game} playerId="bob" busy={false} send={send} />)
