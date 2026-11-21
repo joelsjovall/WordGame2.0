@@ -25,10 +25,13 @@ test('a new guest joins by code from the homepage on desktop or mobile', async (
   await page.getByLabel('Your display name').fill('Bob')
   await page.getByRole('button', { name: 'Join lobby' }).click()
   await expect(
-    page.getByRole('heading', { name: 'You joined the lobby' }),
+    page.getByRole('heading', { name: 'Private lobby' }),
   ).toBeVisible()
   await expect(page.getByText('2 of 4 players')).toBeVisible()
   await expect(page.getByLabel('Lobby players')).toContainText('Host (host)')
+  await expect(
+    page.getByRole('button', { name: 'Ready', exact: true }),
+  ).toBeVisible()
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -64,7 +67,7 @@ test('direct invitations support copying, native-share capability, and safe rejo
   await page.getByLabel('Your display name').fill('Bob')
   await page.getByRole('button', { name: 'Join lobby' }).click()
   await expect(
-    page.getByRole('heading', { name: 'You joined the lobby' }),
+    page.getByRole('heading', { name: 'Private lobby' }),
   ).toBeVisible()
   await page.getByRole('button', { name: 'Copy invitation link' }).click()
   await expect(page.locator('html')).toHaveAttribute(
@@ -77,8 +80,9 @@ test('direct invitations support copying, native-share capability, and safe rejo
     invitation,
   )
   await page.reload()
-  await page.getByLabel('Your display name').fill('bob')
-  await page.getByRole('button', { name: 'Join lobby' }).click()
+  await expect(
+    page.getByRole('button', { name: 'Ready', exact: true }),
+  ).toBeVisible()
   await expect(page.getByText('2 of 4 players')).toBeVisible()
 })
 
@@ -96,6 +100,6 @@ test('name conflicts are clear and can be corrected without account registration
   await page.getByLabel('Your display name').fill('Bob')
   await page.getByRole('button', { name: 'Join lobby' }).click()
   await expect(
-    page.getByRole('heading', { name: 'You joined the lobby' }),
+    page.getByRole('heading', { name: 'Private lobby' }),
   ).toBeVisible()
 })

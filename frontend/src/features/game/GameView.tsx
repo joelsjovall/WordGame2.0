@@ -55,7 +55,9 @@ export function GameView({ id, playerId }: { id: string; playerId: string }) {
             (state.match.format === 'online' ? (
               <OnlineOutcome state={state} playerId={playerId} />
             ) : (
-              <p>The match is complete. Preparing final results...</p>
+              <p role="status">
+                The match is complete. Preparing final results...
+              </p>
             ))}
           {state.match.format === 'online' &&
             (state.status === 'completed' || state.status === 'abandoned') && (

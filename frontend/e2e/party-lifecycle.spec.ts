@@ -35,7 +35,6 @@ for (const playerCount of [2, 3, 4]) {
       await guest
         .getByRole('button', { name: 'Join lobby', exact: true })
         .click()
-      await guest.getByRole('link', { name: 'Open lobby settings' }).click()
       const extraContexts = []
       const guests = [guest]
       try {
@@ -48,9 +47,6 @@ for (const playerCount of [2, 3, 4]) {
           await participant.getByLabel('Your display name').fill(name)
           await participant
             .getByRole('button', { name: 'Join lobby', exact: true })
-            .click()
-          await participant
-            .getByRole('link', { name: 'Open lobby settings' })
             .click()
         }
         await expect(

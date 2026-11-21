@@ -44,12 +44,9 @@ test('manual joining normalizes pasted codes and renders authoritative membershi
     expect.any(AbortSignal),
   )
   expect(
-    await screen.findByRole('heading', { name: 'You joined the lobby' }),
+    await screen.findByRole('heading', { name: 'Private lobby' }),
   ).toBeVisible()
-  expect(screen.getByText('Host (host)')).toBeVisible()
-  expect(screen.getByLabelText('Invitation link')).toHaveValue(
-    lobbyInvitationUrl(lobby),
-  )
+  expect(screen.getByRole('status')).toHaveTextContent('Loading lobby')
 })
 
 test('invitation URLs bind the expected lobby ID and can switch to manual code entry', async () => {

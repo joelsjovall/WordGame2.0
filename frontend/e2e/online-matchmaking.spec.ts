@@ -306,10 +306,10 @@ test('Online players cancel, restore, decline, and enter the same game on deskto
         }
       }
       await expect(
-        alice.getByRole('heading', { name: 'You won', exact: true }),
+        alice.getByRole('heading', { name: 'Shared victory', exact: true }),
       ).toBeVisible()
       await expect(
-        bob.getByRole('heading', { name: 'You won', exact: true }),
+        bob.getByRole('heading', { name: 'Shared victory', exact: true }),
       ).toBeVisible()
       for (const player of [alice, bob]) {
         const statisticsResponse = await player.request.get(

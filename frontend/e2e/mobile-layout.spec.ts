@@ -75,7 +75,6 @@ test('word entry keeps timer and submit reachable when the visible viewport shri
     await guest.goto(invitation)
     await guest.getByLabel('Your display name').fill('Bob')
     await guest.getByRole('button', { name: 'Join lobby', exact: true }).click()
-    await guest.getByRole('link', { name: 'Open lobby settings' }).click()
     await expect(
       page
         .getByLabel('Lobby players')
