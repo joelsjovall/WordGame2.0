@@ -9,6 +9,15 @@ const phases = {
   cancelled: 'Round cancelled',
 }
 export function GameHeader({ state }: { state: GameState }) {
+  const steps = [
+    { status: 'categorySelection', label: 'Choose category' },
+    { status: 'bidding', label: 'Bid or call' },
+    { status: 'challenge', label: 'Name words' },
+    { status: 'completed', label: 'Round results' },
+  ] as const
+  const currentStep = steps.findIndex(
+    (step) => step.status === state.round?.status,
+  )
   const phase =
     state.status === 'completed'
       ? 'Match complete'
@@ -58,6 +67,28 @@ export function GameHeader({ state }: { state: GameState }) {
           state.round.status !== 'cancelled' &&
           ` ${state.players.find((player) => player.id === state.round?.activePlayerId)?.displayName ?? 'Another player'} is playing.`}
       </p>
+      {state.status === 'active' && state.round && currentStep >= 0 && (
+        <ol className="game-stepper" aria-label="Round progress">
+          {steps.map((step, index) => (
+            <li
+              key={step.status}
+              data-state={
+                index < currentStep
+                  ? 'done'
+                  : index === currentStep
+                    ? 'current'
+                    : 'upcoming'
+              }
+              aria-current={index === currentStep ? 'step' : undefined}
+            >
+              <span className="game-step-number" aria-hidden="true">
+                {index + 1}
+              </span>
+              <span>{step.label}</span>
+            </li>
+          ))}
+        </ol>
+      )}
     </header>
   )
 }
