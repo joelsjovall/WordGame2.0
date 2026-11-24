@@ -68,6 +68,7 @@ export default defineConfig({
       url: backendUrl + '/health',
       env: {
         ASPNETCORE_ENVIRONMENT: 'Development',
+        Testing__EphemeralDataProtection: 'true',
         // Parallel browser identities share one loopback IP; security tests exercise low limits separately.
         LobbyRateLimits__CreatePermitsPerMinute: '1000',
         LobbyRateLimits__JoinPermitsPerMinute: '1000',
