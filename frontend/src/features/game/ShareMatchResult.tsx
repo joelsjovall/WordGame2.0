@@ -4,8 +4,10 @@ import type { GameState } from '../../services/api/games.ts'
 
 export function ShareMatchResult({
   standings,
+  highlight,
 }: {
   standings: NonNullable<GameState['result']>['standings']
+  highlight?: NonNullable<GameState['result']>['bestBluffCall']
 }) {
   const [message, setMessage] = useState('')
   const text = `WordGame results\n${standings
@@ -13,7 +15,9 @@ export function ShareMatchResult({
       (player) =>
         `${player.rank}. ${player.displayName}: ${player.score} points`,
     )
-    .join('\n')}`
+    .join(
+      '\n',
+    )}${highlight ? `\nBest bluff call: ${highlight.callerName} caught ${highlight.bidderName}'s ${highlight.wordCount}-word bid in ${highlight.categoryName}.` : ''}`
 
   async function share() {
     try {

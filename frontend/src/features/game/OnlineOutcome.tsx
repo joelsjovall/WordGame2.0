@@ -1,6 +1,7 @@
 import type { GameState } from '../../services/api/games.ts'
 import { MatchStandings } from './MatchStandings.tsx'
 import { ShareMatchResult } from './ShareMatchResult.tsx'
+import { BluffHighlight } from './BluffHighlight.tsx'
 import { Badge, Card } from '../../components/ui.tsx'
 
 export function OnlineOutcome({
@@ -27,7 +28,11 @@ export function OnlineOutcome({
       )}
       {result.isTie && <Badge tone="warning">Tied top score</Badge>}
       <MatchStandings standings={result.standings} />
-      <ShareMatchResult standings={result.standings} />
+      <BluffHighlight highlight={result.bestBluffCall} />
+      <ShareMatchResult
+        standings={result.standings}
+        highlight={result.bestBluffCall}
+      />
       <p>The match has ended. Your final scores are preserved.</p>
     </Card>
   )

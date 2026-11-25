@@ -32,7 +32,8 @@ public static class GameStateMapper
     internal static MatchResultResponse MapMatchResult(Domain.MatchResult result) => new(
         result.GameId, MapFormat(result.Format), result.CompletedRoundCount, result.IsTie, result.WinnerIds,
         result.Standings.Select(standing => new MatchStandingResponse(standing.PlayerId, standing.DisplayName, standing.Score, standing.Rank)).ToArray(),
-        Enum.Parse<ApiMatchEndReason>(result.Reason.ToString()), result.ForfeitedPlayerId);
+        Enum.Parse<ApiMatchEndReason>(result.Reason.ToString()), result.ForfeitedPlayerId,
+        result.BestBluffCall is { } bluff ? new BluffHighlightResponse(bluff.CategoryName, bluff.WordCount, bluff.BidderName, bluff.CallerName) : null);
 
     internal static ApiSessionStatus MapStatus(SessionStatus status) => status switch
     {

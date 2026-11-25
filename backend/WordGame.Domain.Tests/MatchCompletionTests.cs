@@ -79,4 +79,26 @@ public sealed class MatchCompletionTests
         Assert.Equal(GameStatus.Completed, game.Status);
         Assert.Equal(2, game.Result!.WinnerIds.Count);
     }
+
+    [Fact]
+    public void ResultHighlightsTheLargestCaughtBluff()
+    {
+        var game = new Game(Guid.NewGuid(), DomainTestData.CreateGame().Players, MatchSettings.Party(2));
+        var first = DomainTestData.CompleteRound(game);
+        game.RecordRoundScores(first.Id, []);
+        var second = game.StartRound(Guid.NewGuid(), game.Players[0].Id);
+        second.SelectCategory(game.Players[0].Id, new Category("capitals", "Capitals", CategoryDifficulty.Easy));
+        second.RecordBid(new Bid(game.Players[0].Id, 5));
+        second.AssignTurn(game.Players[1].Id);
+        var challenge = DomainTestData.BeginChallenge(game, second);
+        challenge.Resolve(ChallengeOutcome.Failed);
+        second.Complete();
+        game.RecordRoundScores(second.Id, []);
+
+        game.Complete();
+
+        Assert.Equal(new BluffHighlight("Capitals", 5, game.Players[0].DisplayName,
+            game.Players[1].DisplayName), game.Result!.BestBluffCall);
+        Assert.Equal(game.Result.BestBluffCall, game.Copy().Result!.BestBluffCall);
+    }
 }

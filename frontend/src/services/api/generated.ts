@@ -476,6 +476,13 @@ export interface components {
       /** @default false */
       risk: boolean
     }
+    BluffHighlightResponse: {
+      categoryName: string
+      /** Format: int32 */
+      wordCount: number
+      bidderName: string
+      callerName: string
+    }
     CategoryListResponse: {
       items: components['schemas']['CategoryResponse'][]
     }
@@ -698,6 +705,7 @@ export interface components {
       reason?: components['schemas']['ApiMatchEndReason']
       /** Format: uuid */
       forfeitedPlayerId?: null | string
+      bestBluffCall?: null | components['schemas']['BluffHighlightResponse']
     }
     MatchSettingsResponse: {
       format: components['schemas']['ApiMatchFormat']

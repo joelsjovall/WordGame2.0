@@ -17,7 +17,9 @@ public sealed record MatchSettingsResponse(ApiMatchFormat Format, int RoundCount
 public enum ApiMatchEndReason { Completed, Forfeit, ReconnectionExpired }
 public sealed record MatchResultResponse(Guid GameId, ApiMatchFormat Format, int CompletedRoundCount,
     bool IsTie, IReadOnlyList<Guid> WinnerIds, IReadOnlyList<MatchStandingResponse> Standings,
-    ApiMatchEndReason Reason = ApiMatchEndReason.Completed, Guid? ForfeitedPlayerId = null);
+    ApiMatchEndReason Reason = ApiMatchEndReason.Completed, Guid? ForfeitedPlayerId = null,
+    BluffHighlightResponse? BestBluffCall = null);
+public sealed record BluffHighlightResponse(string CategoryName, int WordCount, string BidderName, string CallerName);
 public sealed record MatchStandingResponse(Guid PlayerId, string DisplayName, int Score, int Rank);
 
 public sealed record GamePlayerResponse(Guid Id, string DisplayName, int Score, bool IsConnected, bool HasLeft = false,

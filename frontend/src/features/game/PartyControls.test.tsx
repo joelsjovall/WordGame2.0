@@ -186,6 +186,12 @@ const completed = {
       { playerId: 'host', displayName: 'Host', score: 10, rank: 1 },
       { playerId: 'bob', displayName: 'Bob', score: 10, rank: 1 },
     ],
+    bestBluffCall: {
+      categoryName: 'European Capitals',
+      wordCount: 5,
+      bidderName: 'Host',
+      callerName: 'Bob',
+    },
   },
 }
 test('results display shared winners and only the host can prepare a rematch', async () => {
@@ -200,6 +206,7 @@ test('results display shared winners and only the host can prepare a rematch', a
   expect(
     screen.getByRole('heading', { name: 'Shared victory: Host, Bob' }),
   ).toBeVisible()
+  expect(screen.getByText(/Bob caught Host's 5-word bid/)).toBeVisible()
   expect(
     screen.queryByRole('button', { name: 'Play Again' }),
   ).not.toBeInTheDocument()
