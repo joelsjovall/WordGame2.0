@@ -84,6 +84,20 @@ public sealed class GameEngine(IGameSessionStore sessions, SessionRetention rete
             round.AssignTurn(TurnPolicy.NextPlayer(session, playerId, retention.GraceFor(session.Game.Settings.Format)));
         }, cancellationToken);
 
+    public Task<GameEngineResult> SubmitSealedBidAsync(Guid gameId, Guid playerId, int wordCount,
+        PlayerActionContext context, CancellationToken cancellationToken = default, bool risk = false) =>
+        commands.PlayerUpdateAsync(gameId, playerId, context, session =>
+        {
+            var round = GamePhaseGuard.ActiveRound(session);
+            GamePhaseGuard.Require(round.SealedOpeningPending && session.SelectedCategory?.RoundId == round.Id,
+                "This round is not accepting sealed bids.");
+            round.SubmitSealedBid(new Bid(playerId, wordCount, risk));
+            if (round.SealedBidSubmitterIds.Count == session.Game.Players.Count)
+            {
+                round.RevealSealedBids(session.Game.Players.Select(player => player.Id).ToArray());
+            }
+        }, cancellationToken);
+
     public Task<GameEngineResult> CallBluffAsync(Guid gameId, Guid playerId, PlayerActionContext context, CancellationToken cancellationToken = default) =>
         challenges.BeginAsync(gameId, playerId, context, cancellationToken);
 

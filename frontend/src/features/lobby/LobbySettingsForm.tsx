@@ -53,6 +53,7 @@ export function LobbySettingsForm({
       next.maximumPlayers !== lobby.settings.maximumPlayers ||
         next.roundCount !== lobby.settings.roundCount ||
         next.challengeSeconds !== lobby.settings.challengeSeconds ||
+        next.sealedOpening !== lobby.settings.sealedOpening ||
         [...next.allowedDifficulties].sort().join('|') !==
           [...lobby.settings.allowedDifficulties].sort().join('|') ||
         [...(next.allowedCategoryIds ?? [])].sort().join('|') !==
@@ -190,6 +191,19 @@ export function LobbySettingsForm({
             ))}
           </fieldset>
         )}
+        <label className="lobby-choice">
+          <input
+            type="checkbox"
+            checked={settings.sealedOpening}
+            onChange={(event) =>
+              updateSettings({
+                ...settings,
+                sealedOpening: event.target.checked,
+              })
+            }
+          />
+          Hidden opening bids in the final round
+        </label>
         <button
           type="submit"
           disabled={

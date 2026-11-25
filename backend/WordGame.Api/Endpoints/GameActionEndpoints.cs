@@ -42,6 +42,7 @@ internal static class GameActionEndpoints
         {
             SelectCategoryAction select => await engine.SelectCategoryAsync(gameId, actor, select.CategoryId, action, cancellationToken),
             PlaceBidAction bid => await engine.PlaceBidAsync(gameId, actor, bid.WordCount, action, cancellationToken, bid.Risk),
+            SubmitSealedBidAction bid => await engine.SubmitSealedBidAsync(gameId, actor, bid.WordCount, action, cancellationToken, bid.Risk),
             CallBluffAction => await engine.CallBluffAsync(gameId, actor, action, cancellationToken),
             SubmitWordAction word => await engine.SubmitWordAsync(gameId, actor, word.Word, action, cancellationToken),
             LeaveMatchAction => await engine.LeaveAsync(gameId, actor, action, cancellationToken),

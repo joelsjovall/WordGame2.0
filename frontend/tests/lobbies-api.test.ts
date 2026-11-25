@@ -52,6 +52,7 @@ test('lobby reads and host commands send cookies and authoritative version witho
     roundCount: 8,
     challengeSeconds: 90,
     allowedDifficulties: ['hard'] as const,
+    sealedOpening: false,
   }
   const controller = new AbortController()
   await api.get('room', controller.signal)

@@ -26,6 +26,7 @@ export const gameFixture: GameState = {
     roundCount: 1,
     challengeSeconds: 5,
     allowedDifficulties: ['easy'],
+    sealedOpening: false,
   },
   result: null,
   round: {
@@ -38,5 +39,6 @@ export const gameFixture: GameState = {
     challenge: null,
     result: null,
     categorySelectionDeadline: null,
+    sealedOpeningPending: false,
   },
 }

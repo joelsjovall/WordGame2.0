@@ -534,6 +534,7 @@ export interface components {
     GameActionRequest:
       | components['schemas']['GameActionRequestSelectCategoryAction']
       | components['schemas']['GameActionRequestPlaceBidAction']
+      | components['schemas']['GameActionRequestSubmitSealedBidAction']
       | components['schemas']['GameActionRequestCallBluffAction']
       | components['schemas']['GameActionRequestSubmitWordAction']
       | components['schemas']['GameActionRequestLeaveMatchAction']
@@ -574,6 +575,17 @@ export interface components {
       /** @enum {string} */
       type: 'selectCategory'
       categoryId: string
+      /** Format: uuid */
+      actionId: string
+      expectedVersion: string
+    }
+    GameActionRequestSubmitSealedBidAction: {
+      /** @enum {string} */
+      type: 'submitSealedBid'
+      /** Format: int32 */
+      wordCount: number
+      /** @default false */
+      risk: boolean
       /** Format: uuid */
       actionId: string
       expectedVersion: string
@@ -624,6 +636,9 @@ export interface components {
       result?: null | components['schemas']['RoundResultResponse']
       /** Format: date-time */
       categorySelectionDeadline?: null | string
+      /** @default false */
+      sealedOpeningPending: boolean
+      sealedBidSubmitterIds?: null | string[]
     }
     GameStateResponse: {
       /** Format: uuid */
@@ -694,6 +709,8 @@ export interface components {
       challengeSeconds: number
       allowedDifficulties: components['schemas']['ApiCategoryDifficulty'][]
       allowedCategoryIds?: null | string[]
+      /** @default false */
+      sealedOpening: boolean
     }
     MatchAcceptanceRequest: Record<string, never>
     MatchmakingResponse: {
@@ -733,6 +750,8 @@ export interface components {
       allowedDifficulties?:
         null | components['schemas']['ApiCategoryDifficulty'][]
       allowedCategoryIds?: null | string[]
+      /** @default false */
+      sealedOpening: boolean
     }
     MatchStandingResponse: {
       /** Format: uuid */

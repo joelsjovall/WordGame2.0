@@ -13,7 +13,8 @@ public sealed record GameStateResponse(
     MatchSettingsResponse Match, MatchResultResponse? Result);
 
 public sealed record MatchSettingsResponse(ApiMatchFormat Format, int RoundCount, double? ChallengeSeconds = null,
-    IReadOnlyList<ApiCategoryDifficulty>? AllowedDifficulties = null, IReadOnlyList<string>? AllowedCategoryIds = null);
+    IReadOnlyList<ApiCategoryDifficulty>? AllowedDifficulties = null, IReadOnlyList<string>? AllowedCategoryIds = null,
+    bool SealedOpening = false);
 public enum ApiMatchEndReason { Completed, Forfeit, ReconnectionExpired }
 public sealed record MatchResultResponse(Guid GameId, ApiMatchFormat Format, int CompletedRoundCount,
     bool IsTie, IReadOnlyList<Guid> WinnerIds, IReadOnlyList<MatchStandingResponse> Standings,
@@ -27,7 +28,8 @@ public sealed record GamePlayerResponse(Guid Id, string DisplayName, int Score, 
 public sealed record GameRoundResponse(
     Guid Id, int Number, ApiRoundStatus Status, Guid ActivePlayerId, CategoryResponse? Category,
     BidResponse? HighestBid, ChallengeResponse? Challenge, RoundResultResponse? Result = null,
-    DateTimeOffset? CategorySelectionDeadline = null);
+    DateTimeOffset? CategorySelectionDeadline = null, bool SealedOpeningPending = false,
+    IReadOnlyList<Guid>? SealedBidSubmitterIds = null);
 public sealed record RoundResultResponse(
     Guid RoundId, int RoundNumber, CategoryResponse Category, Guid ChallengeId,
     Guid BidderId, Guid CallerId, Guid WinnerId, int RequiredWordCount, int AcceptedWordCount,

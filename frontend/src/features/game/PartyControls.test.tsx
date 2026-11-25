@@ -44,6 +44,31 @@ test('risk bids send the optional stake to the server', async () => {
     risk: true,
   })
 })
+test('hidden finale accepts one sealed bid per player without revealing amounts', async () => {
+  const send = vi.fn()
+  const user = userEvent.setup()
+  const state = {
+    ...game,
+    round: {
+      ...game.round!,
+      highestBid: null,
+      sealedOpeningPending: true,
+      sealedBidSubmitterIds: [],
+    },
+  }
+  const view = render(<GameControls state={state} playerId="bob" busy={false} send={send} />)
+  expect(screen.getByText('0 of 2 bids submitted.')).toBeVisible()
+  await user.clear(screen.getByLabelText('Your hidden bid'))
+  await user.type(screen.getByLabelText('Your hidden bid'), '4')
+  await user.click(screen.getByRole('button', { name: 'Lock in bid' }))
+  expect(send).toHaveBeenCalledWith({ type: 'submitSealedBid', wordCount: 4, risk: false })
+  view.rerender(<GameControls
+    state={{ ...state, round: { ...state.round, sealedBidSubmitterIds: ['bob'] } }}
+    playerId="bob" busy={false} send={send} />)
+  expect(screen.getByText('1 of 2 bids submitted.')).toBeVisible()
+  expect(screen.queryByText('4 words')).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Lock in bid' })).toBeNull()
+})
 test('category controls show the frozen difficulty subset and submit only the category ID', async () => {
   vi.spyOn(categoriesApi, 'list').mockResolvedValue({
     items: [

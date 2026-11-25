@@ -25,5 +25,6 @@ export const lobbyFixture: Lobby = {
     roundCount: null,
     challengeSeconds: 30,
     allowedDifficulties: ['easy', 'medium', 'hard'],
+    sealedOpening: false,
   },
 }

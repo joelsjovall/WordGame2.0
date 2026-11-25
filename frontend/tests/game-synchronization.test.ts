@@ -12,7 +12,7 @@ function state(version = '1'): GameState {
     serverTime: '2026-11-18T12:00:00Z',
     players: [],
     round: null,
-    match: { format: 'party', roundCount: 4 },
+    match: { format: 'party', roundCount: 4, sealedOpening: false },
     result: null,
   }
 }

@@ -3,7 +3,8 @@ namespace WordGame.Domain;
 public sealed class LobbySettings
 {
     public LobbySettings(int maximumPlayers = 4, int? roundCount = null, int challengeSeconds = 30,
-        IEnumerable<CategoryDifficulty>? allowedDifficulties = null, IEnumerable<string>? allowedCategoryIds = null)
+        IEnumerable<CategoryDifficulty>? allowedDifficulties = null, IEnumerable<string>? allowedCategoryIds = null,
+        bool sealedOpening = false)
     {
         if (maximumPlayers is < Game.MinimumPlayers or > Game.MaximumPlayers || roundCount is < 1 or > 100 ||
             challengeSeconds is < 5 or > 300)
@@ -27,6 +28,7 @@ public sealed class LobbySettings
         ChallengeSeconds = challengeSeconds;
         AllowedDifficulties = Array.AsReadOnly(difficulties.Order().ToArray());
         AllowedCategoryIds = categoryIds is null ? null : Array.AsReadOnly(categoryIds);
+        SealedOpening = sealedOpening;
     }
 
     public int MaximumPlayers { get; }
@@ -34,8 +36,9 @@ public sealed class LobbySettings
     public int ChallengeSeconds { get; }
     public IReadOnlyList<CategoryDifficulty> AllowedDifficulties { get; }
     public IReadOnlyList<string>? AllowedCategoryIds { get; }
+    public bool SealedOpening { get; }
     public MatchSettings ForMatch(int playerCount) => MatchSettings.Party(RoundCount ?? playerCount * 2,
-        TimeSpan.FromSeconds(ChallengeSeconds), AllowedDifficulties, AllowedCategoryIds);
+        TimeSpan.FromSeconds(ChallengeSeconds), AllowedDifficulties, AllowedCategoryIds, SealedOpening);
 }
 
 public sealed class LobbyActionException(string message, bool forbidden = false) : InvalidOperationException(message)

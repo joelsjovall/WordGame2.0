@@ -106,12 +106,15 @@ export function HowToPlay() {
           </li>
         </ol>
         <section aria-labelledby="how-modes">
-          <h3 id="how-modes">Two modes, the same rules</h3>
+          <h3 id="how-modes">Two modes, one game</h3>
           <p>
             <strong>Party:</strong> 2–4 friends in a private lobby. Join by code
             or invitation, ready up, and let the host start. The host can set
             the match length; the default is two rounds per player. Return to
-            the lobby for a rematch.
+            the lobby for a rematch. The host can choose a category pack and
+            enable a hidden-bid finale. In that final round, everyone submits
+            one bid privately. The highest bid is revealed once all have
+            submitted, then raising or calling a bluff continues as usual.
           </p>
           <p>
             <strong>Online:</strong> automatic 1v1 matchmaking without mandatory

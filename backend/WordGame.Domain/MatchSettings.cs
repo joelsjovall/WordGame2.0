@@ -5,7 +5,8 @@ public enum MatchFormat { Party, Online }
 public sealed class MatchSettings
 {
     private MatchSettings(MatchFormat format, int roundCount, TimeSpan? challengeDuration = null,
-        IEnumerable<CategoryDifficulty>? allowedDifficulties = null, IEnumerable<string>? allowedCategoryIds = null)
+        IEnumerable<CategoryDifficulty>? allowedDifficulties = null, IEnumerable<string>? allowedCategoryIds = null,
+        bool sealedOpening = false)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(roundCount);
         Format = format;
@@ -31,6 +32,7 @@ public sealed class MatchSettings
         ChallengeDuration = challengeDuration;
         AllowedDifficulties = allowed is null ? null : Array.AsReadOnly(allowed.Distinct().Order().ToArray());
         AllowedCategoryIds = categoryIds is null ? null : Array.AsReadOnly(categoryIds);
+        SealedOpening = sealedOpening;
     }
 
     public MatchFormat Format { get; }
@@ -38,9 +40,11 @@ public sealed class MatchSettings
     public TimeSpan? ChallengeDuration { get; }
     public IReadOnlyList<CategoryDifficulty>? AllowedDifficulties { get; }
     public IReadOnlyList<string>? AllowedCategoryIds { get; }
+    public bool SealedOpening { get; }
 
     public static MatchSettings Party(int roundCount, TimeSpan? challengeDuration = null,
-        IEnumerable<CategoryDifficulty>? allowedDifficulties = null, IEnumerable<string>? allowedCategoryIds = null) =>
-        new(MatchFormat.Party, roundCount, challengeDuration, allowedDifficulties, allowedCategoryIds);
+        IEnumerable<CategoryDifficulty>? allowedDifficulties = null, IEnumerable<string>? allowedCategoryIds = null,
+        bool sealedOpening = false) =>
+        new(MatchFormat.Party, roundCount, challengeDuration, allowedDifficulties, allowedCategoryIds, sealedOpening);
     public static MatchSettings Online() => new(MatchFormat.Online, 6);
 }

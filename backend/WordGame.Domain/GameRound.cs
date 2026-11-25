@@ -3,8 +3,9 @@ namespace WordGame.Domain;
 public sealed class GameRound
 {
     private readonly HashSet<Guid> playerIds;
+    private readonly Dictionary<Guid, Bid> sealedBids = [];
 
-    internal GameRound(Guid id, int number, IEnumerable<Guid> playerIds, Guid startingPlayerId)
+    internal GameRound(Guid id, int number, IEnumerable<Guid> playerIds, Guid startingPlayerId, bool sealedOpening = false)
     {
         Id = DomainGuard.Id(id, nameof(id));
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(number);
@@ -12,6 +13,7 @@ public sealed class GameRound
         this.playerIds = playerIds.ToHashSet();
         RequirePlayer(startingPlayerId);
         StartingPlayerId = startingPlayerId;
+        SealedOpening = sealedOpening;
         Turn = new PlayerTurn(startingPlayerId, 1);
     }
 
@@ -23,15 +25,26 @@ public sealed class GameRound
     public Category? Category { get; private set; }
     public Bid? HighestBid { get; private set; }
     public Challenge? Challenge { get; private set; }
+    public bool SealedOpening { get; }
+    public bool SealedOpeningPending => SealedOpening && Status == RoundStatus.Bidding && HighestBid is null;
+    public IReadOnlyList<Guid> SealedBidSubmitterIds => Array.AsReadOnly(sealedBids.Keys.ToArray());
 
-    internal GameRound Copy() => new(Id, Number, playerIds, StartingPlayerId)
+    internal GameRound Copy()
     {
-        Status = Status,
-        Turn = Turn,
-        Category = Category,
-        HighestBid = HighestBid,
-        Challenge = Challenge?.Copy()
-    };
+        var copy = new GameRound(Id, Number, playerIds, StartingPlayerId, SealedOpening)
+        {
+            Status = Status,
+            Turn = Turn,
+            Category = Category,
+            HighestBid = HighestBid,
+            Challenge = Challenge?.Copy()
+        };
+        foreach (var bid in sealedBids)
+        {
+            copy.sealedBids.Add(bid.Key, bid.Value);
+        }
+        return copy;
+    }
 
     public void SelectCategory(Guid playerId, Category category)
     {
@@ -47,9 +60,34 @@ public sealed class GameRound
         ArgumentNullException.ThrowIfNull(bid);
         RequireTurn(bid.PlayerId);
         DomainGuard.State(Status == RoundStatus.Bidding, "Bids require the bidding phase.");
+        DomainGuard.State(!SealedOpeningPending, "Submit a sealed opening bid first.");
         DomainGuard.State(HighestBid is null || bid.WordCount > HighestBid.WordCount,
             "A bid must exceed the current highest bid.");
         HighestBid = bid;
+    }
+
+    public void SubmitSealedBid(Bid bid)
+    {
+        ArgumentNullException.ThrowIfNull(bid);
+        RequirePlayer(bid.PlayerId);
+        DomainGuard.State(SealedOpeningPending, "Sealed bids require the hidden opening phase.");
+        DomainGuard.State(sealedBids.TryAdd(bid.PlayerId, bid), "This player has already submitted a sealed bid.");
+    }
+
+    public Bid RevealSealedBids(IReadOnlyList<Guid> rosterOrder)
+    {
+        ArgumentNullException.ThrowIfNull(rosterOrder);
+        DomainGuard.State(SealedOpeningPending && sealedBids.Count == playerIds.Count &&
+            rosterOrder.Count == playerIds.Count && rosterOrder.ToHashSet().SetEquals(playerIds),
+            "Every roster member must submit one sealed bid before reveal.");
+        var roster = rosterOrder.ToArray();
+        var start = Array.IndexOf(roster, StartingPlayerId);
+        var ordered = roster.Skip(start).Concat(roster.Take(start)).ToArray();
+        var winner = ordered.Select(id => sealedBids[id]).OrderByDescending(bid => bid.WordCount).First();
+        HighestBid = winner;
+        var next = roster[(Array.IndexOf(roster, winner.PlayerId) + 1) % roster.Length];
+        Turn = new PlayerTurn(next, checked(Turn.Number + 1));
+        return winner;
     }
 
     // Selection of the next eligible player belongs to the Application turn policy.

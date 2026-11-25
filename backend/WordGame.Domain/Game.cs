@@ -88,7 +88,8 @@ public sealed class Game
         DomainGuard.State(rounds.Count < Settings.RoundCount, "The configured round limit has been reached.");
         DomainGuard.State(!rounds.Any(round => round.Id == roundId), "Round IDs must be unique within a game.");
 
-        var round = new GameRound(roundId, checked(rounds.Count + 1), Players.Select(player => player.Id), startingPlayerId);
+        var round = new GameRound(roundId, checked(rounds.Count + 1), Players.Select(player => player.Id), startingPlayerId,
+            Settings.SealedOpening && rounds.Count + 1 == Settings.RoundCount);
         rounds.Add(round);
         Status = GameStatus.InProgress;
         return round;

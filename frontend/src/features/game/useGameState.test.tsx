@@ -24,7 +24,7 @@ test('components share synchronization, rerender on updates, and release it on n
     serverTime: '2026-11-18T12:00:00Z',
     players: [],
     round: null,
-    match: { format: 'party', roundCount: 4 },
+    match: { format: 'party', roundCount: 4, sealedOpening: false },
     result: null,
   }))
   const sync = createGameSynchronization({ getState, openEvents })

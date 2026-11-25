@@ -19,7 +19,7 @@ public static class GameStateMapper
             new MatchSettingsResponse(MapFormat(snapshot.Game.Settings.Format), snapshot.Game.Settings.RoundCount,
                 snapshot.Game.Settings.ChallengeDuration?.TotalSeconds,
                 snapshot.Game.Settings.AllowedDifficulties?.Select(value => Enum.Parse<ApiCategoryDifficulty>(value.ToString())).ToArray(),
-                snapshot.Game.Settings.AllowedCategoryIds),
+                snapshot.Game.Settings.AllowedCategoryIds, snapshot.Game.Settings.SealedOpening),
             snapshot.Game.Result is { } result ? MapMatchResult(result) : null);
     }
 
@@ -64,7 +64,8 @@ public static class GameStateMapper
             _ => throw new InvalidOperationException("Unsupported round status.")
         }, round.Turn.PlayerId, round.Category is { } category ? CategoryMapper.Map(category) : null,
         round.HighestBid is { } bid ? new BidResponse(bid.PlayerId, bid.WordCount, bid.Risk) : null,
-        round.Challenge is { } challenge ? MapChallenge(challenge) : null, result is null ? null : MapResult(result), selectionDeadline);
+        round.Challenge is { } challenge ? MapChallenge(challenge) : null, result is null ? null : MapResult(result), selectionDeadline,
+        round.SealedOpeningPending, round.SealedBidSubmitterIds);
 
     private static ChallengeResponse MapChallenge(Domain.Challenge challenge) => new(
         challenge.Id, challenge.Bid.PlayerId, challenge.ChallengerId, challenge.Bid.WordCount,
