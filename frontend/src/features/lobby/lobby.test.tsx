@@ -34,7 +34,7 @@ test('manual joining normalizes pasted codes and renders authoritative membershi
       <App />
     </MemoryRouter>,
   )
-  fireEvent.change(screen.getByLabelText('Lobby code'), {
+  fireEvent.change(await screen.findByLabelText('Lobby code'), {
     target: { value: ' abc234 ' },
   })
   await user.type(screen.getByLabelText('Your display name'), 'Bob')
@@ -57,7 +57,7 @@ test('invitation URLs bind the expected lobby ID and can switch to manual code e
       <App />
     </MemoryRouter>,
   )
-  expect(screen.getByLabelText('Lobby code')).toHaveAttribute('readonly')
+  expect(await screen.findByLabelText('Lobby code')).toHaveAttribute('readonly')
   await user.click(screen.getByRole('link', { name: 'Use a different code' }))
   expect(screen.getByLabelText('Lobby code')).toHaveValue('')
   rendered.unmount()
@@ -66,7 +66,7 @@ test('invitation URLs bind the expected lobby ID and can switch to manual code e
       <App />
     </MemoryRouter>,
   )
-  await user.type(screen.getByLabelText('Your display name'), 'Bob')
+  await user.type(await screen.findByLabelText('Your display name'), 'Bob')
   await user.click(screen.getByRole('button', { name: 'Join lobby' }))
   expect(join).toHaveBeenCalledWith(
     { lobbyCode: 'ABC234', displayName: 'Bob', lobbyId: lobby.id },
@@ -74,7 +74,7 @@ test('invitation URLs bind the expected lobby ID and can switch to manual code e
   )
 })
 
-test('invalid invitation syntax displays a useful recovery link without joining', () => {
+test('invalid invitation syntax displays a useful recovery link without joining', async () => {
   const join = vi.spyOn(lobbiesApi, 'join')
   render(
     <MemoryRouter initialEntries={['/join/not-an-id/ABC234']}>
@@ -82,7 +82,7 @@ test('invalid invitation syntax displays a useful recovery link without joining'
     </MemoryRouter>,
   )
   expect(
-    screen.getByRole('heading', { name: 'Invalid invitation' }),
+    await screen.findByRole('heading', { name: 'Invalid invitation' }),
   ).toBeVisible()
   expect(
     screen.getByRole('link', { name: 'enter a lobby code' }),
@@ -104,7 +104,7 @@ test('join errors stay visible and pending submissions are not duplicated', asyn
       <App />
     </MemoryRouter>,
   )
-  await user.type(screen.getByLabelText('Lobby code'), 'ABC234')
+  await user.type(await screen.findByLabelText('Lobby code'), 'ABC234')
   await user.type(screen.getByLabelText('Your display name'), 'Bob')
   const button = screen.getByRole('button', { name: 'Join lobby' })
   fireEvent.submit(button.closest('form')!)
@@ -134,7 +134,7 @@ test('navigation aborts pending joining and ignores late responses', async () =>
       <App />
     </MemoryRouter>,
   )
-  await user.type(screen.getByLabelText('Lobby code'), 'ABC234')
+  await user.type(await screen.findByLabelText('Lobby code'), 'ABC234')
   await user.type(screen.getByLabelText('Your display name'), 'Bob')
   await user.click(screen.getByRole('button', { name: 'Join lobby' }))
   rendered.unmount()

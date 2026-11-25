@@ -23,6 +23,9 @@ const OnlineModePage = lazy(async () => ({
 const OnlineGamePage = lazy(async () => ({
   default: (await import('./pages/OnlineGamePage.tsx')).OnlineGamePage,
 }))
+const SpectatorPage = lazy(async () => ({
+  default: (await import('./pages/SpectatorPage.tsx')).SpectatorPage,
+}))
 
 export default function App() {
   const { pathname } = useLocation()
@@ -53,6 +56,10 @@ export default function App() {
             <Route path="/lobbies/new" element={<CreateLobbyPage />} />
             <Route path="/lobbies/:lobbyId" element={<LobbyPage />} />
             <Route path="/lobbies/:lobbyId/game" element={<PartyGamePage />} />
+            <Route
+              path="/spectate/:lobbyId/:lobbyCode"
+              element={<SpectatorPage />}
+            />
             <Route
               path="/join/:lobbyId/:lobbyCode"
               element={<JoinLobbyPage />}

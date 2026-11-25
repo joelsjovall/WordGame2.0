@@ -162,6 +162,7 @@ app.MapMatchmakingEndpoints();
 app.MapLobbyEndpoints();
 app.MapLobbyHostEndpoints();
 app.MapLobbyPlayerEndpoints();
+app.MapSpectatorEndpoints();
 
 if (app.Environment.IsDevelopment())
 {
