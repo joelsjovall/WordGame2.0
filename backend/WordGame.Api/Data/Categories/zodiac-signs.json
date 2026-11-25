@@ -1,0 +1,19 @@
+{
+  "id": "zodiac-signs",
+  "name": "Zodiac Signs",
+  "difficulty": "medium",
+  "answers": [
+    { "value": "Aries", "aliases": [] },
+    { "value": "Taurus", "aliases": [] },
+    { "value": "Gemini", "aliases": [] },
+    { "value": "Cancer", "aliases": [] },
+    { "value": "Leo", "aliases": [] },
+    { "value": "Virgo", "aliases": [] },
+    { "value": "Libra", "aliases": [] },
+    { "value": "Scorpio", "aliases": [] },
+    { "value": "Sagittarius", "aliases": [] },
+    { "value": "Capricorn", "aliases": [] },
+    { "value": "Aquarius", "aliases": [] },
+    { "value": "Pisces", "aliases": [] }
+  ]
+}

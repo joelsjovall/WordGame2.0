@@ -4,6 +4,7 @@ import { gameAudio } from '../../services/gameAudio.ts'
 import { lobbiesApi, type Lobby } from '../../services/api/lobbies.ts'
 import { useLobbyActions } from '../lobby/useLobbyActions.ts'
 import { MatchStandings } from './MatchStandings.tsx'
+import { ShareMatchResult } from './ShareMatchResult.tsx'
 import { Button, Card } from '../../components/ui.tsx'
 import './game.css'
 
@@ -42,6 +43,7 @@ export function PartyResults({
               .join(', ')}
           </h2>
           <MatchStandings standings={lobby.lastResult.standings} />
+          <ShareMatchResult standings={lobby.lastResult.standings} />
         </>
       ) : (
         <p>This match ended without a final score.</p>
