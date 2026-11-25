@@ -82,6 +82,10 @@ export function HowToPlay() {
               bonus to the caller instead. Other players score nothing that
               round. There are no negative points.
             </p>
+            <p>
+              A risk bid doubles the outcome bonus for whoever wins the
+              challenge. Accepted words still score their usual value.
+            </p>
             <div className="how-to-play-example" aria-label="Scoring example">
               <p>Medium category, bid of 5, using default scoring:</p>
               <p>5 accepted in time: bidder 5 × 2 + 50 = 60; caller 0.</p>
