@@ -1,0 +1,38 @@
+name: Beta bug report
+description: Report a problem found while playing WordGame 2.0
+title: "Bug: "
+body:
+  - type: markdown
+    attributes:
+      value: "Please do not include passwords, connection strings, guest cookies, or other secrets."
+  - type: input
+    id: device
+    attributes:
+      label: Device and browser
+      placeholder: "Example: iPhone 13, Safari"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "What did you click, and what happened next?"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshot or extra details
+      description: "Optional. Remove private information before uploading."

@@ -96,5 +96,6 @@ The planned backlog contains 57 issues across six milestones. Work proceeds one 
 - **Merged, manual follow-up pending:** [F052, Final visual QA and UX polish (#54)](https://github.com/joelsjovall/WordGame2.0/issues/54), PR #111. Usability testing with unfamiliar players remains pending.
 - **Merged, verification pending:** [F053, Configure production hosting and deployment (#55)](https://github.com/joelsjovall/WordGame2.0/issues/55), PR #112. Free Render service is live; health, homepage, and categories respond over HTTPS. Live matches, SSE, and statistics after restart still require verification. See [deployment](deployment.md).
 - **Active:** [F054, Secure production configuration and secret management (#56)](https://github.com/joelsjovall/WordGame2.0/issues/56). The public V1 repository still contains a non-example database connection string. Never reuse or reproduce it; revocation or rotation remains unverified.
+- **Release work in progress on the same branch:** F055 gained an end-to-end timeout/duplicate-answer journey; F056 has local multiplayer and mobile performance measurements; F057 has a [no-go release checklist](release.md). These issues remain open until their final CI, production, and security gates are verified.
 
 Update this section as issues are completed or the handoff state changes.
