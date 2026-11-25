@@ -473,6 +473,8 @@ export interface components {
       playerId: string
       /** Format: int32 */
       wordCount: number
+      /** @default false */
+      risk: boolean
     }
     CategoryListResponse: {
       items: components['schemas']['CategoryResponse'][]
@@ -539,6 +541,8 @@ export interface components {
       type: 'placeBid'
       /** Format: int32 */
       wordCount: number
+      /** @default false */
+      risk: boolean
       /** Format: uuid */
       actionId: string
       expectedVersion: string
@@ -799,6 +803,8 @@ export interface components {
       outcome: components['schemas']['ApiChallengeOutcome']
       submissions: components['schemas']['SubmittedWordResponse'][]
       scores: components['schemas']['RoundPlayerScoreResponse'][]
+      /** @default false */
+      risk: boolean
     }
     SetLobbyReadyRequest: {
       expectedVersion: string

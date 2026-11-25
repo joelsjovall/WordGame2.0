@@ -32,6 +32,18 @@ test('only the active player gets bidding commands and commands do not nominate 
   await user.click(screen.getByRole('button', { name: 'Call bluff' }))
   expect(send).toHaveBeenCalledWith({ type: 'callBluff' })
 })
+test('risk bids send the optional stake to the server', async () => {
+  const send = vi.fn()
+  const user = userEvent.setup()
+  render(<GameControls state={game} playerId="bob" busy={false} send={send} />)
+  await user.click(screen.getByRole('checkbox', { name: /Risk bid:/ }))
+  await user.click(screen.getByRole('button', { name: 'Place bid' }))
+  expect(send).toHaveBeenCalledWith({
+    type: 'placeBid',
+    wordCount: 2,
+    risk: true,
+  })
+})
 test('category controls show the frozen difficulty subset and submit only the category ID', async () => {
   vi.spyOn(categoriesApi, 'list').mockResolvedValue({
     items: [
@@ -65,6 +77,54 @@ test('category controls show the frozen difficulty subset and submit only the ca
   expect(send).toHaveBeenCalledWith({
     type: 'selectCategory',
     categoryId: 'easy',
+  })
+})
+test('theme filter narrows visible categories without changing the selected ID', async () => {
+  vi.spyOn(categoriesApi, 'list').mockResolvedValue({
+    items: [
+      {
+        id: 'european-capitals',
+        name: 'European Capitals',
+        difficulty: 'easy',
+      },
+      {
+        id: 'solar-system-planets',
+        name: 'Solar System Planets',
+        difficulty: 'easy',
+      },
+    ],
+  })
+  const send = vi.fn()
+  const user = userEvent.setup()
+  render(
+    <GameControls
+      state={{
+        ...game,
+        round: {
+          ...game.round!,
+          status: 'categorySelection',
+          activePlayerId: 'host',
+        },
+      }}
+      playerId="host"
+      busy={false}
+      send={send}
+    />,
+  )
+  await screen.findByRole('button', { name: 'Solar System Planets (easy)' })
+  await user.selectOptions(
+    screen.getByRole('combobox', { name: 'Theme' }),
+    'Science & space',
+  )
+  expect(
+    screen.queryByRole('button', { name: 'European Capitals (easy)' }),
+  ).toBeNull()
+  await user.click(
+    screen.getByRole('button', { name: 'Solar System Planets (easy)' }),
+  )
+  expect(send).toHaveBeenCalledWith({
+    type: 'selectCategory',
+    categoryId: 'solar-system-planets',
   })
 })
 test('word challenge controls are bidder-only and observers see authoritative progress', async () => {

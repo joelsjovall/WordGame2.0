@@ -29,9 +29,10 @@ public sealed record GameRoundResponse(
 public sealed record RoundResultResponse(
     Guid RoundId, int RoundNumber, CategoryResponse Category, Guid ChallengeId,
     Guid BidderId, Guid CallerId, Guid WinnerId, int RequiredWordCount, int AcceptedWordCount,
-    ApiChallengeOutcome Outcome, IReadOnlyList<SubmittedWordResponse> Submissions, IReadOnlyList<RoundPlayerScoreResponse> Scores);
+    ApiChallengeOutcome Outcome, IReadOnlyList<SubmittedWordResponse> Submissions, IReadOnlyList<RoundPlayerScoreResponse> Scores,
+    bool Risk = false);
 public sealed record RoundPlayerScoreResponse(Guid PlayerId, int PointsAwarded, int TotalPoints);
-public sealed record BidResponse(Guid PlayerId, int WordCount);
+public sealed record BidResponse(Guid PlayerId, int WordCount, bool Risk = false);
 public sealed record ChallengeResponse(
     Guid Id, Guid PlayerId, Guid CallerId, int RequiredWordCount,
     DateTimeOffset StartedAt, DateTimeOffset Deadline, ApiChallengeOutcome Outcome,

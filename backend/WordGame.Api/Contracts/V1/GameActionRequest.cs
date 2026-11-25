@@ -13,7 +13,7 @@ public abstract record GameActionRequest(Guid ActionId, string ExpectedVersion);
 
 public sealed record SelectCategoryAction(Guid ActionId, string ExpectedVersion, string CategoryId)
     : GameActionRequest(ActionId, ExpectedVersion);
-public sealed record PlaceBidAction(Guid ActionId, string ExpectedVersion, int WordCount)
+public sealed record PlaceBidAction(Guid ActionId, string ExpectedVersion, int WordCount, bool Risk = false)
     : GameActionRequest(ActionId, ExpectedVersion);
 public sealed record CallBluffAction(Guid ActionId, string ExpectedVersion)
     : GameActionRequest(ActionId, ExpectedVersion);

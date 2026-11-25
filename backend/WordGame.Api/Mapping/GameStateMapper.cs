@@ -49,7 +49,7 @@ public static class GameStateMapper
         result.BidderId, result.CallerId, result.WinnerId, result.RequiredWordCount, result.AcceptedWordCount,
         result.Outcome == Domain.ChallengeOutcome.Succeeded ? ApiChallengeOutcome.Succeeded : ApiChallengeOutcome.Failed,
         result.Submissions.Select(MapSubmission).ToArray(),
-        result.Scores.Select(score => new RoundPlayerScoreResponse(score.PlayerId, score.PointsAwarded, score.TotalPoints)).ToArray());
+        result.Scores.Select(score => new RoundPlayerScoreResponse(score.PlayerId, score.PointsAwarded, score.TotalPoints)).ToArray(), result.Risk);
 
     private static GameRoundResponse MapRound(Domain.GameRound round, Domain.RoundResult? result, DateTimeOffset? selectionDeadline) => new(
         round.Id, round.Number, round.Status switch
@@ -61,7 +61,7 @@ public static class GameStateMapper
             Domain.RoundStatus.Cancelled => ApiRoundStatus.Cancelled,
             _ => throw new InvalidOperationException("Unsupported round status.")
         }, round.Turn.PlayerId, round.Category is { } category ? CategoryMapper.Map(category) : null,
-        round.HighestBid is { } bid ? new BidResponse(bid.PlayerId, bid.WordCount) : null,
+        round.HighestBid is { } bid ? new BidResponse(bid.PlayerId, bid.WordCount, bid.Risk) : null,
         round.Challenge is { } challenge ? MapChallenge(challenge) : null, result is null ? null : MapResult(result), selectionDeadline);
 
     private static ChallengeResponse MapChallenge(Domain.Challenge challenge) => new(

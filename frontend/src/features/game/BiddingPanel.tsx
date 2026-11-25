@@ -6,6 +6,7 @@ export function BiddingPanel({ state, playerId, busy, send }: GamePanelProps) {
   const round = state.round!
   const minimum = (round.highestBid?.wordCount ?? 0) + 1
   const [bid, setBid] = useState(String(minimum))
+  const [risk, setRisk] = useState(false)
   const value = Number(bid)
   const valid =
     Number.isInteger(value) && value >= minimum && value <= 2147483647
@@ -36,6 +37,7 @@ export function BiddingPanel({ state, playerId, busy, send }: GamePanelProps) {
               : 'No bid yet.'}
           </p>
           {bidderName && <p>Bid by {bidderName}</p>}
+          {round.highestBid?.risk && <p>Risk bid: double bonus at stake</p>}
         </div>
       </div>
       {turn ? (
@@ -43,7 +45,8 @@ export function BiddingPanel({ state, playerId, busy, send }: GamePanelProps) {
           <form
             onSubmit={(event) => {
               event.preventDefault()
-              if (!busy && valid) send({ type: 'placeBid', wordCount: value })
+              if (!busy && valid)
+                send({ type: 'placeBid', wordCount: value, risk })
             }}
           >
             <TextField
@@ -65,6 +68,15 @@ export function BiddingPanel({ state, playerId, busy, send }: GamePanelProps) {
                 round.highestBid.playerId !== playerId &&
                 ' Or challenge the highest bid.'}
             </p>
+            <label className="game-risk-bid">
+              <input
+                type="checkbox"
+                checked={risk}
+                disabled={busy}
+                onChange={(event) => setRisk(event.target.checked)}
+              />
+              Risk bid: the winner of the challenge earns double bonus points.
+            </label>
             <Button type="submit" busy={busy} disabled={busy || !valid}>
               Place bid
             </Button>

@@ -17,6 +17,7 @@ public sealed class RoundResult
         BidderId = challenge.Bid.PlayerId;
         CallerId = challenge.ChallengerId;
         RequiredWordCount = challenge.Bid.WordCount;
+        Risk = challenge.Bid.Risk;
         AcceptedWordCount = challenge.AcceptedWordCount;
         Outcome = challenge.Outcome;
         WinnerId = Outcome == ChallengeOutcome.Succeeded ? BidderId : CallerId;
@@ -32,6 +33,7 @@ public sealed class RoundResult
     public Guid CallerId { get; }
     public Guid WinnerId { get; }
     public int RequiredWordCount { get; }
+    public bool Risk { get; }
     public int AcceptedWordCount { get; }
     public ChallengeOutcome Outcome { get; }
     public IReadOnlyList<SubmittedWord> Submissions { get; }

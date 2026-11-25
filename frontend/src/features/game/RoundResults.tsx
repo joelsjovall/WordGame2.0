@@ -14,6 +14,7 @@ export function RoundResults({ state }: { state: GameState }) {
         <p role="status">
           {winner} wins the round. {result.acceptedWordCount} of{' '}
           {result.requiredWordCount} words accepted.
+          {result.risk && ' Risk bid: double bonus awarded.'}
         </p>
       )}
       <p>Next round starts automatically.</p>

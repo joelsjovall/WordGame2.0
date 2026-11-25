@@ -76,11 +76,11 @@ public sealed class GameEngine(IGameSessionStore sessions, SessionRetention rete
         categories.SelectAsync(gameId, playerId, categoryId, context, cancellationToken);
 
     public Task<GameEngineResult> PlaceBidAsync(
-        Guid gameId, Guid playerId, int wordCount, PlayerActionContext context, CancellationToken cancellationToken = default) =>
+        Guid gameId, Guid playerId, int wordCount, PlayerActionContext context, CancellationToken cancellationToken = default, bool risk = false) =>
         commands.PlayerUpdateAsync(gameId, playerId, context, session =>
         {
             var round = GamePhaseGuard.BiddingRound(session, playerId);
-            round.RecordBid(new Bid(playerId, wordCount));
+            round.RecordBid(new Bid(playerId, wordCount, risk));
             round.AssignTurn(TurnPolicy.NextPlayer(session, playerId, retention.GraceFor(session.Game.Settings.Format)));
         }, cancellationToken);
 
