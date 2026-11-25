@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { expect, test, vi } from 'vitest'
 import { LobbySettingsForm } from './LobbySettingsForm.tsx'
 import { lobbyFixture as lobby } from '../../../tests/fixtures/lobby.ts'
+import { categoriesApi } from '../../services/api/categories.ts'
 
 test('host edits supported settings and selects available difficulty levels', async () => {
   const save = vi.fn().mockResolvedValue(undefined)
@@ -36,4 +37,36 @@ test('empty difficulties and pending writes disable saving; round count can rema
   view.rerender(<LobbySettingsForm lobby={lobby} busy={true} save={save} />)
   expect(screen.getByLabelText('Challenge time (seconds)')).toBeDisabled()
   expect(save).not.toHaveBeenCalled()
+})
+test('host can save a private pack composed of approved categories', async () => {
+  vi.spyOn(categoriesApi, 'list').mockResolvedValue({
+    items: [
+      {
+        id: 'european-capitals',
+        name: 'European Capitals',
+        difficulty: 'easy',
+      },
+      {
+        id: 'solar-system-planets',
+        name: 'Solar System Planets',
+        difficulty: 'easy',
+      },
+      { id: 'si-base-units', name: 'SI Base Units', difficulty: 'hard' },
+    ],
+  })
+  const save = vi.fn().mockResolvedValue(undefined)
+  const user = userEvent.setup()
+  render(<LobbySettingsForm lobby={lobby} busy={false} save={save} />)
+  const pack = screen.getByRole('combobox', { name: 'Category pack' })
+  await waitFor(() => expect(pack).toBeEnabled())
+  await user.selectOptions(pack, 'Custom')
+  await user.click(
+    screen.getByRole('checkbox', { name: 'SI Base Units (hard)' }),
+  )
+  await user.click(screen.getByRole('button', { name: 'Save settings' }))
+  expect(save).toHaveBeenCalledWith({
+    ...lobby.settings,
+    allowedCategoryIds: ['european-capitals', 'solar-system-planets'],
+  })
+  vi.restoreAllMocks()
 })

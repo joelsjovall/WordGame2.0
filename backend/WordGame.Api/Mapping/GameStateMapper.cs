@@ -18,7 +18,8 @@ public static class GameStateMapper
             snapshot.Game.CurrentRound is { } round ? MapRound(round, snapshot.Game.RoundResults.GetValueOrDefault(round.Id), snapshot.CategorySelectionDeadline) : null,
             new MatchSettingsResponse(MapFormat(snapshot.Game.Settings.Format), snapshot.Game.Settings.RoundCount,
                 snapshot.Game.Settings.ChallengeDuration?.TotalSeconds,
-                snapshot.Game.Settings.AllowedDifficulties?.Select(value => Enum.Parse<ApiCategoryDifficulty>(value.ToString())).ToArray()),
+                snapshot.Game.Settings.AllowedDifficulties?.Select(value => Enum.Parse<ApiCategoryDifficulty>(value.ToString())).ToArray(),
+                snapshot.Game.Settings.AllowedCategoryIds),
             snapshot.Game.Result is { } result ? MapMatchResult(result) : null);
     }
 

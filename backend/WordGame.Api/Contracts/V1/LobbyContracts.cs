@@ -5,7 +5,8 @@ public sealed record GuestIdentityResponse(Guid PlayerId);
 public sealed record CreateLobbyRequest(Guid RequestId, string DisplayName);
 public sealed record JoinLobbyRequest(string LobbyCode, string DisplayName, Guid? LobbyId = null);
 public enum ApiLobbyStatus { Waiting, Starting, Started, Closed, Completed }
-public sealed record LobbySettingsRequest(int MaximumPlayers, int? RoundCount, int ChallengeSeconds, IReadOnlyList<ApiCategoryDifficulty> AllowedDifficulties);
+public sealed record LobbySettingsRequest(int MaximumPlayers, int? RoundCount, int ChallengeSeconds,
+    IReadOnlyList<ApiCategoryDifficulty> AllowedDifficulties, IReadOnlyList<string>? AllowedCategoryIds = null);
 public sealed record UpdateLobbySettingsRequest(string ExpectedVersion, LobbySettingsRequest Settings);
 public sealed record StartLobbyRequest(string ExpectedVersion);
 public sealed record SetLobbyReadyRequest(string ExpectedVersion, bool IsReady);

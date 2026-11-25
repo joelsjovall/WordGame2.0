@@ -15,6 +15,7 @@ export function GameControls(props: GamePanelProps) {
       return (
         <CategoryChoice
           allowed={state.match.allowedDifficulties}
+          allowedCategoryIds={state.match.allowedCategoryIds}
           busy={busy}
           choose={(categoryId) => send({ type: 'selectCategory', categoryId })}
         />

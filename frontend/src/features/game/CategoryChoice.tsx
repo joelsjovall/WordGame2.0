@@ -3,31 +3,16 @@ import { categoriesApi } from '../../services/api/categories.ts'
 import type { GameState } from '../../services/api/games.ts'
 import type { components } from '../../services/api/generated.ts'
 import { Button, Card, LoadingStatus } from '../../components/ui.tsx'
-
-const themes = [
-  'All',
-  'Everyday',
-  'World & culture',
-  'Science & space',
-] as const
-type Theme = (typeof themes)[number]
-
-const categoryThemes: Record<string, Exclude<Theme, 'All'>> = {
-  'months-of-the-year': 'Everyday',
-  'european-capitals': 'World & culture',
-  'zodiac-signs': 'World & culture',
-  'chemical-elements': 'Science & space',
-  'greek-letters': 'Science & space',
-  'si-base-units': 'Science & space',
-  'solar-system-planets': 'Science & space',
-}
+import { categoryThemes, themes, type Theme } from './categoryThemes.ts'
 
 export function CategoryChoice({
   allowed,
+  allowedCategoryIds,
   busy,
   choose,
 }: {
   allowed: GameState['match']['allowedDifficulties']
+  allowedCategoryIds: GameState['match']['allowedCategoryIds']
   busy: boolean
   choose: (id: string) => void
 }) {
@@ -94,6 +79,7 @@ export function CategoryChoice({
         .filter(
           (category) =>
             (!allowed || allowed.includes(category.difficulty)) &&
+            (!allowedCategoryIds || allowedCategoryIds.includes(category.id)) &&
             (theme === 'All' || categoryThemes[category.id] === theme),
         )
         .map((category) => (

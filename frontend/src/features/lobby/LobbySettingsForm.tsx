@@ -1,5 +1,8 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import type { Lobby, LobbySettings } from '../../services/api/lobbies.ts'
+import { categoriesApi } from '../../services/api/categories.ts'
+import type { components } from '../../services/api/generated.ts'
+import { categoryThemes, themes } from '../game/categoryThemes.ts'
 
 export function LobbySettingsForm({
   lobby,
@@ -13,6 +16,37 @@ export function LobbySettingsForm({
   onDirtyChange?: (dirty: boolean) => void
 }) {
   const [settings, setSettings] = useState(lobby.settings)
+  const [categories, setCategories] = useState<
+    components['schemas']['CategoryResponse'][]
+  >([])
+  const [categoryError, setCategoryError] = useState('')
+  useEffect(() => {
+    const controller = new AbortController()
+    void categoriesApi.list(undefined, controller.signal).then(
+      (result) => {
+        if (!controller.signal.aborted) setCategories(result.items)
+      },
+      () => {
+        if (!controller.signal.aborted)
+          setCategoryError('Category packs are temporarily unavailable.')
+      },
+    )
+    return () => controller.abort()
+  }, [])
+  const selectedIds = settings.allowedCategoryIds ?? null
+  const pack =
+    selectedIds === null
+      ? 'All'
+      : (themes.slice(1).find((theme) => {
+          const ids = categories
+            .filter((category) => categoryThemes[category.id] === theme)
+            .map((category) => category.id)
+          return (
+            ids.length > 0 &&
+            ids.length === selectedIds.length &&
+            ids.every((id) => selectedIds.includes(id))
+          )
+        }) ?? 'Custom')
   function updateSettings(next: LobbySettings) {
     setSettings(next)
     onDirtyChange?.(
@@ -20,7 +54,9 @@ export function LobbySettingsForm({
         next.roundCount !== lobby.settings.roundCount ||
         next.challengeSeconds !== lobby.settings.challengeSeconds ||
         [...next.allowedDifficulties].sort().join('|') !==
-          [...lobby.settings.allowedDifficulties].sort().join('|'),
+          [...lobby.settings.allowedDifficulties].sort().join('|') ||
+        [...(next.allowedCategoryIds ?? [])].sort().join('|') !==
+          [...(lobby.settings.allowedCategoryIds ?? [])].sort().join('|'),
     )
   }
   function submit(event: FormEvent) {
@@ -100,9 +136,66 @@ export function LobbySettingsForm({
             </label>
           ))}
         </fieldset>
+        <label htmlFor="category-pack">Category pack</label>
+        <select
+          id="category-pack"
+          value={pack}
+          disabled={categories.length === 0}
+          onChange={(event) => {
+            const theme = event.target.value
+            updateSettings({
+              ...settings,
+              allowedCategoryIds:
+                theme === 'All'
+                  ? null
+                  : theme === 'Custom'
+                    ? categories.map((category) => category.id)
+                    : categories
+                        .filter(
+                          (category) => categoryThemes[category.id] === theme,
+                        )
+                        .map((category) => category.id),
+            })
+          }}
+        >
+          {themes.map((theme) => (
+            <option key={theme} value={theme}>
+              {theme === 'All' ? 'All categories' : theme}
+            </option>
+          ))}
+          <option value="Custom">Choose categories</option>
+        </select>
+        {categoryError && <p role="alert">{categoryError}</p>}
+        {pack === 'Custom' && (
+          <fieldset>
+            <legend>Categories in this private pack</legend>
+            {categories.map((category) => (
+              <label className="lobby-choice" key={category.id}>
+                <input
+                  type="checkbox"
+                  checked={selectedIds?.includes(category.id) ?? false}
+                  onChange={(event) =>
+                    updateSettings({
+                      ...settings,
+                      allowedCategoryIds: event.target.checked
+                        ? [...(selectedIds ?? []), category.id]
+                        : (selectedIds ?? []).filter(
+                            (id) => id !== category.id,
+                          ),
+                    })
+                  }
+                />
+                {category.name} ({category.difficulty})
+              </label>
+            ))}
+          </fieldset>
+        )}
         <button
           type="submit"
-          disabled={settings.allowedDifficulties.length === 0}
+          disabled={
+            settings.allowedDifficulties.length === 0 ||
+            settings.allowedCategoryIds?.length === 0
+          }
         >
           Save settings
         </button>

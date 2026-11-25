@@ -47,7 +47,8 @@ public sealed class LobbyHostService(ILobbySessionStore lobbies, GameEngine engi
     private async Task<Guid> CreateGameAsync(Lobby lobby)
     {
         var available = await categories.GetAvailableAsync();
-        if (!available.Any(category => lobby.Settings.AllowedDifficulties.Contains(category.Difficulty)))
+        if (!available.Any(category => lobby.Settings.AllowedDifficulties.Contains(category.Difficulty) &&
+            (lobby.Settings.AllowedCategoryIds is null || lobby.Settings.AllowedCategoryIds.Contains(category.Id))))
         {
             throw new LobbyActionException("No categories are available for the selected difficulties.");
         }

@@ -41,7 +41,8 @@ public sealed class CategorySelectionService(ICategoryProvider provider, Categor
     {
         var snapshot = await sessions.GetAsync(gameId, cancellationToken);
         var definition = rules.TimeoutBehavior == CategoryTimeoutBehavior.AutoSelect
-            ? await ResolveTimeoutAsync(snapshot?.Game.Settings.AllowedDifficulties, cancellationToken) : null;
+            ? await ResolveTimeoutAsync(snapshot?.Game.Settings.AllowedDifficulties,
+                snapshot?.Game.Settings.AllowedCategoryIds, cancellationToken) : null;
         return await commands.UpdateAsync(gameId, session =>
         {
             RequireSelectionPhase(session);
@@ -90,11 +91,13 @@ public sealed class CategorySelectionService(ICategoryProvider provider, Categor
         return await LoadAsync(categoryId, cancellationToken);
     }
 
-    private async Task<CategoryDefinition?> ResolveTimeoutAsync(IReadOnlyList<CategoryDifficulty>? allowed, CancellationToken cancellationToken = default)
+    private async Task<CategoryDefinition?> ResolveTimeoutAsync(IReadOnlyList<CategoryDifficulty>? allowed,
+        IReadOnlyList<string>? allowedIds, CancellationToken cancellationToken = default)
     {
         foreach (var category in await GetAvailableAsync(cancellationToken: cancellationToken))
         {
-            if (allowed is not null && !allowed.Contains(category.Difficulty))
+            if (allowed is not null && !allowed.Contains(category.Difficulty) ||
+                allowedIds is not null && !allowedIds.Contains(category.Id))
             {
                 continue;
             }
@@ -116,7 +119,8 @@ public sealed class CategorySelectionService(ICategoryProvider provider, Categor
         }
 
         if (!rules.AllowedDifficulties.Contains(definition.Category.Difficulty) ||
-            session.Game.Settings.AllowedDifficulties is { } allowed && !allowed.Contains(definition.Category.Difficulty))
+            session.Game.Settings.AllowedDifficulties is { } allowed && !allowed.Contains(definition.Category.Difficulty) ||
+            session.Game.Settings.AllowedCategoryIds is { } ids && !ids.Contains(definition.Category.Id))
         {
             throw new InvalidOperationException("This difficulty is unavailable.");
         }

@@ -693,6 +693,7 @@ export interface components {
       /** Format: int32 */
       challengeSeconds: number
       allowedDifficulties: components['schemas']['ApiCategoryDifficulty'][]
+      allowedCategoryIds?: null | string[]
     }
     MatchAcceptanceRequest: Record<string, never>
     MatchmakingResponse: {
@@ -731,6 +732,7 @@ export interface components {
       challengeSeconds?: null | number
       allowedDifficulties?:
         null | components['schemas']['ApiCategoryDifficulty'][]
+      allowedCategoryIds?: null | string[]
     }
     MatchStandingResponse: {
       /** Format: uuid */
