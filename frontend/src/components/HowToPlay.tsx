@@ -82,6 +82,10 @@ export function HowToPlay() {
               bonus to the caller instead. Other players score nothing that
               round. There are no negative points.
             </p>
+            <p>
+              A risk bid doubles the outcome bonus for whoever wins the
+              challenge. Accepted words still score their usual value.
+            </p>
             <div className="how-to-play-example" aria-label="Scoring example">
               <p>Medium category, bid of 5, using default scoring:</p>
               <p>5 accepted in time: bidder 5 × 2 + 50 = 60; caller 0.</p>
@@ -102,12 +106,15 @@ export function HowToPlay() {
           </li>
         </ol>
         <section aria-labelledby="how-modes">
-          <h3 id="how-modes">Two modes, the same rules</h3>
+          <h3 id="how-modes">Two modes, one game</h3>
           <p>
             <strong>Party:</strong> 2–4 friends in a private lobby. Join by code
             or invitation, ready up, and let the host start. The host can set
             the match length; the default is two rounds per player. Return to
-            the lobby for a rematch.
+            the lobby for a rematch. The host can choose a category pack and
+            enable a hidden-bid finale. In that final round, everyone submits
+            one bid privately. The highest bid is revealed once all have
+            submitted, then raising or calling a bluff continues as usual.
           </p>
           <p>
             <strong>Online:</strong> automatic 1v1 matchmaking without mandatory

@@ -1,6 +1,7 @@
 import { CategoryChoice } from './CategoryChoice.tsx'
 import { Card } from '../../components/ui.tsx'
 import { BiddingPanel } from './BiddingPanel.tsx'
+import { SealedBiddingPanel } from './SealedBiddingPanel.tsx'
 import { ChallengePanel } from './ChallengePanel.tsx'
 import { RoundResults } from './RoundResults.tsx'
 import type { GamePanelProps } from './gameTypes.ts'
@@ -15,6 +16,7 @@ export function GameControls(props: GamePanelProps) {
       return (
         <CategoryChoice
           allowed={state.match.allowedDifficulties}
+          allowedCategoryIds={state.match.allowedCategoryIds}
           busy={busy}
           choose={(categoryId) => send({ type: 'selectCategory', categoryId })}
         />
@@ -29,7 +31,12 @@ export function GameControls(props: GamePanelProps) {
       </Card>
     )
   }
-  if (round.status === 'bidding') return <BiddingPanel {...props} />
+  if (round.status === 'bidding')
+    return round.sealedOpeningPending ? (
+      <SealedBiddingPanel {...props} />
+    ) : (
+      <BiddingPanel {...props} />
+    )
   if (round.status === 'challenge' && round.challenge)
     return <ChallengePanel {...props} />
   if (round.status === 'completed') return <RoundResults state={state} />

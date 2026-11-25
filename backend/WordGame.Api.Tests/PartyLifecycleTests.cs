@@ -45,6 +45,10 @@ public sealed class PartyLifecycleTests
         first.EnsureSuccessStatusCode();
         var active = (await first.Content.ReadFromJsonAsync<LobbyResponse>(Json))!;
         var gameId = active.GameId!.Value;
+        using var spectator = factory.CreateClient();
+        var watched = await spectator.GetFromJsonAsync<SpectatorStateResponse>(
+            $"/api/v1/lobbies/{room.Id}/spectate/{room.LobbyCode}", Json);
+        Assert.Equal(gameId, watched!.Game!.Id);
         using var hostGame = await Events(host, $"/api/v1/games/{gameId}/events");
         using var bobGame = await Events(bob, $"/api/v1/games/{gameId}/events");
         using var forbidden = await stranger.PostAsJsonAsync($"/api/v1/games/{gameId}/actions", new { type = "placeBid", actionId = Guid.NewGuid(), expectedVersion = "0", wordCount = 1 });

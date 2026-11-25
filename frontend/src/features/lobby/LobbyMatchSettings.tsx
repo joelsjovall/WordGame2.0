@@ -32,6 +32,13 @@ export function LobbyMatchSettings({
           </p>
           <p>Challenge time: {settings.challengeSeconds} seconds</p>
           <p>Difficulties: {settings.allowedDifficulties.join(', ')}</p>
+          <p>Hidden finale: {settings.sealedOpening ? 'On' : 'Off'}</p>
+          <p>
+            Category pack:{' '}
+            {settings.allowedCategoryIds
+              ? `${settings.allowedCategoryIds.length} selected categories`
+              : 'All categories'}
+          </p>
         </div>
         {!host && waiting && (
           <p className="party-note">

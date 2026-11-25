@@ -1,0 +1,15 @@
+{
+  "id": "solar-system-planets",
+  "name": "Solar System Planets",
+  "difficulty": "easy",
+  "answers": [
+    { "value": "Mercury", "aliases": [] },
+    { "value": "Venus", "aliases": [] },
+    { "value": "Earth", "aliases": [] },
+    { "value": "Mars", "aliases": [] },
+    { "value": "Jupiter", "aliases": [] },
+    { "value": "Saturn", "aliases": [] },
+    { "value": "Uranus", "aliases": [] },
+    { "value": "Neptune", "aliases": [] }
+  ]
+}

@@ -74,6 +74,21 @@ public sealed class CategorySelectionTests
     }
 
     [Fact]
+    public async Task PartyPackRejectsCategoriesOutsideItsFrozenSelection()
+    {
+        var provider = new TestCategoryProvider(Definition("cars", CategoryDifficulty.Easy),
+            Definition("books", CategoryDifficulty.Easy));
+        var settings = MatchSettings.Party(2, allowedCategoryIds: ["cars"]);
+        var game = await TurnTestGame.Create(provider: provider, settings: settings);
+        var before = await game.State();
+
+        Assert.Equal(GameEngineErrorCode.InvalidState,
+            (await game.Engine.SelectCategoryAsync(game.Id, game.Players[0].Id, "books", await game.Context())).Error!.Code);
+        Assert.Equal(before.Version, (await game.State()).Version);
+        Assert.Equal("cars", (await game.Select()).Game.CurrentRound!.Category!.Id);
+    }
+
+    [Fact]
     public async Task SelectionRetainsAnswersAndModifierWhenProviderDataChanges()
     {
         var original = Definition("cars", CategoryDifficulty.Easy, "Volvo");

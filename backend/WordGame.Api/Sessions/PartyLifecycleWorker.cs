@@ -1,8 +1,10 @@
+using WordGame.Api.Errors;
 using WordGame.Application.Lobbies;
 
 namespace WordGame.Api.Sessions;
 
-public sealed class PartyLifecycleWorker(PartyLifecycleService lifecycle, TimeProvider clock, ILogger<PartyLifecycleWorker> logger) : BackgroundService
+public sealed class PartyLifecycleWorker(PartyLifecycleService lifecycle, TimeProvider clock, ILogger<PartyLifecycleWorker> logger,
+    IHostEnvironment environment) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -15,7 +17,7 @@ public sealed class PartyLifecycleWorker(PartyLifecycleService lifecycle, TimePr
                 {
                     try { await lifecycle.RefreshAsync(lobby, stoppingToken); }
                     catch (Exception exception) when (exception is not OperationCanceledException)
-                    { logger.LogError(exception, "Party lifecycle update failed for {LobbyId}; a later sweep will retry.", lobby.Id); }
+                    { SafeErrorLogging.Log(logger, environment, exception, $"Party lifecycle update for lobby {lobby.Id}"); }
                 }
             }
         }

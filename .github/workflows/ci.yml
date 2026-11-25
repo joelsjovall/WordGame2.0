@@ -91,6 +91,8 @@ jobs:
         run: npm test -- --reporter=default --reporter=junit --outputFile.junit=test-results/vitest.xml
       - name: Build frontend
         run: npm run build
+      - name: Check frontend build for backend secrets
+        run: node ../scripts/check-frontend-secrets.mjs
       - name: Upload frontend test results
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

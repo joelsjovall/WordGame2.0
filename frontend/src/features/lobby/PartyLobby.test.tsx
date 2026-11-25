@@ -60,7 +60,9 @@ test('host controls are separated and unsaved edits block start until authoritat
   const start = vi.spyOn(lobbiesApi, 'start').mockResolvedValue(lobby)
   const user = userEvent.setup()
   const view = room()
-  expect(screen.getByRole('region', { name: 'Host controls' })).toBeVisible()
+  expect(
+    await screen.findByRole('region', { name: 'Host controls' }),
+  ).toBeVisible()
   expect(screen.getByRole('button', { name: 'Start match' })).toBeEnabled()
   await user.type(screen.getByLabelText('Total rounds'), '10')
   expect(screen.getByRole('button', { name: 'Start match' })).toBeDisabled()
@@ -105,7 +107,9 @@ test('guests see server settings and activity without host controls and readines
   expect(
     screen.queryByRole('button', { name: 'Start match' }),
   ).not.toBeInTheDocument()
-  expect(screen.getByRole('region', { name: 'Match settings' })).toBeVisible()
+  expect(
+    await screen.findByRole('region', { name: 'Match settings' }),
+  ).toBeVisible()
   expect(screen.getByRole('log')).toHaveTextContent('Taylor joined the lobby.')
   expect(screen.getByRole('button', { name: 'Ready' })).toHaveAttribute(
     'aria-pressed',
@@ -114,12 +118,12 @@ test('guests see server settings and activity without host controls and readines
   await user.click(screen.getByRole('button', { name: 'Ready' }))
   expect(ready).toHaveBeenCalledWith(lobby.id, lobby.version, true)
 })
-test('loading and terminal errors provide clear states without active room controls', () => {
+test('loading and terminal errors provide clear states without active room controls', async () => {
   const hook = vi
     .spyOn(lobbyHook, 'useLobby')
     .mockReturnValue(state({ lobby: null }))
   const view = room()
-  expect(screen.getByRole('status')).toHaveTextContent('Loading lobby…')
+  expect(await screen.findByRole('status')).toHaveTextContent('Loading lobby…')
   expect(
     screen.queryByRole('button', { name: 'Ready' }),
   ).not.toBeInTheDocument()

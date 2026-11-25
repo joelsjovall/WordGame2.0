@@ -1,0 +1,14 @@
+{
+  "id": "si-base-units",
+  "name": "SI Base Units",
+  "difficulty": "hard",
+  "answers": [
+    { "value": "Second", "aliases": [] },
+    { "value": "Metre", "aliases": ["Meter"] },
+    { "value": "Kilogram", "aliases": [] },
+    { "value": "Ampere", "aliases": [] },
+    { "value": "Kelvin", "aliases": [] },
+    { "value": "Mole", "aliases": [] },
+    { "value": "Candela", "aliases": [] }
+  ]
+}

@@ -36,6 +36,12 @@ internal static class TurnPolicy
         }
 
         var round = session.Game.CurrentRound;
+        if (round?.SealedOpeningPending == true &&
+            session.Game.Players.Any(player => !session.CanTakeTurn(player.Id, grace)))
+        {
+            session.Abandon();
+            return true;
+        }
         var essentialPlayerMissing = round?.Status is RoundStatus.Bidding or RoundStatus.Challenge &&
             (round.HighestBid is { } bid && !session.CanTakeTurn(bid.PlayerId, grace) ||
              round.Challenge is { } challenge && !session.CanTakeTurn(challenge.ChallengerId, grace));

@@ -13,7 +13,8 @@ public sealed class InMemoryMatchmakingQueueStore : IMatchmakingQueueStore, IDis
     public async Task<T> ExecuteAsync<T>(Func<MatchmakingQueueState, Task<T>> transition, CancellationToken cancellationToken = default)
     {
         await gate.WaitAsync(cancellationToken);
-        var before = state.LatestByPlayer.ToDictionary(pair => pair.Key, pair => state.Searches.GetValueOrDefault(pair.Value));
+        // Only connected observers need a before/after comparison.
+        var before = watchers.Keys.ToDictionary(playerId => playerId, Current);
         try
         {
             cancellationToken.ThrowIfCancellationRequested();

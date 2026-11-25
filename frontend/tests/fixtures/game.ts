@@ -26,6 +26,7 @@ export const gameFixture: GameState = {
     roundCount: 1,
     challengeSeconds: 5,
     allowedDifficulties: ['easy'],
+    sealedOpening: false,
   },
   result: null,
   round: {
@@ -34,9 +35,10 @@ export const gameFixture: GameState = {
     status: 'bidding',
     activePlayerId: 'bob',
     category: { id: 'capitals', name: 'Capitals', difficulty: 'easy' },
-    highestBid: { playerId: 'host', wordCount: 1 },
+    highestBid: { playerId: 'host', wordCount: 1, risk: false },
     challenge: null,
     result: null,
     categorySelectionDeadline: null,
+    sealedOpeningPending: false,
   },
 }

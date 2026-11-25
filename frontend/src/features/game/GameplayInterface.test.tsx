@@ -12,12 +12,32 @@ import { gameSynchronization } from '../../services/gameSynchronization.ts'
 import { gameFixture as game } from '../../../tests/fixtures/game.ts'
 import type { GameState } from '../../services/api/games.ts'
 import { PlayerScoreboard } from './PlayerScoreboard.tsx'
+import { GameHeader } from './GameHeader.tsx'
 import { ServerCountdown } from './ServerCountdown.tsx'
 import { gameAudio } from '../../services/gameAudio.ts'
 
 afterEach(() => {
   vi.restoreAllMocks()
   vi.useRealTimers()
+})
+
+test('round progress follows the server phase', () => {
+  const view = render(<GameHeader state={game} />)
+  const progress = screen.getByRole('list', { name: 'Round progress' })
+  expect(
+    within(progress).getByText('Bid or call').closest('li'),
+  ).toHaveAttribute('aria-current', 'step')
+  view.rerender(
+    <GameHeader
+      state={{ ...game, round: { ...game.round!, status: 'challenge' } }}
+    />,
+  )
+  expect(
+    within(progress).getByText('Name words').closest('li'),
+  ).toHaveAttribute('aria-current', 'step')
+  expect(
+    within(progress).getByText('Bid or call').closest('li'),
+  ).toHaveAttribute('data-state', 'done')
 })
 
 test('score emphasis restarts only for changed scores, not presence updates', () => {

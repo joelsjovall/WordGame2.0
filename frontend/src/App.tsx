@@ -1,14 +1,31 @@
-import { useEffect, useRef } from 'react'
+import { lazy, Suspense, useEffect, useRef } from 'react'
 import { Route, Routes, useLocation } from 'react-router'
 import { HomePage } from './pages/HomePage'
 import { NotFoundPage } from './pages/NotFoundPage'
-import { JoinLobbyPage } from './pages/JoinLobbyPage.tsx'
-import { LobbyPage } from './pages/LobbyPage.tsx'
-import { CreateLobbyPage } from './pages/CreateLobbyPage.tsx'
-import { PartyGamePage } from './pages/PartyGamePage.tsx'
-import { OnlineModePage } from './pages/OnlineModePage.tsx'
-import { OnlineGamePage } from './pages/OnlineGamePage.tsx'
 import { AudioSettings } from './components/AudioSettings.tsx'
+import { LoadingStatus } from './components/ui.tsx'
+
+const JoinLobbyPage = lazy(async () => ({
+  default: (await import('./pages/JoinLobbyPage.tsx')).JoinLobbyPage,
+}))
+const LobbyPage = lazy(async () => ({
+  default: (await import('./pages/LobbyPage.tsx')).LobbyPage,
+}))
+const CreateLobbyPage = lazy(async () => ({
+  default: (await import('./pages/CreateLobbyPage.tsx')).CreateLobbyPage,
+}))
+const PartyGamePage = lazy(async () => ({
+  default: (await import('./pages/PartyGamePage.tsx')).PartyGamePage,
+}))
+const OnlineModePage = lazy(async () => ({
+  default: (await import('./pages/OnlineModePage.tsx')).OnlineModePage,
+}))
+const OnlineGamePage = lazy(async () => ({
+  default: (await import('./pages/OnlineGamePage.tsx')).OnlineGamePage,
+}))
+const SpectatorPage = lazy(async () => ({
+  default: (await import('./pages/SpectatorPage.tsx')).SpectatorPage,
+}))
 
 export default function App() {
   const { pathname } = useLocation()
@@ -24,17 +41,32 @@ export default function App() {
         Skip to main content
       </a>
       <div id="main-content" ref={content} tabIndex={-1}>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/online" element={<OnlineModePage />} />
-          <Route path="/online/games/:gameId" element={<OnlineGamePage />} />
-          <Route path="/join" element={<JoinLobbyPage />} />
-          <Route path="/lobbies/new" element={<CreateLobbyPage />} />
-          <Route path="/lobbies/:lobbyId" element={<LobbyPage />} />
-          <Route path="/lobbies/:lobbyId/game" element={<PartyGamePage />} />
-          <Route path="/join/:lobbyId/:lobbyCode" element={<JoinLobbyPage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+        <Suspense
+          fallback={
+            <main className="page">
+              <LoadingStatus>Loading page...</LoadingStatus>
+            </main>
+          }
+        >
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/online" element={<OnlineModePage />} />
+            <Route path="/online/games/:gameId" element={<OnlineGamePage />} />
+            <Route path="/join" element={<JoinLobbyPage />} />
+            <Route path="/lobbies/new" element={<CreateLobbyPage />} />
+            <Route path="/lobbies/:lobbyId" element={<LobbyPage />} />
+            <Route path="/lobbies/:lobbyId/game" element={<PartyGamePage />} />
+            <Route
+              path="/spectate/:lobbyId/:lobbyCode"
+              element={<SpectatorPage />}
+            />
+            <Route
+              path="/join/:lobbyId/:lobbyCode"
+              element={<JoinLobbyPage />}
+            />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
       </div>
       <AudioSettings />
     </>

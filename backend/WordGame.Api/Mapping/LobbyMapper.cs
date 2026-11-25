@@ -18,7 +18,8 @@ internal static class LobbyMapper
         Lobby.MinimumPlayers, lobby.Settings.MaximumPlayers, lobby.CreatedAt, lobby.ExpiresAt,
         lobby.Version.ToString(System.Globalization.CultureInfo.InvariantCulture),
         new LobbySettingsRequest(lobby.Settings.MaximumPlayers, lobby.Settings.RoundCount, lobby.Settings.ChallengeSeconds,
-            lobby.Settings.AllowedDifficulties.Select(value => Enum.Parse<ApiCategoryDifficulty>(value.ToString())).ToArray()), lobby.GameId,
+            lobby.Settings.AllowedDifficulties.Select(value => Enum.Parse<ApiCategoryDifficulty>(value.ToString())).ToArray(),
+            lobby.Settings.AllowedCategoryIds, lobby.Settings.SealedOpening), lobby.GameId,
         lobby.Status == LobbyStatus.Waiting && lobby.Roster.AllReady && lobby.Players.Count <= lobby.Settings.MaximumPlayers,
         lobby.StartsAt, serverTime, lobby.LastResult is { } result ? GameStateMapper.MapMatchResult(result) : null);
 }

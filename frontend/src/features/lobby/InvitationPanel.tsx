@@ -3,6 +3,7 @@ import { lobbyInvitationUrl, type InvitationLobby } from './invitations.ts'
 
 export function InvitationPanel({ lobby }: { lobby: InvitationLobby }) {
   const url = lobbyInvitationUrl(lobby)
+  const spectatorUrl = `${window.location.origin}/spectate/${encodeURIComponent(lobby.id)}/${encodeURIComponent(lobby.lobbyCode)}`
   const [status, setStatus] = useState('')
   const [sharing, setSharing] = useState(false)
 
@@ -20,6 +21,14 @@ export function InvitationPanel({ lobby }: { lobby: InvitationLobby }) {
       setStatus('Lobby code copied.')
     } catch {
       setStatus('Copy failed. Select and copy the code above.')
+    }
+  }
+  async function copySpectatorLink() {
+    try {
+      await navigator.clipboard.writeText(spectatorUrl)
+      setStatus('Spectator link copied.')
+    } catch {
+      setStatus('Copy failed. Select and copy the spectator link below.')
     }
   }
   async function share() {
@@ -76,6 +85,20 @@ export function InvitationPanel({ lobby }: { lobby: InvitationLobby }) {
           </button>
         )}
       </div>
+      <label htmlFor="spectator-link">Spectator link</label>
+      <input
+        id="spectator-link"
+        value={spectatorUrl}
+        readOnly
+        onFocus={(event) => event.currentTarget.select()}
+      />
+      <p>
+        Share this link with friends who want to watch without taking a player
+        slot.
+      </p>
+      <button type="button" onClick={() => void copySpectatorLink()}>
+        Copy spectator link
+      </button>
       <p role="status">{status}</p>
     </section>
   )

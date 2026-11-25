@@ -112,6 +112,22 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/v1/lobbies/{lobbyId}/spectate/{code}': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get: operations['GetSpectatorState']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/v1/categories': {
     parameters: {
       query?: never
@@ -473,6 +489,15 @@ export interface components {
       playerId: string
       /** Format: int32 */
       wordCount: number
+      /** @default false */
+      risk: boolean
+    }
+    BluffHighlightResponse: {
+      categoryName: string
+      /** Format: int32 */
+      wordCount: number
+      bidderName: string
+      callerName: string
     }
     CategoryListResponse: {
       items: components['schemas']['CategoryResponse'][]
@@ -509,6 +534,7 @@ export interface components {
     GameActionRequest:
       | components['schemas']['GameActionRequestSelectCategoryAction']
       | components['schemas']['GameActionRequestPlaceBidAction']
+      | components['schemas']['GameActionRequestSubmitSealedBidAction']
       | components['schemas']['GameActionRequestCallBluffAction']
       | components['schemas']['GameActionRequestSubmitWordAction']
       | components['schemas']['GameActionRequestLeaveMatchAction']
@@ -539,6 +565,8 @@ export interface components {
       type: 'placeBid'
       /** Format: int32 */
       wordCount: number
+      /** @default false */
+      risk: boolean
       /** Format: uuid */
       actionId: string
       expectedVersion: string
@@ -547,6 +575,17 @@ export interface components {
       /** @enum {string} */
       type: 'selectCategory'
       categoryId: string
+      /** Format: uuid */
+      actionId: string
+      expectedVersion: string
+    }
+    GameActionRequestSubmitSealedBidAction: {
+      /** @enum {string} */
+      type: 'submitSealedBid'
+      /** Format: int32 */
+      wordCount: number
+      /** @default false */
+      risk: boolean
       /** Format: uuid */
       actionId: string
       expectedVersion: string
@@ -597,6 +636,9 @@ export interface components {
       result?: null | components['schemas']['RoundResultResponse']
       /** Format: date-time */
       categorySelectionDeadline?: null | string
+      /** @default false */
+      sealedOpeningPending: boolean
+      sealedBidSubmitterIds?: null | string[]
     }
     GameStateResponse: {
       /** Format: uuid */
@@ -666,6 +708,9 @@ export interface components {
       /** Format: int32 */
       challengeSeconds: number
       allowedDifficulties: components['schemas']['ApiCategoryDifficulty'][]
+      allowedCategoryIds?: null | string[]
+      /** @default false */
+      sealedOpening: boolean
     }
     MatchAcceptanceRequest: Record<string, never>
     MatchmakingResponse: {
@@ -694,6 +739,7 @@ export interface components {
       reason?: components['schemas']['ApiMatchEndReason']
       /** Format: uuid */
       forfeitedPlayerId?: null | string
+      bestBluffCall?: null | components['schemas']['BluffHighlightResponse']
     }
     MatchSettingsResponse: {
       format: components['schemas']['ApiMatchFormat']
@@ -703,6 +749,9 @@ export interface components {
       challengeSeconds?: null | number
       allowedDifficulties?:
         null | components['schemas']['ApiCategoryDifficulty'][]
+      allowedCategoryIds?: null | string[]
+      /** @default false */
+      sealedOpening: boolean
     }
     MatchStandingResponse: {
       /** Format: uuid */
@@ -799,10 +848,16 @@ export interface components {
       outcome: components['schemas']['ApiChallengeOutcome']
       submissions: components['schemas']['SubmittedWordResponse'][]
       scores: components['schemas']['RoundPlayerScoreResponse'][]
+      /** @default false */
+      risk: boolean
     }
     SetLobbyReadyRequest: {
       expectedVersion: string
       isReady: boolean
+    }
+    SpectatorStateResponse: {
+      lobbyStatus: string
+      game: null | components['schemas']['GameStateResponse']
     }
     StartLobbyRequest: {
       expectedVersion: string
@@ -1161,6 +1216,43 @@ export interface operations {
       }
       /** @description Conflict */
       409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Too Many Requests */
+      429: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  GetSpectatorState: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        lobbyId: string
+        code: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['SpectatorStateResponse']
+        }
+      }
+      /** @description Not Found */
+      404: {
         headers: {
           [name: string]: unknown
         }

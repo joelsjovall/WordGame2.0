@@ -8,5 +8,14 @@ export async function checkAccessibility(page: Page) {
   // axe aggregates results in a temporary sibling tab. Restore the tested tab
   // before subsequent keyboard interactions, particularly in WebKit.
   await page.bringToFront()
-  expect(results.violations).toEqual([])
+  const summary = results.violations.map((violation) => ({
+    rule: violation.id,
+    impact: violation.impact,
+    help: violation.help,
+    nodes: violation.nodes.map((node) => ({
+      target: node.target,
+      failure: node.failureSummary,
+    })),
+  }))
+  expect(summary).toEqual([])
 }

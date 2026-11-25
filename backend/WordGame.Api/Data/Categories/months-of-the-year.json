@@ -1,0 +1,19 @@
+{
+  "id": "months-of-the-year",
+  "name": "Months of the Year",
+  "difficulty": "easy",
+  "answers": [
+    { "value": "January", "aliases": [] },
+    { "value": "February", "aliases": [] },
+    { "value": "March", "aliases": [] },
+    { "value": "April", "aliases": [] },
+    { "value": "May", "aliases": [] },
+    { "value": "June", "aliases": [] },
+    { "value": "July", "aliases": [] },
+    { "value": "August", "aliases": [] },
+    { "value": "September", "aliases": [] },
+    { "value": "October", "aliases": [] },
+    { "value": "November", "aliases": [] },
+    { "value": "December", "aliases": [] }
+  ]
+}

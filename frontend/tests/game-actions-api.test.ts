@@ -14,6 +14,7 @@ test('game commands and rematch preserve command versions and use protected cook
     actionId: 'action',
     expectedVersion: '8',
     wordCount: 2,
+    risk: false,
   }
   await createGamesApi(client).act('game', command)
   await createLobbiesApi(client).rematch('room', '10')

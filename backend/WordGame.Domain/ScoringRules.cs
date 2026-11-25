@@ -31,8 +31,9 @@ public sealed class ScoringRules
         }
 
         var wordPoints = checked(challenge.AcceptedWordCount * pointsPerWord);
+        var outcomeBonus = checked(OutcomeBonus * (challenge.Bid.Risk ? 2 : 1));
         return challenge.Outcome == ChallengeOutcome.Succeeded
-            ? [new PlayerScore(challenge.Bid.PlayerId, checked(wordPoints + OutcomeBonus))]
-            : [new PlayerScore(challenge.Bid.PlayerId, wordPoints), new PlayerScore(challenge.ChallengerId, OutcomeBonus)];
+            ? [new PlayerScore(challenge.Bid.PlayerId, checked(wordPoints + outcomeBonus))]
+            : [new PlayerScore(challenge.Bid.PlayerId, wordPoints), new PlayerScore(challenge.ChallengerId, outcomeBonus)];
     }
 }

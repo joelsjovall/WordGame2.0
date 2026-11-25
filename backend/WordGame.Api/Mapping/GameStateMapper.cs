@@ -18,7 +18,8 @@ public static class GameStateMapper
             snapshot.Game.CurrentRound is { } round ? MapRound(round, snapshot.Game.RoundResults.GetValueOrDefault(round.Id), snapshot.CategorySelectionDeadline) : null,
             new MatchSettingsResponse(MapFormat(snapshot.Game.Settings.Format), snapshot.Game.Settings.RoundCount,
                 snapshot.Game.Settings.ChallengeDuration?.TotalSeconds,
-                snapshot.Game.Settings.AllowedDifficulties?.Select(value => Enum.Parse<ApiCategoryDifficulty>(value.ToString())).ToArray()),
+                snapshot.Game.Settings.AllowedDifficulties?.Select(value => Enum.Parse<ApiCategoryDifficulty>(value.ToString())).ToArray(),
+                snapshot.Game.Settings.AllowedCategoryIds, snapshot.Game.Settings.SealedOpening),
             snapshot.Game.Result is { } result ? MapMatchResult(result) : null);
     }
 
@@ -32,7 +33,8 @@ public static class GameStateMapper
     internal static MatchResultResponse MapMatchResult(Domain.MatchResult result) => new(
         result.GameId, MapFormat(result.Format), result.CompletedRoundCount, result.IsTie, result.WinnerIds,
         result.Standings.Select(standing => new MatchStandingResponse(standing.PlayerId, standing.DisplayName, standing.Score, standing.Rank)).ToArray(),
-        Enum.Parse<ApiMatchEndReason>(result.Reason.ToString()), result.ForfeitedPlayerId);
+        Enum.Parse<ApiMatchEndReason>(result.Reason.ToString()), result.ForfeitedPlayerId,
+        result.BestBluffCall is { } bluff ? new BluffHighlightResponse(bluff.CategoryName, bluff.WordCount, bluff.BidderName, bluff.CallerName) : null);
 
     internal static ApiSessionStatus MapStatus(SessionStatus status) => status switch
     {
@@ -49,7 +51,7 @@ public static class GameStateMapper
         result.BidderId, result.CallerId, result.WinnerId, result.RequiredWordCount, result.AcceptedWordCount,
         result.Outcome == Domain.ChallengeOutcome.Succeeded ? ApiChallengeOutcome.Succeeded : ApiChallengeOutcome.Failed,
         result.Submissions.Select(MapSubmission).ToArray(),
-        result.Scores.Select(score => new RoundPlayerScoreResponse(score.PlayerId, score.PointsAwarded, score.TotalPoints)).ToArray());
+        result.Scores.Select(score => new RoundPlayerScoreResponse(score.PlayerId, score.PointsAwarded, score.TotalPoints)).ToArray(), result.Risk);
 
     private static GameRoundResponse MapRound(Domain.GameRound round, Domain.RoundResult? result, DateTimeOffset? selectionDeadline) => new(
         round.Id, round.Number, round.Status switch
@@ -61,8 +63,9 @@ public static class GameStateMapper
             Domain.RoundStatus.Cancelled => ApiRoundStatus.Cancelled,
             _ => throw new InvalidOperationException("Unsupported round status.")
         }, round.Turn.PlayerId, round.Category is { } category ? CategoryMapper.Map(category) : null,
-        round.HighestBid is { } bid ? new BidResponse(bid.PlayerId, bid.WordCount) : null,
-        round.Challenge is { } challenge ? MapChallenge(challenge) : null, result is null ? null : MapResult(result), selectionDeadline);
+        round.HighestBid is { } bid ? new BidResponse(bid.PlayerId, bid.WordCount, bid.Risk) : null,
+        round.Challenge is { } challenge ? MapChallenge(challenge) : null, result is null ? null : MapResult(result), selectionDeadline,
+        round.SealedOpeningPending, round.SealedBidSubmitterIds);
 
     private static ChallengeResponse MapChallenge(Domain.Challenge challenge) => new(
         challenge.Id, challenge.Bid.PlayerId, challenge.ChallengerId, challenge.Bid.WordCount,

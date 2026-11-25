@@ -3,13 +3,16 @@ import { categoriesApi } from '../../services/api/categories.ts'
 import type { GameState } from '../../services/api/games.ts'
 import type { components } from '../../services/api/generated.ts'
 import { Button, Card, LoadingStatus } from '../../components/ui.tsx'
+import { categoryThemes, themes, type Theme } from './categoryThemes.ts'
 
 export function CategoryChoice({
   allowed,
+  allowedCategoryIds,
   busy,
   choose,
 }: {
   allowed: GameState['match']['allowedDifficulties']
+  allowedCategoryIds: GameState['match']['allowedCategoryIds']
   busy: boolean
   choose: (id: string) => void
 }) {
@@ -19,6 +22,7 @@ export function CategoryChoice({
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [attempt, setAttempt] = useState(0)
+  const [theme, setTheme] = useState<Theme>('All')
   useEffect(() => {
     const controller = new AbortController()
     void categoriesApi
@@ -56,8 +60,28 @@ export function CategoryChoice({
           </Button>
         </div>
       )}
+      {categories.length > 0 && (
+        <label className="game-category-theme">
+          Theme
+          <select
+            value={theme}
+            onChange={(event) => setTheme(event.target.value as Theme)}
+          >
+            {themes.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       {categories
-        .filter((category) => !allowed || allowed.includes(category.difficulty))
+        .filter(
+          (category) =>
+            (!allowed || allowed.includes(category.difficulty)) &&
+            (!allowedCategoryIds || allowedCategoryIds.includes(category.id)) &&
+            (theme === 'All' || categoryThemes[category.id] === theme),
+        )
         .map((category) => (
           <Button
             variant="secondary"

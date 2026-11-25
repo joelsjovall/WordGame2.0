@@ -1,3 +1,4 @@
+using WordGame.Api.Errors;
 using WordGame.Application.Categories;
 using WordGame.Application.Challenges;
 using WordGame.Application.Games;
@@ -15,10 +16,12 @@ public sealed class GameplayTimeoutWorker : BackgroundService
     private readonly SessionRetention retention;
     private readonly TimeProvider clock;
     private readonly ILogger<GameplayTimeoutWorker> logger;
+    private readonly IHostEnvironment environment;
     private readonly TimeSpan interval;
 
     public GameplayTimeoutWorker(IGameSessionStore sessions, CategorySelectionService categories, ChallengeService challenges,
-        TimeProvider clock, IConfiguration configuration, ILogger<GameplayTimeoutWorker> logger, GameEngine engine, SessionRetention retention)
+        TimeProvider clock, IConfiguration configuration, ILogger<GameplayTimeoutWorker> logger, IHostEnvironment environment,
+        GameEngine engine, SessionRetention retention)
     {
         this.sessions = sessions;
         this.categories = categories;
@@ -27,6 +30,7 @@ public sealed class GameplayTimeoutWorker : BackgroundService
         this.retention = retention;
         this.clock = clock;
         this.logger = logger;
+        this.environment = environment;
         interval = configuration.GetValue<TimeSpan?>("Gameplay:TimeoutSweepInterval") ??
             configuration.GetValue("Gameplay:CategorySelectionSweepInterval", TimeSpan.FromSeconds(1));
         if (interval <= TimeSpan.Zero)
@@ -77,13 +81,13 @@ public sealed class GameplayTimeoutWorker : BackgroundService
                         }
                         catch (Exception exception) when (exception is not OperationCanceledException)
                         {
-                            logger.LogError(exception, "{Phase} timeout failed for {GameId}; a later sweep will retry.", phase, session.Id);
+                            SafeErrorLogging.Log(logger, environment, exception, $"{phase} timeout for game {session.Id}");
                         }
                     }
                 }
                 catch (Exception exception) when (exception is not OperationCanceledException)
                 {
-                    logger.LogError(exception, "{Phase} timeout sweep failed; a later sweep will retry.", phase);
+                    SafeErrorLogging.Log(logger, environment, exception, $"{phase} timeout sweep");
                 }
             }
         }

@@ -13,11 +13,14 @@ public sealed record GameStateResponse(
     MatchSettingsResponse Match, MatchResultResponse? Result);
 
 public sealed record MatchSettingsResponse(ApiMatchFormat Format, int RoundCount, double? ChallengeSeconds = null,
-    IReadOnlyList<ApiCategoryDifficulty>? AllowedDifficulties = null);
+    IReadOnlyList<ApiCategoryDifficulty>? AllowedDifficulties = null, IReadOnlyList<string>? AllowedCategoryIds = null,
+    bool SealedOpening = false);
 public enum ApiMatchEndReason { Completed, Forfeit, ReconnectionExpired }
 public sealed record MatchResultResponse(Guid GameId, ApiMatchFormat Format, int CompletedRoundCount,
     bool IsTie, IReadOnlyList<Guid> WinnerIds, IReadOnlyList<MatchStandingResponse> Standings,
-    ApiMatchEndReason Reason = ApiMatchEndReason.Completed, Guid? ForfeitedPlayerId = null);
+    ApiMatchEndReason Reason = ApiMatchEndReason.Completed, Guid? ForfeitedPlayerId = null,
+    BluffHighlightResponse? BestBluffCall = null);
+public sealed record BluffHighlightResponse(string CategoryName, int WordCount, string BidderName, string CallerName);
 public sealed record MatchStandingResponse(Guid PlayerId, string DisplayName, int Score, int Rank);
 
 public sealed record GamePlayerResponse(Guid Id, string DisplayName, int Score, bool IsConnected, bool HasLeft = false,
@@ -25,13 +28,15 @@ public sealed record GamePlayerResponse(Guid Id, string DisplayName, int Score, 
 public sealed record GameRoundResponse(
     Guid Id, int Number, ApiRoundStatus Status, Guid ActivePlayerId, CategoryResponse? Category,
     BidResponse? HighestBid, ChallengeResponse? Challenge, RoundResultResponse? Result = null,
-    DateTimeOffset? CategorySelectionDeadline = null);
+    DateTimeOffset? CategorySelectionDeadline = null, bool SealedOpeningPending = false,
+    IReadOnlyList<Guid>? SealedBidSubmitterIds = null);
 public sealed record RoundResultResponse(
     Guid RoundId, int RoundNumber, CategoryResponse Category, Guid ChallengeId,
     Guid BidderId, Guid CallerId, Guid WinnerId, int RequiredWordCount, int AcceptedWordCount,
-    ApiChallengeOutcome Outcome, IReadOnlyList<SubmittedWordResponse> Submissions, IReadOnlyList<RoundPlayerScoreResponse> Scores);
+    ApiChallengeOutcome Outcome, IReadOnlyList<SubmittedWordResponse> Submissions, IReadOnlyList<RoundPlayerScoreResponse> Scores,
+    bool Risk = false);
 public sealed record RoundPlayerScoreResponse(Guid PlayerId, int PointsAwarded, int TotalPoints);
-public sealed record BidResponse(Guid PlayerId, int WordCount);
+public sealed record BidResponse(Guid PlayerId, int WordCount, bool Risk = false);
 public sealed record ChallengeResponse(
     Guid Id, Guid PlayerId, Guid CallerId, int RequiredWordCount,
     DateTimeOffset StartedAt, DateTimeOffset Deadline, ApiChallengeOutcome Outcome,

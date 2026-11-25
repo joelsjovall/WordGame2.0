@@ -58,7 +58,8 @@ internal static class LobbyHostEndpoints
         LobbyHostService service, CancellationToken cancellationToken) => ExecuteAsync(context, async () =>
         await service.ConfigureAsync(lobbyId, Actor(context), Version(request.ExpectedVersion),
             new LobbySettings(request.Settings.MaximumPlayers, request.Settings.RoundCount, request.Settings.ChallengeSeconds,
-                request.Settings.AllowedDifficulties.Select(value => Enum.Parse<CategoryDifficulty>(value.ToString()))), cancellationToken));
+                request.Settings.AllowedDifficulties.Select(value => Enum.Parse<CategoryDifficulty>(value.ToString())),
+                request.Settings.AllowedCategoryIds, request.Settings.SealedOpening), cancellationToken));
 
     private static Task<IResult> StartAsync(Guid lobbyId, StartLobbyRequest request, HttpContext context,
         LobbyHostService service, CancellationToken cancellationToken) => ExecuteAsync(context, () =>

@@ -24,6 +24,12 @@ public sealed class LobbySettingsTests
         Assert.Throws<ArgumentException>(() => new LobbySettings(allowedDifficulties: []));
         Assert.Throws<ArgumentException>(() => new LobbySettings(allowedDifficulties: [CategoryDifficulty.Easy, CategoryDifficulty.Easy]));
         Assert.Throws<ArgumentException>(() => new LobbySettings(allowedDifficulties: [(CategoryDifficulty)99]));
+        var ids = new[] { "cars" };
+        var packed = new LobbySettings(allowedCategoryIds: ids);
+        ids[0] = "books";
+        Assert.Equal("cars", Assert.Single(packed.ForMatch(2).AllowedCategoryIds!));
+        Assert.Throws<ArgumentException>(() => new LobbySettings(allowedCategoryIds: []));
+        Assert.Throws<ArgumentException>(() => new LobbySettings(allowedCategoryIds: ["cars", "cars"]));
     }
 
     [Fact]

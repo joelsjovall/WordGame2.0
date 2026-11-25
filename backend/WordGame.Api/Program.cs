@@ -1,5 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Npgsql;
 using WordGame.Api.Authentication;
 using WordGame.Api.Endpoints;
@@ -43,6 +45,12 @@ builder.Services.AddOpenApi("v1", options =>
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddHealthChecks();
 builder.AddPlayerAuthentication();
+// Browser tests use one short-lived server and must not depend on a developer's OS key ring.
+if (builder.Environment.IsDevelopment() && builder.Configuration.GetValue<bool>("Testing:EphemeralDataProtection"))
+{
+    builder.Services.RemoveAll<IDataProtectionProvider>();
+    builder.Services.AddSingleton<IDataProtectionProvider, EphemeralDataProtectionProvider>();
+}
 builder.AddLobbyRateLimiting();
 builder.Services.AddSingleton<GameEventService>();
 builder.Services.AddSingleton(TimeProvider.System);
@@ -154,6 +162,7 @@ app.MapMatchmakingEndpoints();
 app.MapLobbyEndpoints();
 app.MapLobbyHostEndpoints();
 app.MapLobbyPlayerEndpoints();
+app.MapSpectatorEndpoints();
 
 if (app.Environment.IsDevelopment())
 {

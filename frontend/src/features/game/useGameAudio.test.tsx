@@ -16,7 +16,10 @@ test('only fresh authoritative events play, with silent initial/recovered snapsh
   expect(play).not.toHaveBeenCalled()
   const bid: GameState = {
     ...game,
-    round: { ...game.round!, highestBid: { playerId: 'bob', wordCount: 2 } },
+    round: {
+      ...game.round!,
+      highestBid: { playerId: 'bob', wordCount: 2, risk: false },
+    },
   }
   hook.rerender({ state: bid, connected: true })
   expect(play).toHaveBeenLastCalledWith(

@@ -1,3 +1,4 @@
+using WordGame.Api.Errors;
 using WordGame.Application.Sessions;
 
 namespace WordGame.Api.Sessions;
@@ -8,15 +9,18 @@ public sealed class SessionCleanupWorker : BackgroundService
     private readonly ILobbySessionStore lobbies;
     private readonly TimeProvider clock;
     private readonly ILogger<SessionCleanupWorker> logger;
+    private readonly IHostEnvironment environment;
     private readonly TimeSpan interval;
 
     public SessionCleanupWorker(
-        IGameSessionStore sessions, ILobbySessionStore lobbies, TimeProvider clock, IConfiguration configuration, ILogger<SessionCleanupWorker> logger)
+        IGameSessionStore sessions, ILobbySessionStore lobbies, TimeProvider clock, IConfiguration configuration,
+        ILogger<SessionCleanupWorker> logger, IHostEnvironment environment)
     {
         this.sessions = sessions;
         this.lobbies = lobbies;
         this.clock = clock;
         this.logger = logger;
+        this.environment = environment;
         interval = configuration.GetValue("Sessions:CleanupInterval", TimeSpan.FromMinutes(1));
         if (interval <= TimeSpan.Zero)
         {
@@ -42,7 +46,7 @@ public sealed class SessionCleanupWorker : BackgroundService
                 }
                 catch (Exception exception) when (exception is not OperationCanceledException)
                 {
-                    logger.LogError(exception, "Game session cleanup failed; a later sweep will retry.");
+                    SafeErrorLogging.Log(logger, environment, exception, "Game session cleanup");
                 }
             }
         }
